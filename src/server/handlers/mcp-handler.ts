@@ -12,7 +12,7 @@ const tools: Record<string, string[]> = {
     'officedepot_get_order_history',
     'officedepot_get_order_history_details',
   ],
-  wayfair: ['wayfair_dpage_get_order_history'],
+  wayfair: ['wayfair_get_order_history'],
   goodreads: ['goodreads_get_book_list'],
 };
 

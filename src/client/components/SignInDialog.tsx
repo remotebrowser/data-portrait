@@ -3,6 +3,7 @@ import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import { transformData } from '../modules/DataTransformSchema.js';
 import { Button } from '@/components/ui/button.js';
+import { FollowUpForm } from './FollowUpForm.js';
 
 type SignInDialogProps = {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export function SignInDialog({
   const [pollingError, setPollingError] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>(null);
   const [signinData, setSigninData] = useState<SigninData | null>(null);
+  const [showFollowUpForm, setShowFollowUpForm] = useState(false);
 
   const loadPurchaseDataStream = async () => {
     try {
@@ -77,6 +79,7 @@ export function SignInDialog({
     setSigninData(null);
     setPollingError(null);
     setLoadingState(null);
+    setShowFollowUpForm(false);
     setCredentials({ email: '', password: '' });
   }, [isOpen]);
 
@@ -149,6 +152,7 @@ export function SignInDialog({
         setPollingError(`Sign in failed: ${responseText}`);
         setLoadingState(null);
       } else if (!isFinished) {
+        setShowFollowUpForm(true);
         setLoadingState('SIGNING_IN');
         pollSigninStatus();
       } else {
@@ -226,6 +230,21 @@ export function SignInDialog({
                 Close
               </Button>
             </div>
+          ) : showFollowUpForm ? (
+            <>
+              <h3 className="text-lg font-medium text-center leading-6 text-white mb-4">
+                Additional Verification Required
+              </h3>
+              <p className="text-sm text-gray-300 mb-4 text-center">
+                Please complete the verification process below
+              </p>
+              <FollowUpForm
+                signinUrl={signinData?.url}
+                onFinishSignin={(signinId) => {
+                  console.log('Follow-up form completed', { signinId });
+                }}
+              />
+            </>
           ) : loadingState ? (
             <div className="text-center">
               <p className="text-gray-200 mb-4 font-medium">

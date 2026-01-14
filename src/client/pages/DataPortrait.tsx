@@ -70,7 +70,9 @@ export function DataPortrait() {
   const [selectedGender, setSelectedGender] = useState('Female');
   const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [selectedImageStyle, setSelectedImageStyle] = useState('realistic');
+  const [selectedImageStyle, setSelectedImageStyle] = useState<string[]>([
+    'realistic',
+  ]);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   const [generatedImages, setGeneratedImages] = useState<ImageData[]>([]);

@@ -49,7 +49,7 @@ const PROMPT_TEMPLATE =
   'Portrait of a person: {{style}}, {{gender}}{{traits}}. The person should be the main focal point{{bookshelf}}{{products}}. The overall scene should feel authentic and lived-in, perfectly balanced composition with professional lighting and attention to detail, ensuring the human figure is prominently featured';
 
 interface PromptParams {
-  imageStyle: string;
+  imageStyle: string | string[];
   gender: string;
   traits: string[];
   purchaseData?: any[];
@@ -161,15 +161,24 @@ etc.`;
     books,
     products,
   }: {
-    imageStyle: string;
+    imageStyle: string | string[];
     gender: string;
     traits: string[];
     books: string[];
     products: string[];
   }): string {
+    const styleIds = Array.isArray(imageStyle) ? imageStyle : [imageStyle];
+    const stylePromptParts = styleIds
+      .map(
+        (id) =>
+          STYLE_PROMPTS[id as keyof typeof STYLE_PROMPTS]
+      )
+      .filter(Boolean);
+
     const stylePrompt =
-      STYLE_PROMPTS[imageStyle as keyof typeof STYLE_PROMPTS] ||
-      STYLE_PROMPTS['realistic'];
+      stylePromptParts.length > 0
+        ? stylePromptParts.join(', ')
+        : STYLE_PROMPTS['realistic'];
     const genderPrompt =
       gender === 'Male'
         ? 'masculine features, male presentation'

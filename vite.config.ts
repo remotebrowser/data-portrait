@@ -19,6 +19,10 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/getgather': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
       '/dpage': {
         target: 'http://localhost:3000',
         changeOrigin: true,

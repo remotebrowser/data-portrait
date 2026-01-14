@@ -312,12 +312,14 @@ export function DataPortrait() {
       />
 
       {/* Sign In Dialog */}
-      <SignInDialog
-        isOpen={signInDialogBrand !== null}
-        onClose={() => setSignInDialogBrand(null)}
-        onSuccessSignin={handleSignInSuccess}
-        brandConfig={signInDialogBrand!}
-      />
+      {signInDialogBrand && (
+        <SignInDialog
+          isOpen={true}
+          onClose={() => setSignInDialogBrand(null)}
+          onSuccessSignin={handleSignInSuccess}
+          brandConfig={signInDialogBrand}
+        />
+      )}
 
       {/* Image Preview Modal */}
       <ImagePreviewModal

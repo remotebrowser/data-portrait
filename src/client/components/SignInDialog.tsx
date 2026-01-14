@@ -191,7 +191,7 @@ export function SignInDialog({
       onClose={onClose}
       ref={dialogRef}
       className="m-0 p-0 bg-transparent w-full h-full max-w-full max-h-full backdrop-blur-sm"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)' }}
     >
       <div
         className="fixed inset-0 flex items-center justify-center p-4"
@@ -199,7 +199,7 @@ export function SignInDialog({
         style={{ zIndex: 0 }}
       >
         <div
-          className="w-full max-w-md bg-gray-900/50 backdrop-blur-sm rounded-2xl p-8 border border-gray-800 shadow-xl"
+          className="w-full max-w-md bg-white rounded-2xl p-8 border border-gray-200 shadow-xl"
           onClick={(e) => e.stopPropagation()}
           style={{ zIndex: 1 }}
         >
@@ -213,13 +213,13 @@ export function SignInDialog({
             </div>
           </div>
 
-          <h3 className="text-xl font-semibold text-center leading-6 text-white mb-6">
+          <h3 className="text-xl font-semibold text-center leading-6 text-gray-900 mb-6">
             Connect to {brandConfig.brand_name}
           </h3>
 
           {pollingError ? (
             <div className="text-center">
-              <p className="text-red-400 mb-4">{pollingError}</p>
+              <p className="text-red-600 mb-4">{pollingError}</p>
               <Button
                 onClick={() => {
                   setPollingError(null);
@@ -232,10 +232,10 @@ export function SignInDialog({
             </div>
           ) : showFollowUpForm ? (
             <>
-              <h3 className="text-lg font-medium text-center leading-6 text-white mb-4">
+              <h3 className="text-lg font-medium text-center leading-6 text-gray-900 mb-4">
                 Additional Verification Required
               </h3>
-              <p className="text-sm text-gray-300 mb-4 text-center">
+              <p className="text-sm text-gray-600 mb-4 text-center">
                 Please complete the verification process below
               </p>
               <FollowUpForm
@@ -247,7 +247,7 @@ export function SignInDialog({
             </>
           ) : loadingState ? (
             <div className="text-center">
-              <p className="text-gray-200 mb-4 font-medium">
+              <p className="text-gray-700 mb-4 font-medium">
                 {loadingState === 'CONNECTING'
                   ? 'Establishing connection...'
                   : loadingState === 'SIGNING_IN'
@@ -255,7 +255,7 @@ export function SignInDialog({
                     : 'Retrieving your data...'}
               </p>
               <div className="mt-4">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
               </div>
             </div>
           ) : (
@@ -263,7 +263,7 @@ export function SignInDialog({
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-white mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Email
                 </label>
@@ -278,7 +278,7 @@ export function SignInDialog({
                     })
                   }
                   placeholder="Enter your email"
-                  className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-base text-white placeholder-gray-500 autofill:shadow-[inset_0_0_0px_1000px_rgb(31,41,55)] autofill:[-webkit-text-fill-color:white]"
+                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-base text-gray-900 placeholder-gray-400"
                   required
                   autoFocus
                 />
@@ -287,7 +287,7 @@ export function SignInDialog({
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-white mb-2"
+                  className="block text-sm font-medium text-gray-700 mb-2"
                 >
                   Password
                 </label>
@@ -302,7 +302,7 @@ export function SignInDialog({
                     })
                   }
                   placeholder="Enter your password"
-                  className="w-full px-3 py-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-base text-white placeholder-gray-500 autofill:shadow-[inset_0_0_0px_1000px_rgb(31,41,55)] autofill:[-webkit-text-fill-color:white]"
+                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-base text-gray-900 placeholder-gray-400"
                   required
                 />
               </div>

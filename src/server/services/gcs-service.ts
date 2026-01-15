@@ -38,12 +38,4 @@ export const gcsService = {
       fileSize: buffer.length,
     };
   },
-
-  async deleteImage(filename: string): Promise<void> {
-    try {
-      await bucket.file(filename).delete();
-    } catch (error) {
-      console.warn(`Failed to delete ${filename} from GCS:`, error);
-    }
-  },
 };

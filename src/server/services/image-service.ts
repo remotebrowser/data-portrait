@@ -1,14 +1,13 @@
 import { Portkey } from 'portkey-ai';
 import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
-import path from 'path';
-import fs from 'fs';
+import { gcsService } from './gcs-service.js';
 
 const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,
 });
 
-const IMAGE_GENERATION_TIMEOUT = 20000;
+const IMAGE_GENERATION_TIMEOUT = 60000;
 
 interface ImageData {
   url?: string;
@@ -70,7 +69,7 @@ class ImageService {
       throw new Error('No image data returned from Portkey API');
     }
 
-    const fileData = this.saveImageFile(base64Data, 'gemini');
+    const fileData = await this.saveImageFile(base64Data, 'gemini');
     return {
       ...fileData,
       b64_json: base64Data,
@@ -91,26 +90,13 @@ class ImageService {
     });
   }
 
-  private saveImageFile(base64Data: string, model: string) {
-    const publicDir = path.join(process.cwd(), 'public');
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
-    }
-
+  private async saveImageFile(base64Data: string, model: string) {
     const id = nanoid(8);
     const filename = `${model}-portrait-${id}.png`;
-    const publicPath = path.join(publicDir, filename);
-    const buffer = Buffer.from(base64Data, 'base64');
-    fs.writeFileSync(publicPath, buffer);
 
-    const url = `/uploads/${filename}`;
-    console.log(`💾 ${model} image saved: ${url}`);
+    const result = await gcsService.uploadImage(base64Data, filename);
 
-    return {
-      url,
-      filename,
-      fileSize: buffer.length,
-    };
+    return result;
   }
 }
 

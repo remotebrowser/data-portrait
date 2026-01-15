@@ -1,10 +1,12 @@
-import { GoogleGenAI, Modality } from '@google/genai';
+import { Portkey } from 'portkey-ai';
 import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
+const portkey = new Portkey({
+  apiKey: settings.PORTKEY_API_KEY,
+});
 
 const IMAGE_GENERATION_TIMEOUT = 20000;
 const IMAGE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
@@ -29,54 +31,54 @@ class ImageService {
     return {
       ...imageData,
       model: 'gemini-3-pro-image-preview',
-      provider: 'google-ai',
+      provider: 'portkey',
     };
   }
 
   private async generateWithGemini(prompt: string): Promise<ImageData> {
-    if (!settings.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured');
+    if (!settings.PORTKEY_API_KEY) {
+      throw new Error('PORTKEY_API_KEY not configured');
     }
 
-    const model = 'gemini-3-pro-image-preview';
-    const geminiGenerationPromise = genAI.models.generateContent({
-      model,
-      contents: prompt,
-      config: {
-        responseModalities: [Modality.TEXT, Modality.IMAGE],
-      },
-    });
-
-    const response = (await Promise.race([
-      geminiGenerationPromise,
+    const response = await Promise.race([
+      portkey.chat.completions.create({
+        model: '@google/gemini-3-pro-image-preview',
+        maxTokens: 32000,
+        stream: false,
+        modalities: ['text', 'image'],
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: prompt,
+              },
+            ],
+          },
+        ],
+      }),
       this.createTimeoutPromise(IMAGE_GENERATION_TIMEOUT),
-    ])) as Awaited<typeof geminiGenerationPromise>;
+    ]);
 
-    if (!response.candidates?.length) {
-      throw new Error('No candidates found in Gemini response');
+    const imageUrl =
+      response.choices[0]?.message?.content_blocks?.[0]?.image_url?.url;
+    if (!imageUrl) {
+      throw new Error('No image URL returned from Portkey API');
     }
 
-    const candidate = response.candidates[0];
-    if (!candidate.content?.parts) {
-      throw new Error('No content parts found in Gemini response');
+    const base64Data = imageUrl.split(',')[1];
+    if (!base64Data) {
+      throw new Error('No image data returned from Portkey API');
     }
 
-    for (const part of candidate.content.parts) {
-      if (part.inlineData?.data) {
-        const fileData = this.saveImageFile(part.inlineData.data, 'gemini');
-        const imageData = {
-          ...fileData,
-          b64_json: part.inlineData.data,
-          width: 1024,
-          height: 1024,
-        };
-
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        return imageData;
-      }
-    }
-
-    throw new Error('No image data found in Gemini response');
+    const fileData = this.saveImageFile(base64Data, 'gemini');
+    return {
+      ...fileData,
+      b64_json: base64Data,
+      width: 1024,
+      height: 1024,
+    };
   }
 
   private createTimeoutPromise(timeoutMs: number): Promise<never> {

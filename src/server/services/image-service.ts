@@ -28,7 +28,7 @@ class ImageService {
     const imageData = await this.generateWithGemini(prompt);
     return {
       ...imageData,
-      model: 'gemini-2.0-flash-preview-image-generation',
+      model: 'gemini-3-pro-image-preview',
       provider: 'google-ai',
     };
   }
@@ -38,7 +38,7 @@ class ImageService {
       throw new Error('GEMINI_API_KEY not configured');
     }
 
-    const model = 'gemini-2.0-flash-preview-image-generation';
+    const model = 'gemini-3-pro-image-preview';
     const geminiGenerationPromise = genAI.models.generateContent({
       model,
       contents: prompt,

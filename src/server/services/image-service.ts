@@ -1,11 +1,9 @@
-import Together from 'together-ai';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const together = new Together({ apiKey: settings.TOGETHER_API_KEY });
 const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
 
 const IMAGE_GENERATION_TIMEOUT = 20000;
@@ -13,10 +11,6 @@ const IMAGE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
 const IMAGE_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
 
 const MODEL_CONFIG = {
-  'flux-schnell': {
-    provider: 'together',
-    model: 'black-forest-labs/FLUX.1-schnell-Free',
-  },
   gemini: {
     provider: 'google-ai',
     model: 'gemini-2.0-flash-preview-image-generation',
@@ -37,54 +31,24 @@ interface ImageData {
 class ImageService {
   async generate(
     prompt: string,
-    modelName: string = 'flux-schnell'
+    modelName: string = 'gemini'
   ): Promise<ImageData> {
     const config =
       MODEL_CONFIG[modelName as keyof typeof MODEL_CONFIG] ||
-      MODEL_CONFIG['flux-schnell'];
+      MODEL_CONFIG['gemini'];
 
     console.log(`🎨 Final prompt: "${prompt}"`);
 
-    let imageData: ImageData;
-    if (config.provider === 'together') {
-      imageData = await this.generateWithTogether(prompt, config);
-    } else if (config.provider === 'google-ai') {
-      imageData = await this.generateWithGemini(prompt, config);
-    } else {
-      throw new Error(`Unsupported provider: ${config.provider}`);
+    if (config.provider === 'google-ai') {
+      const imageData = await this.generateWithGemini(prompt, config);
+      return {
+        ...imageData,
+        model: config.model,
+        provider: config.provider,
+      };
     }
 
-    return {
-      ...imageData,
-      model: config.model,
-      provider: config.provider,
-    };
-  }
-
-  private async generateWithTogether(
-    prompt: string,
-    config: any
-  ): Promise<ImageData> {
-    const imageGenerationPromise = together.images.create({
-      model: config.model,
-      prompt,
-      width: 1024,
-      height: 1024,
-      steps: 4,
-      n: 1,
-    });
-
-    const response = (await Promise.race([
-      imageGenerationPromise,
-      this.createTimeoutPromise(IMAGE_GENERATION_TIMEOUT),
-    ])) as Awaited<typeof imageGenerationPromise>;
-
-    const originalData = response.data[0];
-    if (originalData.b64_json) {
-      const fileData = this.saveImageFile(originalData.b64_json, 'flux');
-      return { ...originalData, ...fileData };
-    }
-    return originalData;
+    throw new Error(`Unsupported provider: ${config.provider}`);
   }
 
   private async generateWithGemini(
@@ -127,7 +91,6 @@ class ImageService {
           height: 1024,
         };
 
-        // Brief delay to ensure file is fully written
         await new Promise((resolve) => setTimeout(resolve, 1000));
         return imageData;
       }
@@ -153,13 +116,11 @@ class ImageService {
     const filename = `${model}-portrait-${id}.png`;
     const publicPath = path.join(process.cwd(), 'public', filename);
 
-    // Ensure public directory exists
     const publicDir = path.join(process.cwd(), 'public');
     if (!fs.existsSync(publicDir)) {
       fs.mkdirSync(publicDir, { recursive: true });
     }
 
-    // Save file
     const buffer = Buffer.from(base64Data, 'base64');
     fs.writeFileSync(publicPath, buffer);
 

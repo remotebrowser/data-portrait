@@ -10,13 +10,6 @@ const IMAGE_GENERATION_TIMEOUT = 20000;
 const IMAGE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
 const IMAGE_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
 
-const MODEL_CONFIG = {
-  gemini: {
-    provider: 'google-ai',
-    model: 'gemini-2.0-flash-preview-image-generation',
-  },
-};
-
 interface ImageData {
   url?: string;
   filename?: string;
@@ -29,38 +22,25 @@ interface ImageData {
 }
 
 class ImageService {
-  async generate(
-    prompt: string,
-    modelName: string = 'gemini'
-  ): Promise<ImageData> {
-    const config =
-      MODEL_CONFIG[modelName as keyof typeof MODEL_CONFIG] ||
-      MODEL_CONFIG['gemini'];
-
+  async generate(prompt: string): Promise<ImageData> {
     console.log(`🎨 Final prompt: "${prompt}"`);
 
-    if (config.provider === 'google-ai') {
-      const imageData = await this.generateWithGemini(prompt, config);
-      return {
-        ...imageData,
-        model: config.model,
-        provider: config.provider,
-      };
-    }
-
-    throw new Error(`Unsupported provider: ${config.provider}`);
+    const imageData = await this.generateWithGemini(prompt);
+    return {
+      ...imageData,
+      model: 'gemini-2.0-flash-preview-image-generation',
+      provider: 'google-ai',
+    };
   }
 
-  private async generateWithGemini(
-    prompt: string,
-    config: any
-  ): Promise<ImageData> {
+  private async generateWithGemini(prompt: string): Promise<ImageData> {
     if (!settings.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY not configured');
     }
 
+    const model = 'gemini-2.0-flash-preview-image-generation';
     const geminiGenerationPromise = genAI.models.generateContent({
-      model: config.model,
+      model,
       contents: prompt,
       config: {
         responseModalities: [Modality.TEXT, Modality.IMAGE],

@@ -6,9 +6,6 @@ export const handlePortraitGeneration = async (req: Request, res: Response) => {
   try {
     const { imageStyle, gender, traits, purchaseData } = req.body;
 
-    // Clean up old images
-    imageService.cleanupOldImages();
-
     // Build prompt using prompt service
     const prompt = await promptService.buildPrompt({
       imageStyle,

@@ -20,6 +20,7 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
+    "@google-cloud/storage": "^7.18.0",
     "@google/genai": "^1.0.0",
     "@maxmind/geoip2-node": "^6.1.0",
     "@radix-ui/react-popover": "^1.1.14",

@@ -2,15 +2,12 @@ import Together from 'together-ai';
 import { GoogleGenAI, Modality } from '@google/genai';
 import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { gcsService } from './gcs-service.js';
 
 const together = new Together({ apiKey: settings.TOGETHER_API_KEY });
 const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
 
 const IMAGE_GENERATION_TIMEOUT = 20000;
-const IMAGE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
-const IMAGE_CLEANUP_INTERVAL = 60 * 60 * 1000; // 1 hour
 
 const MODEL_CONFIG = {
   'flux-schnell': {
@@ -81,7 +78,7 @@ class ImageService {
 
     const originalData = response.data[0];
     if (originalData.b64_json) {
-      const fileData = this.saveImageFile(originalData.b64_json, 'flux');
+      const fileData = await this.saveImageFile(originalData.b64_json, 'flux');
       return { ...originalData, ...fileData };
     }
     return originalData;
@@ -119,7 +116,10 @@ class ImageService {
 
     for (const part of candidate.content.parts) {
       if (part.inlineData?.data) {
-        const fileData = this.saveImageFile(part.inlineData.data, 'gemini');
+        const fileData = await this.saveImageFile(
+          part.inlineData.data,
+          'gemini'
+        );
         const imageData = {
           ...fileData,
           b64_json: part.inlineData.data,
@@ -127,8 +127,6 @@ class ImageService {
           height: 1024,
         };
 
-        // Brief delay to ensure file is fully written
-        await new Promise((resolve) => setTimeout(resolve, 1000));
         return imageData;
       }
     }
@@ -148,56 +146,15 @@ class ImageService {
     });
   }
 
-  private saveImageFile(base64Data: string, model: string) {
+  private async saveImageFile(base64Data: string, model: string) {
     const id = nanoid(8);
     const filename = `${model}-portrait-${id}.png`;
-    const publicPath = path.join(process.cwd(), 'public', filename);
 
-    // Ensure public directory exists
-    const publicDir = path.join(process.cwd(), 'public');
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
-    }
+    const result = await gcsService.uploadImage(base64Data, filename);
 
-    // Save file
-    const buffer = Buffer.from(base64Data, 'base64');
-    fs.writeFileSync(publicPath, buffer);
+    console.log(`💾 ${model} image uploaded: ${result.url}`);
 
-    console.log(`💾 ${model} image saved: /${filename}`);
-
-    return {
-      url: `/${filename}`,
-      filename,
-      fileSize: buffer.length,
-    };
-  }
-
-  cleanupOldImages() {
-    const publicDir = path.join(process.cwd(), 'public');
-    if (!fs.existsSync(publicDir)) return;
-
-    const now = Date.now();
-
-    try {
-      const files = fs.readdirSync(publicDir);
-      files.forEach((file) => {
-        if (file.includes('-portrait-')) {
-          const filePath = path.join(publicDir, file);
-          const stats = fs.statSync(filePath);
-          if (now - stats.mtime.getTime() > IMAGE_MAX_AGE) {
-            fs.unlinkSync(filePath);
-            console.log('🗑️ Cleaned up old image:', file);
-          }
-        }
-      });
-    } catch (error) {
-      console.warn('⚠️ Failed to cleanup old images:', error);
-    }
-  }
-
-  initializeImageCleanup() {
-    setInterval(() => this.cleanupOldImages(), IMAGE_CLEANUP_INTERVAL);
-    this.cleanupOldImages();
+    return result;
   }
 }
 

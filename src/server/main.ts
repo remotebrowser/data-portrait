@@ -9,7 +9,6 @@ import { fileURLToPath } from 'url';
 import { settings } from './config.js';
 import { IPBlockerMiddleware } from './middleware/ip-blocker-middleware.js';
 import { geolocationService } from './services/geolocation-service.js';
-import { imageService } from './services/image-service.js';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import session from 'express-session';
 import bodyParser from 'body-parser';
@@ -138,9 +137,6 @@ app.use('*name', (_req, res) => {
 
 Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
-
-// Initialize image cleanup service
-imageService.initializeImageCleanup();
 
 app.listen(3000, () => {
   if (process.env.NODE_ENV === 'production') {

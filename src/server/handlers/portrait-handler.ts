@@ -16,9 +16,6 @@ export const handlePortraitGeneration = async (req: Request, res: Response) => {
       `🚀 Portrait generation request: ${imageStyle}, ${gender}, [${traits}], model=${model}`
     );
 
-    // Clean up old images
-    imageService.cleanupOldImages();
-
     // Build prompt using prompt service
     const prompt = await promptService.buildPrompt({
       imageStyle,

@@ -1,9 +1,7 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { DataConnectors } from './DataConnectors.js';
-import { GenderSelector } from './GenderSelector.js';
-import { TraitsSelector } from './TraitsSelector.js';
-import { ImageStyleSelector } from './ImageStyleSelector.js';
+import { PersonaSelector } from './PersonaSelector.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 
@@ -14,13 +12,13 @@ type SidebarProps = {
   connectedBrands: string[];
   selectedGender: string;
   selectedTraits: string[];
-  selectedImageStyle: string;
+  selectedImageStyle: string[];
   isGenerating: boolean;
   onSuccessConnect: (brandName: string, data: PurchaseHistory[]) => void;
   onOpenSignInDialog: (brandConfig: BrandConfig) => void;
   onGenderChange: (genderId: string) => void;
   onTraitsChange: (traits: string[]) => void;
-  onImageStyleChange: (styleId: string) => void;
+  onImageStyleChange: (styleIds: string[]) => void;
   onGeneratePortrait: () => void;
 };
 
@@ -82,18 +80,12 @@ export function Sidebar({
             onOpenSignInDialog={onOpenSignInDialog}
           />
 
-          <GenderSelector
-            selectedGender={selectedGender}
+          <PersonaSelector
+            gender={selectedGender}
+            imageStyles={selectedImageStyle}
+            traits={selectedTraits}
             onGenderChange={onGenderChange}
-          />
-
-          <ImageStyleSelector
-            selectedImageStyle={selectedImageStyle}
-            onImageStyleChange={onImageStyleChange}
-          />
-
-          <TraitsSelector
-            selectedTraits={selectedTraits}
+            onImageStylesChange={onImageStyleChange}
             onTraitsChange={onTraitsChange}
           />
         </div>

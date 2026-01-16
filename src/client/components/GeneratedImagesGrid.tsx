@@ -9,13 +9,13 @@ export type ImageData = {
   provider?: string;
   timestamp: string;
   filename?: string;
-  style?: string;
+  style?: string[];
 };
 
 type GeneratedImagesGridProps = {
   generatedImages: ImageData[];
   isGenerating: boolean;
-  selectedImageStyle?: string;
+  selectedImageStyle?: string[];
   onImageClick: (imageUrl: string) => void;
 };
 
@@ -25,8 +25,9 @@ export function GeneratedImagesGrid({
   selectedImageStyle,
   onImageClick,
 }: GeneratedImagesGridProps) {
+  const primarySelectedStyleId = selectedImageStyle?.[0];
   const selectedStyle = IMAGE_STYLES.find(
-    (style) => style.id === selectedImageStyle
+    (style) => style.id === primarySelectedStyleId
   );
 
   return (
@@ -66,8 +67,9 @@ export function GeneratedImagesGrid({
 
       {/* Generated Images */}
       {generatedImages.map((imageData, i) => {
+        const imagePrimaryStyleId = imageData.style?.[0];
         const imageStyle = IMAGE_STYLES.find(
-          (style) => style.id === imageData.style
+          (style) => style.id === imagePrimaryStyleId
         );
 
         return (

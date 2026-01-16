@@ -5,6 +5,7 @@ import { EmptyState } from '../components/EmptyState.js';
 import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay.js';
 import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
+import { SignInDialog } from '../components/SignInDialog.js';
 import { Sidebar } from '../components/Sidebar.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
@@ -78,6 +79,8 @@ export function DataPortrait() {
   const [selectedImagePreview, setSelectedImagePreview] = useState<
     string | null
   >(null);
+  const [signInDialogBrand, setSignInDialogBrand] =
+    useState<BrandConfig | null>(null);
 
   // Track page view on component mount
   useEffect(() => {
@@ -93,7 +96,6 @@ export function DataPortrait() {
       type: 'server',
     });
 
-    // Track successful brand connection
     trackEvent('brand_connected_successful', {
       brand_name: brandName,
       orders_count: data.length,
@@ -107,6 +109,16 @@ export function DataPortrait() {
       const combined = [...prev, ...data];
       return filterUniqueOrders(combined);
     });
+  };
+
+  const handleOpenSignInDialog = (brandConfig: BrandConfig) => {
+    setSignInDialogBrand(brandConfig);
+  };
+
+  const handleSignInSuccess = (data: PurchaseHistory[]) => {
+    if (signInDialogBrand) {
+      handleSuccessConnect(signInDialogBrand.brand_name, data);
+    }
   };
   const toggleOrderExpansion = (orderId: string, productName: string) => {
     const newExpanded = new Set(expandedOrders);
@@ -292,11 +304,22 @@ export function DataPortrait() {
         selectedImageStyle={selectedImageStyle}
         isGenerating={isGenerating}
         onSuccessConnect={handleSuccessConnect}
+        onOpenSignInDialog={handleOpenSignInDialog}
         onGenderChange={setSelectedGender}
         onTraitsChange={setSelectedTraits}
         onImageStyleChange={setSelectedImageStyle}
         onGeneratePortrait={generatePortrait}
       />
+
+      {/* Sign In Dialog */}
+      {signInDialogBrand && (
+        <SignInDialog
+          isOpen={true}
+          onClose={() => setSignInDialogBrand(null)}
+          onSuccessSignin={handleSignInSuccess}
+          brandConfig={signInDialogBrand}
+        />
+      )}
 
       {/* Image Preview Modal */}
       <ImagePreviewModal

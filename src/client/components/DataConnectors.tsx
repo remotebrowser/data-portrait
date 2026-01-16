@@ -9,12 +9,14 @@ type DataConnectorsProps = {
   brands: BrandConfig[];
   connectedBrands: string[];
   onSuccessConnect: (brandName: string, data: PurchaseHistory[]) => void;
+  onOpenSignInDialog: (brandConfig: BrandConfig) => void;
 };
 
 export function DataConnectors({
   brands,
   connectedBrands,
   onSuccessConnect,
+  onOpenSignInDialog,
 }: DataConnectorsProps) {
   return (
     <>
@@ -67,6 +69,7 @@ export function DataConnectors({
               onSuccessConnect={(data) =>
                 onSuccessConnect(brandConfig.brand_name, data)
               }
+              onOpenSignInDialog={onOpenSignInDialog}
               isConnected={connectedBrands.includes(brandConfig.brand_name)}
             />
           ))}

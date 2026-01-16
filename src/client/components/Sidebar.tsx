@@ -17,6 +17,7 @@ type SidebarProps = {
   selectedImageStyle: string;
   isGenerating: boolean;
   onSuccessConnect: (brandName: string, data: PurchaseHistory[]) => void;
+  onOpenSignInDialog: (brandConfig: BrandConfig) => void;
   onGenderChange: (genderId: string) => void;
   onTraitsChange: (traits: string[]) => void;
   onImageStyleChange: (styleId: string) => void;
@@ -33,6 +34,7 @@ export function Sidebar({
   selectedImageStyle,
   isGenerating,
   onSuccessConnect,
+  onOpenSignInDialog,
   onGenderChange,
   onTraitsChange,
   onImageStyleChange,
@@ -77,6 +79,7 @@ export function Sidebar({
             brands={brands}
             connectedBrands={connectedBrands}
             onSuccessConnect={onSuccessConnect}
+            onOpenSignInDialog={onOpenSignInDialog}
           />
 
           <GenderSelector

@@ -10,7 +10,10 @@ export const settings = {
   MAXMIND_LICENSE_KEY: process.env.MAXMIND_LICENSE_KEY || '',
   TOGETHER_API_KEY: process.env.TOGETHER_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  PORTKEY_API_KEY: process.env.PORTKEY_API_KEY || '',
   SENTRY_DSN: process.env.SENTRY_DSN || '',
   SESSION_SECRET: process.env.SESSION_SECRET || 'pleasereplacemeonprod',
   SEGMENT_WRITE_KEY: process.env.SEGMENT_WRITE_KEY || '',
+  GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || 'data-portrait-imagegen',
+  GCS_PROJECT_ID: 'getgather',
 } as const;

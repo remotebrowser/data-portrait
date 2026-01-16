@@ -4,20 +4,7 @@ import { imageService } from '../services/image-service.js';
 
 export const handlePortraitGeneration = async (req: Request, res: Response) => {
   try {
-    const {
-      imageStyle,
-      gender,
-      traits,
-      model = 'flux-schnell',
-      purchaseData,
-    } = req.body;
-
-    console.log(
-      `🚀 Portrait generation request: ${imageStyle}, ${gender}, [${traits}], model=${model}`
-    );
-
-    // Clean up old images
-    imageService.cleanupOldImages();
+    const { imageStyle, gender, traits, purchaseData } = req.body;
 
     // Build prompt using prompt service
     const prompt = await promptService.buildPrompt({
@@ -28,7 +15,7 @@ export const handlePortraitGeneration = async (req: Request, res: Response) => {
     });
 
     // Generate image using image service
-    const imageData = await imageService.generate(prompt, model);
+    const imageData = await imageService.generate(prompt);
 
     // Return response in the format expected by frontend
     res.json({

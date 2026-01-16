@@ -29,8 +29,12 @@ app.disable('x-powered-by');
 
 // Basic security headers
 app.use((req, res, next) => {
+  // Allow framing for dpage content since it's designed to be embedded
+  const isDpageRequest = req.path.startsWith('/dpage');
+  if (!isDpageRequest) {
+    res.setHeader('X-Frame-Options', 'DENY');
+  }
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
 
   // Production-only security headers

@@ -8,6 +8,7 @@ import {
   handleDpageSigninCheck,
 } from '../handlers/mcp-handler.js';
 import { handleAnalytics } from '../handlers/analytics-handler.js';
+import { settings } from '../config.js';
 
 const router = Router();
 
@@ -42,5 +43,13 @@ router.post('/log', (req, res) => {
 });
 
 router.post('/analytics', handleAnalytics);
+
+router.get('/config', (req, res) => {
+  res.json({
+    sentry: {
+      dsn: settings.SENTRY_DSN || null,
+    },
+  });
+});
 
 export { router as apiRoutes };

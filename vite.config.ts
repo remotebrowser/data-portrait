@@ -22,7 +22,10 @@ export default defineConfig({
       '/getgather': {
         target: 'http://localhost:3000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/getgather/, '/getgather'),
+      },
+      '/dpage': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
       },
       '/dpage': {
         target: 'http://localhost:3000',

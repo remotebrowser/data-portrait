@@ -1,12 +1,6 @@
 import { Storage } from '@google-cloud/storage';
 import { settings } from '../config.js';
 
-const storage = new Storage({
-  projectId: settings.GCS_PROJECT_ID,
-});
-
-const bucket = storage.bucket(settings.GCS_BUCKET_NAME);
-
 type UploadResult = {
   url: string;
   filename: string;
@@ -18,6 +12,11 @@ export const gcsService = {
     base64Data: string,
     filename: string
   ): Promise<UploadResult> {
+    const storage = new Storage({
+      projectId: settings.GCS_PROJECT_ID,
+    });
+
+    const bucket = storage.bucket(settings.GCS_BUCKET_NAME);
     const buffer = Buffer.from(base64Data, 'base64');
     const file = bucket.file(filename);
 

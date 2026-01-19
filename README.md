@@ -32,7 +32,8 @@ Data Portrait is a web app that transforms your shopping and reading history int
 
 - **Frontend:** React (Vite), TypeScript, Tailwind CSS.
 - **Backend:** Express.js, geolocation via MaxMind, reverse proxy to GetGather API.
-- **AI Models:** Google Gemini, FLUX (via Together AI).
+- **AI Models:** Google Gemini via Portkey or direct Google GenAI.
+- **Storage:** Google Cloud Storage (optional) or local filesystem.
 - **Data Model:** Purchases include brand, order date, products, images, etc.
 
 ## Configuration
@@ -48,8 +49,17 @@ MAXMIND_ACCOUNT_ID=your_maxmind_account_id
 MAXMIND_LICENSE_KEY=your_maxmind_license_key
 
 # AI Providers (required for image generation)
-TOGETHER_API_KEY=your_together_ai_key
+# Image generation provider is automatically selected based on API key availability:
+# - If PORTKEY_API_KEY is set, uses Portkey (recommended for production)
+# - If only GEMINI_API_KEY is set, uses Google GenAI directly
+# - Both keys can be set; Portkey will be prioritized
+PORTKEY_API_KEY=your_portkey_api_key
 GEMINI_API_KEY=your_gemini_api_key
+
+# Google Cloud Storage (optional, for cloud image storage)
+# If not configured, images are stored locally in the public/ directory
+GCS_BUCKET_NAME=data-portrait-imagegen
+GCS_PROJECT_ID=your_gcp_project_id
 ```
 
 ## Development
@@ -61,7 +71,7 @@ Use Docker or Podman to pull the container image and run it:
 ```bash
 docker run -p 3000:3000 \
   -e GETGATHER_URL=your_local_mcp_getgather_url \
-  -e GEMINI_API_KEY=your_gemini_key \
+  -e PORTKEY_API_KEY=your_portkey_key \
   ghcr.io/mcp-getgather/data-portrait:latest
 ```
 

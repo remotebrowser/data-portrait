@@ -8,7 +8,6 @@ export const settings = {
   GETGATHER_URL: process.env.GETGATHER_URL || '',
   MAXMIND_ACCOUNT_ID: process.env.MAXMIND_ACCOUNT_ID || '',
   MAXMIND_LICENSE_KEY: process.env.MAXMIND_LICENSE_KEY || '',
-  TOGETHER_API_KEY: process.env.TOGETHER_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   PORTKEY_API_KEY: process.env.PORTKEY_API_KEY || '',
   SENTRY_DSN: process.env.SENTRY_DSN || '',

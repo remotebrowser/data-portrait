@@ -2,6 +2,7 @@ import { Portkey } from 'portkey-ai';
 import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
 import { gcsService } from './gcs-service.js';
+import { localStorageService } from './local-storage-service.js';
 
 const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,
@@ -21,6 +22,10 @@ interface ImageData {
 }
 
 class ImageService {
+  private useGCS(): boolean {
+    return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
+  }
+
   async generate(prompt: string): Promise<ImageData> {
     console.log(`🎨 Final prompt: "${prompt}"`);
 
@@ -94,7 +99,9 @@ class ImageService {
     const id = nanoid(8);
     const filename = `${model}-portrait-${id}.png`;
 
-    const result = await gcsService.uploadImage(base64Data, filename);
+    const result = this.useGCS()
+      ? await gcsService.uploadImage(base64Data, filename)
+      : await localStorageService.uploadImage(base64Data, filename);
 
     return result;
   }

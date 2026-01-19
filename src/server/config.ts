@@ -14,6 +14,6 @@ export const settings = {
   SENTRY_DSN: process.env.SENTRY_DSN || '',
   SESSION_SECRET: process.env.SESSION_SECRET || 'pleasereplacemeonprod',
   SEGMENT_WRITE_KEY: process.env.SEGMENT_WRITE_KEY || '',
-  GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || 'data-portrait-imagegen',
-  GCS_PROJECT_ID: 'getgather',
+  GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || '',
+  GCS_PROJECT_ID: process.env.GCS_PROJECT_ID || '',
 } as const;

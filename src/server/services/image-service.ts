@@ -103,10 +103,6 @@ class ImageService {
       ? await gcsService.uploadImage(base64Data, filename)
       : await localStorageService.uploadImage(base64Data, filename);
 
-    if (!this.useGCS()) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-
     return result;
   }
 }

@@ -22,6 +22,9 @@ export const localStorageService = {
     const buffer = Buffer.from(base64Data, 'base64');
     fs.writeFileSync(publicPath, buffer);
 
+    // Delay to ensure file is fully written to disk before returning URL
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     return {
       url: `/${filename}`,
       filename,

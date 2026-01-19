@@ -1,4 +1,4 @@
-import * as fs from 'node:fs';
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 type UploadResult = {
@@ -15,12 +15,14 @@ export const localStorageService = {
     const publicPath = path.join(process.cwd(), 'public', filename);
     const publicDir = path.join(process.cwd(), 'public');
 
-    if (!fs.existsSync(publicDir)) {
-      fs.mkdirSync(publicDir, { recursive: true });
+    try {
+      await fs.access(publicDir);
+    } catch {
+      await fs.mkdir(publicDir, { recursive: true });
     }
 
     const buffer = Buffer.from(base64Data, 'base64');
-    fs.writeFileSync(publicPath, buffer);
+    await fs.writeFile(publicPath, buffer);
 
     return {
       url: `/${filename}`,

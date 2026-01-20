@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { handlePortraitGeneration } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
@@ -11,6 +12,20 @@ import { handleAnalytics } from '../handlers/analytics-handler.js';
 import { settings } from '../config.js';
 
 const router = Router();
+
+const upload = multer({
+  dest: 'uploads/',
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+});
 
 // Get dpage url
 router.get('/dpage-url/:brandId', handleDpageUrl);
@@ -31,6 +46,13 @@ router.get('/mcp-poll/:brandId/:linkId', handleMcpPoll);
 
 // Portrait generation endpoint
 router.post('/generate-portrait', handlePortraitGeneration);
+
+// Portrait generation with image upload endpoint
+router.post(
+  '/generate-portrait-with-image',
+  upload.single('image'),
+  handlePortraitGeneration
+);
 
 router.post('/log', (req, res) => {
   // The client sends an object: { brand: string, orders: PurchaseHistory[] }

@@ -129,7 +129,7 @@ export function PurchaseDataDisplay({
                               className="flex items-start gap-2 py-2 px-1 bg-gray-50 rounded"
                             >
                               <div className="flex-shrink-0 w-8 h-8 bg-white rounded overflow-hidden border">
-                                {order.image_urls[index] ? (
+                                {order.image_urls?.[index] ? (
                                   <img
                                     src={order.image_urls[index]}
                                     alt={productName}

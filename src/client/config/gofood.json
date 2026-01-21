@@ -45,12 +45,6 @@
         "sourcePath": "menu_name",
         "defaultValue": "N/A",
         "convertToArray": true
-      },
-      {
-        "outputKey": "image_urls",
-        "sourcePath": "",
-        "defaultValue": "[]",
-        "transform": "array"
       }
     ]
   }

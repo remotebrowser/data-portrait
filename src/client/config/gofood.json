@@ -14,11 +14,11 @@
       "name": "Submit",
       "type": "click",
       "prompt": "Sign In",
-      "dependsOnFields": "phone,otp"
+      "dependsOnFields": "phone"
     }
   ],
   "dataTransform": {
-    "dataPath": "bundles.1.content",
+    "dataPath": "content",
     "fieldMappings": [
       {
         "outputKey": "brand",
@@ -28,28 +28,29 @@
       {
         "outputKey": "order_date",
         "sourcePath": "order_date",
-        "transform": "date"
+        "transform": "string"
       },
       {
         "outputKey": "order_total",
-        "sourcePath": "order_total"
+        "sourcePath": "total_price"
       },
       {
         "outputKey": "order_id",
-        "sourcePath": "order_id"
+        "sourcePath": "order_date",
+        "transform": "string",
+        "formatTemplate": "gofood_{value}"
       },
       {
         "outputKey": "product_names",
-        "sourcePath": "title",
+        "sourcePath": "menu_name",
         "defaultValue": "N/A",
         "convertToArray": true
       },
       {
         "outputKey": "image_urls",
-        "sourcePath": "cover",
-        "defaultValue": "N/A",
-        "transform": "image",
-        "convertToArray": true
+        "sourcePath": "",
+        "defaultValue": "[]",
+        "transform": "array"
       }
     ]
   }

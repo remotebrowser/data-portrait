@@ -11,6 +11,7 @@ import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
 import officedepot from '../config/officedepot.json' with { type: 'json' };
 import goodreads from '../config/goodreads.json' with { type: 'json' };
+import gofood from '../config/gofood.json' with { type: 'json' };
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type { ImageData } from '../components/GeneratedImagesGrid.js';
@@ -22,12 +23,14 @@ const amazonConfig = amazon as BrandConfig;
 const wayfairConfig = wayfair as BrandConfig;
 const officedepotConfig = officedepot as BrandConfig;
 const goodreadsConfig = goodreads as BrandConfig;
+const gofoodConfig = gofood as BrandConfig;
 
 const BRANDS: Array<BrandConfig> = [
   amazonConfig,
   officedepotConfig,
   wayfairConfig,
   goodreadsConfig,
+  gofoodConfig,
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [

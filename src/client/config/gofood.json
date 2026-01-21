@@ -1,0 +1,61 @@
+{
+  "brand_id": "gofood",
+  "brand_name": "GoFood",
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Gofood_logo.svg/1280px-Gofood_logo.svg.png",
+  "is_mandatory": false,
+  "is_dpage": true,
+  "schema": [
+    {
+      "name": "email",
+      "type": "email",
+      "prompt": "Email"
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "prompt": "Password"
+    },
+    {
+      "name": "login,remember_me,submit",
+      "type": "click",
+      "prompt": "Sign In",
+      "dependsOnFields": "email,password"
+    }
+  ],
+  "dataTransform": {
+    "dataPath": "bundles.1.content",
+    "fieldMappings": [
+      {
+        "outputKey": "brand",
+        "sourcePath": "brand",
+        "defaultValue": "GoFood"
+      },
+      {
+        "outputKey": "order_date",
+        "sourcePath": "order_date",
+        "transform": "date"
+      },
+      {
+        "outputKey": "order_total",
+        "sourcePath": "order_total"
+      },
+      {
+        "outputKey": "order_id",
+        "sourcePath": "order_id"
+      },
+      {
+        "outputKey": "product_names",
+        "sourcePath": "title",
+        "defaultValue": "N/A",
+        "convertToArray": true
+      },
+      {
+        "outputKey": "image_urls",
+        "sourcePath": "cover",
+        "defaultValue": "N/A",
+        "transform": "image",
+        "convertToArray": true
+      }
+    ]
+  }
+}

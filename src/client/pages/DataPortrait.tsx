@@ -205,8 +205,9 @@ export function DataPortrait() {
       const data = await response.json();
 
       if (data.success && data.image) {
+        // Create image object with metadata
         const imageData = {
-          url: `${data.image.url}?t=${Date.now()}`,
+          url: `${data.image.url}?t=${Date.now()}`, // Add timestamp to prevent caching
           model: data.model || 'gemini',
           provider: data.provider || 'unknown',
           timestamp: data.timestamp || new Date().toISOString(),
@@ -214,7 +215,10 @@ export function DataPortrait() {
           style: selectedImageStyle,
         };
 
-        setGeneratedImages((prev) => [imageData, ...prev.slice(0, 11)]);
+        setGeneratedImages((prev) => [
+          imageData,
+          ...prev.slice(0, 11), // Keep only the latest 12 images
+        ]);
 
         trackEvent('portrait_generation_successful', {
           model: data.model,
@@ -224,6 +228,7 @@ export function DataPortrait() {
           used_uploaded_image: !!uploadedImage,
         });
 
+        // Close sidebar on mobile after successful generation
         if (window.innerWidth < 1024) {
           setIsSidebarOpen(false);
         }

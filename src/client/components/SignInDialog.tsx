@@ -26,10 +26,7 @@ export function SignInDialog({
   brandConfig,
 }: SignInDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [credentials, setCredentials] = useState({
-    email: '',
-    password: '',
-  });
+  const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [pollingError, setPollingError] = useState<string | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>(null);
   const [signinData, setSigninData] = useState<SigninData | null>(null);
@@ -80,8 +77,14 @@ export function SignInDialog({
     setPollingError(null);
     setLoadingState(null);
     setShowFollowUpForm(false);
-    setCredentials({ email: '', password: '' });
-  }, [isOpen]);
+    const initial: Record<string, string> = {};
+    brandConfig.schema
+      .filter((field) => field.type !== 'click')
+      .forEach((field) => {
+        initial[field.name] = '';
+      });
+    setCredentials(initial);
+  }, [isOpen, brandConfig]);
 
   const pollSigninStatus = async () => {
     if (!signinData) return;
@@ -137,10 +140,7 @@ export function SignInDialog({
       const response = await fetch(signinData.url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          email: credentials.email,
-          password: credentials.password,
-        }),
+        body: new URLSearchParams(credentials),
       });
 
       const responseText = await response.text();
@@ -260,52 +260,33 @@ export function SignInDialog({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={credentials.email}
-                  onChange={(e) =>
-                    setCredentials({
-                      ...credentials,
-                      email: e.target.value,
-                    })
-                  }
-                  placeholder="Enter your email"
-                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-base text-gray-900 placeholder-gray-400"
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Password
-                </label>
-                <input
-                  id="password"
-                  type="password"
-                  value={credentials.password}
-                  onChange={(e) =>
-                    setCredentials({
-                      ...credentials,
-                      password: e.target.value,
-                    })
-                  }
-                  placeholder="Enter your password"
-                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-base text-gray-900 placeholder-gray-400"
-                  required
-                />
-              </div>
+              {brandConfig.schema
+                .filter((field) => field.type !== 'click')
+                .map((field) => (
+                  <div key={field.name}>
+                    <label
+                      htmlFor={field.name}
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      {field.prompt}
+                    </label>
+                    <input
+                      id={field.name}
+                      type={field.type}
+                      value={credentials[field.name] || ''}
+                      onChange={(e) =>
+                        setCredentials({
+                          ...credentials,
+                          [field.name]: e.target.value,
+                        })
+                      }
+                      placeholder={`Enter your ${(field.prompt || '').toLowerCase()}`}
+                      className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent text-base text-gray-900 placeholder-gray-400"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                ))}
 
               <div className="flex gap-3 pt-4">
                 <Button
@@ -318,7 +299,11 @@ export function SignInDialog({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={!credentials.email || !credentials.password}
+                  disabled={
+                    !brandConfig.schema
+                      .filter((f) => f.type !== 'click')
+                      .every((f) => credentials[f.name]?.trim())
+                  }
                   className="flex-1"
                 >
                   Connect

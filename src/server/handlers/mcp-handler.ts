@@ -14,6 +14,7 @@ const tools: Record<string, string[]> = {
   ],
   wayfair: ['wayfair_get_order_history'],
   goodreads: ['goodreads_get_book_list'],
+  gofood: ['gofood_get_purchase_history'],
 };
 
 const McpResponse = z.object({

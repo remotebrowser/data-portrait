@@ -129,11 +129,29 @@ export function PurchaseDataDisplay({
                               className="flex items-start gap-2 py-2 px-1 bg-gray-50 rounded"
                             >
                               <div className="flex-shrink-0 w-8 h-8 bg-white rounded overflow-hidden border">
-                                <img
-                                  src={order.image_urls[index]}
-                                  alt={productName}
-                                  className="w-full h-full object-contain"
-                                />
+                                {order.image_urls?.[index] ? (
+                                  <img
+                                    src={order.image_urls[index]}
+                                    alt={productName}
+                                    className="w-full h-full object-contain"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                    <svg
+                                      className="w-5 h-5"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={1.5}
+                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                                      />
+                                    </svg>
+                                  </div>
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">

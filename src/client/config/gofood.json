@@ -11,11 +11,6 @@
       "prompt": "Phone"
     },
     {
-      "name": "otp",
-      "type": "tel",
-      "prompt": "OTP"
-    },
-    {
       "name": "Submit",
       "type": "click",
       "prompt": "Sign In",

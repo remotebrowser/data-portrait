@@ -1,4 +1,5 @@
 import { Portkey } from 'portkey-ai';
+import { GoogleGenAI, Modality } from '@google/genai';
 import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
 import { gcsService } from './gcs-service.js';
@@ -8,7 +9,11 @@ const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,
 });
 
+const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
+
 const IMAGE_GENERATION_TIMEOUT = 60000;
+
+type ImageProvider = 'portkey' | 'google-genai';
 
 interface ImageData {
   url?: string;
@@ -21,6 +26,18 @@ interface ImageData {
   provider?: string;
 }
 
+function getImageProvider(): ImageProvider {
+  if (settings.PORTKEY_API_KEY) {
+    return 'portkey';
+  }
+  if (settings.GEMINI_API_KEY) {
+    return 'google-genai';
+  }
+  throw new Error(
+    'No image generation provider configured. Please set either PORTKEY_API_KEY or GEMINI_API_KEY in environment variables.'
+  );
+}
+
 class ImageService {
   private useGCS(): boolean {
     return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
@@ -29,15 +46,22 @@ class ImageService {
   async generate(prompt: string): Promise<ImageData> {
     console.log(`🎨 Final prompt: "${prompt}"`);
 
-    const imageData = await this.generateWithGemini(prompt);
+    const provider = getImageProvider();
+    console.log(`🔧 Using image provider: ${provider}`);
+
+    const imageData =
+      provider === 'portkey'
+        ? await this.generateWithPortkey(prompt)
+        : await this.generateWithGoogleGenAI(prompt);
+
     return {
       ...imageData,
       model: 'gemini-3-pro-image-preview',
-      provider: 'portkey',
+      provider,
     };
   }
 
-  private async generateWithGemini(prompt: string): Promise<ImageData> {
+  private async generateWithPortkey(prompt: string): Promise<ImageData> {
     if (!settings.PORTKEY_API_KEY) {
       throw new Error('PORTKEY_API_KEY not configured');
     }
@@ -81,6 +105,52 @@ class ImageService {
       width: 1024,
       height: 1024,
     };
+  }
+
+  private async generateWithGoogleGenAI(prompt: string): Promise<ImageData> {
+    if (!settings.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
+    }
+
+    const model = 'gemini-3-pro-image-preview';
+    const geminiGenerationPromise = genAI.models.generateContent({
+      model,
+      contents: prompt,
+      config: {
+        responseModalities: [Modality.TEXT, Modality.IMAGE],
+      },
+    });
+
+    const response = (await Promise.race([
+      geminiGenerationPromise,
+      this.createTimeoutPromise(IMAGE_GENERATION_TIMEOUT),
+    ])) as Awaited<typeof geminiGenerationPromise>;
+
+    if (!response.candidates?.length) {
+      throw new Error('No candidates found in Gemini response');
+    }
+
+    const candidate = response.candidates[0];
+    if (!candidate.content?.parts) {
+      throw new Error('No content parts found in Gemini response');
+    }
+
+    for (const part of candidate.content.parts) {
+      if (part.inlineData?.data) {
+        const fileData = await this.saveImageFile(
+          part.inlineData.data,
+          'gemini'
+        );
+        return {
+          ...fileData,
+          b64_json: part.inlineData.data,
+          width: 1024,
+          height: 1024,
+        };
+      }
+    }
+
+    throw new Error('No image data found in Gemini response');
   }
 
   private createTimeoutPromise(timeoutMs: number): Promise<never> {

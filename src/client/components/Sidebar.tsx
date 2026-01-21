@@ -22,6 +22,7 @@ type SidebarProps = {
   onImageStyleChange: (styleIds: string[]) => void;
   onGeneratePortrait: () => void;
   onImageChange?: (file: File | null) => void;
+  enableImageUpload?: boolean;
 };
 
 export function Sidebar({
@@ -40,6 +41,7 @@ export function Sidebar({
   onImageStyleChange,
   onGeneratePortrait,
   onImageChange,
+  enableImageUpload = false,
 }: SidebarProps) {
   return (
     <>
@@ -76,7 +78,7 @@ export function Sidebar({
 
         {/* Sidebar Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {onImageChange && (
+          {onImageChange && enableImageUpload && (
             <ImageUpload
               onImageChange={onImageChange}
               disabled={isGenerating}

@@ -68,6 +68,9 @@ router.get('/config', (req, res) => {
     sentry: {
       dsn: settings.SENTRY_DSN || null,
     },
+    features: {
+      enableImageUpload: settings.ENABLE_IMAGE_UPLOAD,
+    },
   });
 });
 

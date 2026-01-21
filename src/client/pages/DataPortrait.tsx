@@ -77,6 +77,7 @@ export function DataPortrait() {
   ]);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [enableImageUpload, setEnableImageUpload] = useState(false);
 
   const [generatedImages, setGeneratedImages] = useState<ImageData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -85,6 +86,18 @@ export function DataPortrait() {
   >(null);
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
+
+  // Load feature flags
+  useEffect(() => {
+    fetch('/getgather/config')
+      .then((res) => res.json())
+      .then((data) => {
+        setEnableImageUpload(data.features?.enableImageUpload || false);
+      })
+      .catch(() => {
+        console.warn('Failed to load feature flags');
+      });
+  }, []);
 
   // Track page view on component mount
   useEffect(() => {
@@ -320,6 +333,7 @@ export function DataPortrait() {
         onImageStyleChange={setSelectedImageStyle}
         onGeneratePortrait={generatePortrait}
         onImageChange={setUploadedImage}
+        enableImageUpload={enableImageUpload}
       />
 
       {/* Sign In Dialog */}

@@ -6,20 +6,20 @@
   "is_dpage": true,
   "schema": [
     {
-      "name": "email",
-      "type": "email",
-      "prompt": "Email"
+      "name": "phone",
+      "type": "tel",
+      "prompt": "Phone"
     },
     {
-      "name": "password",
-      "type": "password",
-      "prompt": "Password"
+      "name": "otp",
+      "type": "tel",
+      "prompt": "OTP"
     },
     {
-      "name": "login,remember_me,submit",
+      "name": "Submit",
       "type": "click",
       "prompt": "Sign In",
-      "dependsOnFields": "email,password"
+      "dependsOnFields": "phone,otp"
     }
   ],
   "dataTransform": {

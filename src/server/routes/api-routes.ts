@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import multer from 'multer';
 import { handlePortraitGeneration } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
@@ -11,6 +12,20 @@ import { handleAnalytics } from '../handlers/analytics-handler.js';
 import { settings } from '../config.js';
 
 const router = Router();
+
+const upload = multer({
+  dest: 'uploads/',
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+  },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+});
 
 // Get dpage url
 router.get('/dpage-url/:brandId', handleDpageUrl);
@@ -29,8 +44,12 @@ router.get(
 // MCP poll endpoint
 router.get('/mcp-poll/:brandId/:linkId', handleMcpPoll);
 
-// Portrait generation endpoint
-router.post('/generate-portrait', handlePortraitGeneration);
+// Portrait generation endpoint (supports both with and without image upload)
+router.post(
+  '/generate-portrait',
+  upload.single('image'),
+  handlePortraitGeneration
+);
 
 router.post('/log', (req, res) => {
   // The client sends an object: { brand: string, orders: PurchaseHistory[] }
@@ -44,7 +63,7 @@ router.post('/log', (req, res) => {
 
 router.post('/analytics', handleAnalytics);
 
-router.get('/config', (req, res) => {
+router.get('/config', (_req, res) => {
   res.json({
     sentry: {
       dsn: settings.SENTRY_DSN || null,

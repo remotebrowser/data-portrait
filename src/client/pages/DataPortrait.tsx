@@ -75,6 +75,7 @@ export function DataPortrait() {
     'realistic',
   ]);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
 
   const [generatedImages, setGeneratedImages] = useState<ImageData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -83,6 +84,10 @@ export function DataPortrait() {
   >(null);
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
+
+  const enableImageUpload =
+    new URLSearchParams(window.location.search).get('enableImageUpload') ===
+    'true';
 
   // Track page view on component mount
   useEffect(() => {
@@ -155,6 +160,7 @@ export function DataPortrait() {
       selected_gender: selectedGender,
       selected_traits: selectedTraits,
       selected_image_style: selectedImageStyle,
+      has_uploaded_image: !!uploadedImage,
     });
 
     setIsGenerating(true);
@@ -162,16 +168,24 @@ export function DataPortrait() {
     try {
       const response = await fetch('/getgather/generate-portrait', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          imageStyle: selectedImageStyle,
-          gender: selectedGender,
-          traits: selectedTraits,
-          model: 'gemini',
-          purchaseData: orders,
-        }),
+        headers: uploadedImage ? {} : { 'Content-Type': 'application/json' },
+        body: uploadedImage
+          ? (() => {
+              const formData = new FormData();
+              formData.append('image', uploadedImage);
+              formData.append('imageStyle', JSON.stringify(selectedImageStyle));
+              formData.append('gender', selectedGender);
+              formData.append('traits', selectedTraits.join(','));
+              formData.append('purchaseData', JSON.stringify(orders));
+              return formData;
+            })()
+          : JSON.stringify({
+              imageStyle: selectedImageStyle,
+              gender: selectedGender,
+              traits: selectedTraits,
+              model: 'gemini',
+              purchaseData: orders,
+            }),
       });
 
       if (!response.ok) {
@@ -201,6 +215,7 @@ export function DataPortrait() {
           provider: data.provider,
           image_style: selectedImageStyle,
           orders_count: orders.length,
+          used_uploaded_image: !!uploadedImage,
         });
 
         // Close sidebar on mobile after successful generation
@@ -215,6 +230,7 @@ export function DataPortrait() {
         error: error instanceof Error ? error.message : 'Unknown error',
         orders_count: orders.length,
         selected_image_style: selectedImageStyle,
+        used_uploaded_image: !!uploadedImage,
       });
       alert('Failed to generate portrait. Please try again.');
     } finally {
@@ -311,6 +327,8 @@ export function DataPortrait() {
         onTraitsChange={setSelectedTraits}
         onImageStyleChange={setSelectedImageStyle}
         onGeneratePortrait={generatePortrait}
+        onImageChange={setUploadedImage}
+        enableImageUpload={enableImageUpload}
       />
 
       {/* Sign In Dialog */}

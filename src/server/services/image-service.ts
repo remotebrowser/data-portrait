@@ -4,6 +4,9 @@ import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
 import { gcsService } from './gcs-service.js';
 import { localStorageService } from './local-storage-service.js';
+import { readFile } from 'fs/promises';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 
 const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,
@@ -43,16 +46,19 @@ class ImageService {
     return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
   }
 
-  async generate(prompt: string): Promise<ImageData> {
+  async generate(prompt: string, imagePath?: string): Promise<ImageData> {
     console.log(`🎨 Final prompt: "${prompt}"`);
+    if (imagePath) {
+      console.log(`🖼️ Using reference image: ${imagePath}`);
+    }
 
     const provider = getImageProvider();
     console.log(`🔧 Using image provider: ${provider}`);
 
     const imageData =
       provider === 'portkey'
-        ? await this.generateWithPortkey(prompt)
-        : await this.generateWithGoogleGenAI(prompt);
+        ? await this.generateWithPortkey(prompt, imagePath)
+        : await this.generateWithGoogleGenAI(prompt, imagePath);
 
     return {
       ...imageData,
@@ -61,9 +67,32 @@ class ImageService {
     };
   }
 
-  private async generateWithPortkey(prompt: string): Promise<ImageData> {
+  private async generateWithPortkey(
+    prompt: string,
+    imagePath?: string
+  ): Promise<ImageData> {
     if (!settings.PORTKEY_API_KEY) {
       throw new Error('PORTKEY_API_KEY not configured');
+    }
+
+    const content: Array<
+      | { type: string; text: string }
+      | { type: string; image_url: { url: string } }
+    > = [
+      {
+        type: 'text',
+        text: prompt,
+      },
+    ];
+
+    if (imagePath) {
+      const imageBase64 = await this.readImageAsBase64(imagePath);
+      content.push({
+        type: 'image_url',
+        image_url: {
+          url: `data:image/jpeg;base64,${imageBase64}`,
+        },
+      });
     }
 
     const response = await Promise.race([
@@ -75,12 +104,7 @@ class ImageService {
         messages: [
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: prompt,
-              },
-            ],
+            content,
           },
         ],
       }),
@@ -107,15 +131,41 @@ class ImageService {
     };
   }
 
-  private async generateWithGoogleGenAI(prompt: string): Promise<ImageData> {
+  private async generateWithGoogleGenAI(
+    prompt: string,
+    imagePath?: string
+  ): Promise<ImageData> {
     if (!settings.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY not configured');
     }
 
     const model = 'gemini-3-pro-image-preview';
+    let contents: {
+      role: string;
+      parts: Array<
+        { text: string } | { inlineData: { mimeType: string; data: string } }
+      >;
+    } = { role: 'user', parts: [{ text: prompt }] };
+
+    if (imagePath) {
+      const imageBase64 = await this.readImageAsBase64(imagePath);
+      contents = {
+        role: 'user',
+        parts: [
+          {
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: imageBase64,
+            },
+          },
+          { text: prompt },
+        ],
+      };
+    }
+
     const geminiGenerationPromise = genAI.models.generateContent({
       model,
-      contents: prompt,
+      contents,
       config: {
         responseModalities: [Modality.TEXT, Modality.IMAGE],
       },
@@ -174,6 +224,18 @@ class ImageService {
       : await localStorageService.uploadImage(base64Data, filename);
 
     return result;
+  }
+
+  private async readImageAsBase64(imagePath: string): Promise<string> {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+
+    const absolutePath = imagePath.startsWith('/')
+      ? imagePath
+      : join(__dirname, '../../..', imagePath);
+
+    const imageBuffer = await readFile(absolutePath);
+    return imageBuffer.toString('base64');
   }
 }
 

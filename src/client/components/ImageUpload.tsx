@@ -6,6 +6,9 @@ type ImageUploadProps = {
   disabled?: boolean;
 };
 
+// 10 MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 export function ImageUpload({
   onImageChange,
   disabled = false,
@@ -20,7 +23,7 @@ export function ImageUpload({
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > MAX_FILE_SIZE) {
       alert('Image must be less than 10MB');
       return;
     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Upload } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay.js';
@@ -7,7 +7,6 @@ import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
 import { SignInDialog } from '../components/SignInDialog.js';
 import { Sidebar } from '../components/Sidebar.js';
-import { ImageUpload } from '../components/ImageUpload.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
 import officedepot from '../config/officedepot.json' with { type: 'json' };
@@ -77,7 +76,6 @@ export function DataPortrait() {
   ]);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-  const [enableImageUpload, setEnableImageUpload] = useState(false);
 
   const [generatedImages, setGeneratedImages] = useState<ImageData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -87,17 +85,9 @@ export function DataPortrait() {
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
 
-  // Load feature flags
-  useEffect(() => {
-    fetch('/getgather/config')
-      .then((res) => res.json())
-      .then((data) => {
-        setEnableImageUpload(data.features?.enableImageUpload || false);
-      })
-      .catch(() => {
-        console.warn('Failed to load feature flags');
-      });
-  }, []);
+  const enableImageUpload =
+    new URLSearchParams(window.location.search).get('enableImageUpload') ===
+    'true';
 
   // Track page view on component mount
   useEffect(() => {

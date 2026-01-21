@@ -63,13 +63,10 @@ router.post('/log', (req, res) => {
 
 router.post('/analytics', handleAnalytics);
 
-router.get('/config', (req, res) => {
+router.get('/config', (_req, res) => {
   res.json({
     sentry: {
       dsn: settings.SENTRY_DSN || null,
-    },
-    features: {
-      enableImageUpload: settings.ENABLE_IMAGE_UPLOAD,
     },
   });
 });

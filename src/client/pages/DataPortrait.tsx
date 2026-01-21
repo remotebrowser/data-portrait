@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay.js';
@@ -7,6 +7,7 @@ import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
 import { SignInDialog } from '../components/SignInDialog.js';
 import { Sidebar } from '../components/Sidebar.js';
+import { ImageUpload } from '../components/ImageUpload.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
 import officedepot from '../config/officedepot.json' with { type: 'json' };
@@ -75,6 +76,7 @@ export function DataPortrait() {
     'realistic',
   ]);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
+  const [uploadedImage, setUploadedImage] = useState<File | null>(null);
 
   const [generatedImages, setGeneratedImages] = useState<ImageData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -155,6 +157,7 @@ export function DataPortrait() {
       selected_gender: selectedGender,
       selected_traits: selectedTraits,
       selected_image_style: selectedImageStyle,
+      has_uploaded_image: !!uploadedImage,
     });
 
     setIsGenerating(true);
@@ -162,16 +165,24 @@ export function DataPortrait() {
     try {
       const response = await fetch('/getgather/generate-portrait', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          imageStyle: selectedImageStyle,
-          gender: selectedGender,
-          traits: selectedTraits,
-          model: 'gemini',
-          purchaseData: orders,
-        }),
+        headers: uploadedImage ? {} : { 'Content-Type': 'application/json' },
+        body: uploadedImage
+          ? (() => {
+              const formData = new FormData();
+              formData.append('image', uploadedImage);
+              formData.append('imageStyle', JSON.stringify(selectedImageStyle));
+              formData.append('gender', selectedGender);
+              formData.append('traits', selectedTraits.join(','));
+              formData.append('purchaseData', JSON.stringify(orders));
+              return formData;
+            })()
+          : JSON.stringify({
+              imageStyle: selectedImageStyle,
+              gender: selectedGender,
+              traits: selectedTraits,
+              model: 'gemini',
+              purchaseData: orders,
+            }),
       });
 
       if (!response.ok) {
@@ -181,9 +192,8 @@ export function DataPortrait() {
       const data = await response.json();
 
       if (data.success && data.image) {
-        // Create image object with metadata
         const imageData = {
-          url: `${data.image.url}?t=${Date.now()}`, // Add timestamp to prevent caching
+          url: `${data.image.url}?t=${Date.now()}`,
           model: data.model || 'gemini',
           provider: data.provider || 'unknown',
           timestamp: data.timestamp || new Date().toISOString(),
@@ -191,19 +201,16 @@ export function DataPortrait() {
           style: selectedImageStyle,
         };
 
-        setGeneratedImages((prev) => [
-          imageData,
-          ...prev.slice(0, 11), // Keep only the latest 12 images
-        ]);
+        setGeneratedImages((prev) => [imageData, ...prev.slice(0, 11)]);
 
         trackEvent('portrait_generation_successful', {
           model: data.model,
           provider: data.provider,
           image_style: selectedImageStyle,
           orders_count: orders.length,
+          used_uploaded_image: !!uploadedImage,
         });
 
-        // Close sidebar on mobile after successful generation
         if (window.innerWidth < 1024) {
           setIsSidebarOpen(false);
         }
@@ -215,6 +222,7 @@ export function DataPortrait() {
         error: error instanceof Error ? error.message : 'Unknown error',
         orders_count: orders.length,
         selected_image_style: selectedImageStyle,
+        used_uploaded_image: !!uploadedImage,
       });
       alert('Failed to generate portrait. Please try again.');
     } finally {
@@ -311,6 +319,7 @@ export function DataPortrait() {
         onTraitsChange={setSelectedTraits}
         onImageStyleChange={setSelectedImageStyle}
         onGeneratePortrait={generatePortrait}
+        onImageChange={setUploadedImage}
       />
 
       {/* Sign In Dialog */}

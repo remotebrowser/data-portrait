@@ -44,12 +44,9 @@ router.get(
 // MCP poll endpoint
 router.get('/mcp-poll/:brandId/:linkId', handleMcpPoll);
 
-// Portrait generation endpoint
-router.post('/generate-portrait', handlePortraitGeneration);
-
-// Portrait generation with image upload endpoint
+// Portrait generation endpoint (supports both with and without image upload)
 router.post(
-  '/generate-portrait-with-image',
+  '/generate-portrait',
   upload.single('image'),
   handlePortraitGeneration
 );

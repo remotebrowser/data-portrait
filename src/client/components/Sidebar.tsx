@@ -2,6 +2,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { DataConnectors } from './DataConnectors.js';
 import { PersonaSelector } from './PersonaSelector.js';
+import { ImageUpload } from './ImageUpload.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 
@@ -20,6 +21,7 @@ type SidebarProps = {
   onTraitsChange: (traits: string[]) => void;
   onImageStyleChange: (styleIds: string[]) => void;
   onGeneratePortrait: () => void;
+  onImageChange?: (file: File | null) => void;
 };
 
 export function Sidebar({
@@ -37,6 +39,7 @@ export function Sidebar({
   onTraitsChange,
   onImageStyleChange,
   onGeneratePortrait,
+  onImageChange,
 }: SidebarProps) {
   return (
     <>
@@ -73,6 +76,13 @@ export function Sidebar({
 
         {/* Sidebar Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {onImageChange && (
+            <ImageUpload
+              onImageChange={onImageChange}
+              disabled={isGenerating}
+            />
+          )}
+
           <DataConnectors
             brands={brands}
             connectedBrands={connectedBrands}

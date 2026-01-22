@@ -14,7 +14,7 @@ const portkey = new Portkey({
 
 const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
 
-const IMAGE_GENERATION_TIMEOUT = 60000;
+const IMAGE_GENERATION_TIMEOUT = 120000;
 
 type ImageProvider = 'portkey' | 'google-genai';
 

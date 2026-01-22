@@ -11,6 +11,13 @@ export const handlePortraitGeneration = async (
 
   try {
     const { imageStyle, gender, traits, purchaseData } = req.body;
+
+    const parsedImageStyle = Array.isArray(imageStyle)
+      ? imageStyle
+      : typeof imageStyle === 'string'
+        ? imageStyle.split(',').map((s) => s.trim())
+        : [];
+
     const uploadedFile = req.file;
 
     if (uploadedFile) {
@@ -37,7 +44,7 @@ export const handlePortraitGeneration = async (
         : [];
 
     const prompt = await promptService.buildPrompt({
-      imageStyle,
+      imageStyle: parsedImageStyle,
       gender,
       traits: parsedTraits,
       purchaseData: parsedPurchaseData,

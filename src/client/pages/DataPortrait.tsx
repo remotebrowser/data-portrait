@@ -176,7 +176,7 @@ export function DataPortrait() {
           ? (() => {
               const formData = new FormData();
               formData.append('image', uploadedImage);
-              formData.append('imageStyle', JSON.stringify(selectedImageStyle));
+              formData.append('imageStyle', selectedImageStyle.join(','));
               formData.append('gender', selectedGender);
               formData.append('traits', selectedTraits.join(','));
               formData.append('purchaseData', JSON.stringify(orders));

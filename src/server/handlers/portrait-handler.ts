@@ -2,26 +2,46 @@ import { Request, Response } from 'express';
 import { promptService } from '../services/prompt-service.js';
 import { imageService } from '../services/image-service.js';
 import { unlink } from 'fs/promises';
+import sharp from 'sharp';
+import { join } from 'path';
 
 export const handlePortraitGeneration = async (
   req: Request,
   res: Response
 ): Promise<void> => {
   let uploadedFilePath: string | undefined;
+  let originalFilePath: string | undefined;
 
   try {
     const { imageStyle, gender, traits, purchaseData } = req.body;
     const uploadedFile = req.file;
 
     if (uploadedFile) {
-      uploadedFilePath = uploadedFile.path;
+      originalFilePath = uploadedFile.path;
 
       console.log('🖼️ Uploaded image:', {
         originalName: uploadedFile.originalname,
         size: uploadedFile.size,
         mimetype: uploadedFile.mimetype,
-        path: uploadedFilePath,
+        path: originalFilePath,
       });
+
+      // Resize image to reduce base64 size
+      const resizedPath = join(
+        'uploads',
+        `resized-${Date.now()}-${uploadedFile.originalname}`
+      );
+      await sharp(originalFilePath)
+        .resize(1024, 1024, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 85 })
+        .toFile(resizedPath);
+
+      uploadedFilePath = resizedPath;
+
+      console.log('🖼️ Resized image:', { path: uploadedFilePath });
     }
 
     const parsedTraits = Array.isArray(traits)
@@ -68,12 +88,14 @@ export const handlePortraitGeneration = async (
       timestamp: new Date().toISOString(),
     });
   } finally {
-    if (uploadedFilePath) {
+    // Clean up files
+    const filesToClean = [uploadedFilePath, originalFilePath].filter(Boolean);
+    for (const filePath of filesToClean) {
       try {
-        await unlink(uploadedFilePath);
-        console.log('🗑️ Cleaned up uploaded file:', uploadedFilePath);
+        await unlink(filePath!);
+        console.log('🗑️ Cleaned up file:', filePath);
       } catch (error) {
-        console.warn('⚠️ Failed to cleanup uploaded file:', error);
+        console.warn('⚠️ Failed to cleanup file:', filePath, error);
       }
     }
   }

@@ -106,7 +106,7 @@ export function Sidebar({
         <div className="flex-shrink-0 p-6 border-t border-gray-100">
           <Button
             onClick={onGeneratePortrait}
-            disabled={isGenerating}
+            disabled={isGenerating || connectedBrands.length === 0}
             size="lg"
             className="w-full"
           >

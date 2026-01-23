@@ -2,12 +2,15 @@ import { Request, Response } from 'express';
 import { promptService } from '../services/prompt-service.js';
 import { imageService } from '../services/image-service.js';
 import { unlink } from 'fs/promises';
+import sharp from 'sharp';
+import { join } from 'path';
 
 export const handlePortraitGeneration = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  let uploadedFilePath: string | undefined;
+  // to track file that need to be delete after process done
+  const filesToClean: string[] = [];
 
   try {
     const { imageStyle, gender, traits, purchaseData } = req.body;
@@ -19,16 +22,32 @@ export const handlePortraitGeneration = async (
         : [];
 
     const uploadedFile = req.file;
+    let resizedPath: string | undefined;
 
     if (uploadedFile) {
-      uploadedFilePath = uploadedFile.path;
+      filesToClean.push(uploadedFile.path);
 
       console.log('🖼️ Uploaded image:', {
         originalName: uploadedFile.originalname,
         size: uploadedFile.size,
         mimetype: uploadedFile.mimetype,
-        path: uploadedFilePath,
+        path: uploadedFile.path,
       });
+
+      // Resize image to reduce base64 size
+      resizedPath = join(
+        'uploads',
+        `resized-${Date.now()}-${uploadedFile.originalname}`
+      );
+      await sharp(uploadedFile.path)
+        .resize(1024, 1024, {
+          fit: 'inside',
+          withoutEnlargement: true,
+        })
+        .jpeg({ quality: 85 })
+        .toFile(resizedPath);
+
+      filesToClean.push(resizedPath);
     }
 
     const parsedTraits = Array.isArray(traits)
@@ -50,7 +69,7 @@ export const handlePortraitGeneration = async (
       purchaseData: parsedPurchaseData,
     });
 
-    const imageData = await imageService.generate(prompt, uploadedFilePath);
+    const imageData = await imageService.generate(prompt, resizedPath);
 
     res.json({
       success: true,
@@ -75,12 +94,13 @@ export const handlePortraitGeneration = async (
       timestamp: new Date().toISOString(),
     });
   } finally {
-    if (uploadedFilePath) {
+    // Clean up files
+    for (const filePath of filesToClean) {
       try {
-        await unlink(uploadedFilePath);
-        console.log('🗑️ Cleaned up uploaded file:', uploadedFilePath);
+        await unlink(filePath);
+        console.log('🗑️ Cleaned up file:', filePath);
       } catch (error) {
-        console.warn('⚠️ Failed to cleanup uploaded file:', error);
+        console.warn('⚠️ Failed to cleanup file:', filePath, error);
       }
     }
   }

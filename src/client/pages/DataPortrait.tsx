@@ -18,6 +18,7 @@ import type { ImageData } from '../components/GeneratedImagesGrid.js';
 import { filterUniqueOrders } from '../utils/index.js';
 import { log } from '../utils/log.js';
 import { useAnalytics } from '../hooks/useAnalytics.js';
+import { useAppConfig } from '../hooks/useAppConfig.js';
 
 const amazonConfig = amazon as BrandConfig;
 const wayfairConfig = wayfair as BrandConfig;
@@ -68,6 +69,7 @@ const sampleOrders: PurchaseHistory[] = [
 
 export function DataPortrait() {
   const { trackEvent } = useAnalytics();
+  const { config: appConfig } = useAppConfig();
 
   const [orders, setOrders] = useState<PurchaseHistory[]>([]);
   const [connectedBrands, setConnectedBrands] = useState<string[]>([]);
@@ -87,10 +89,6 @@ export function DataPortrait() {
   >(null);
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
-
-  const enableImageUpload =
-    new URLSearchParams(window.location.search).get('enableImageUpload') ===
-    'true';
 
   // Track page view on component mount
   useEffect(() => {
@@ -331,7 +329,7 @@ export function DataPortrait() {
         onImageStyleChange={setSelectedImageStyle}
         onGeneratePortrait={generatePortrait}
         onImageChange={setUploadedImage}
-        enableImageUpload={enableImageUpload}
+        enableImageUpload={appConfig.allowFaceUpload}
       />
 
       {/* Sign In Dialog */}

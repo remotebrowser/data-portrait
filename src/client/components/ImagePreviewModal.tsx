@@ -1,5 +1,6 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
+import { SocialShareButtons } from './SocialShareButtons.js';
 
 type ImagePreviewModalProps = {
   imageUrl: string | null;
@@ -21,13 +22,19 @@ export function ImagePreviewModal({
   imageUrl,
   onClose,
 }: ImagePreviewModalProps) {
-  const handleShare = async () => {
-    if (!imageUrl) return;
+  const getShareUrl = (): string | null => {
+    if (!imageUrl) return null;
 
     const filename = extractFilenameFromUrl(imageUrl);
-    if (!filename) return;
+    if (!filename) return null;
 
-    const shareUrl = `${window.location.origin}/shared/${filename}`;
+    return `${window.location.origin}/shared/${filename}`;
+  };
+
+  const shareUrl = getShareUrl();
+
+  const handleShare = async () => {
+    if (!shareUrl) return;
 
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -71,56 +78,62 @@ export function ImagePreviewModal({
           onClick={(e) => e.stopPropagation()}
         />
 
-        {/* Share button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleShare();
-          }}
-          className="absolute bottom-4 right-20 bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
-          title="Copy share link"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-            />
-          </svg>
-        </Button>
+        {/* Social share buttons */}
+        <div className="absolute bottom-4 right-4 flex gap-2 items-center">
+          {shareUrl && <SocialShareButtons url={shareUrl} />}
 
-        {/* Download button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDownload();
-          }}
-          className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
-        >
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+          {/* Copy share link button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShare();
+            }}
+            className="bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
+            title="Copy share link"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-        </Button>
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
+            </svg>
+          </Button>
+
+          {/* Download button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload();
+            }}
+            className="bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
+            title="Download image"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </Button>
+        </div>
 
         {/* Image info */}
         <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded-lg text-sm">

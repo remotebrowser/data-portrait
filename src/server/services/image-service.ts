@@ -211,25 +211,31 @@ class ImageService {
     throw new Error('No image data found in Gemini response');
   }
 
-  async blurBackground(imageBase64: string): Promise<string> {
+  async blurBackground(imageBase64: string): Promise<ImageData> {
     if (!settings.DEEPINFRA_API_KEY) {
       throw new Error('DEEPINFRA_API_KEY not configured');
     }
 
     console.log('🔘 Applying background blur via DeepInfra Bria API...');
 
+    const imageBuffer = Buffer.from(imageBase64, 'base64');
+    const formData = new FormData();
+    formData.append(
+      'image',
+      new Blob([imageBuffer], { type: 'image/png' }),
+      'image.png'
+    );
+    formData.append('prompt', 'blur background');
+    formData.append('model', 'Bria/blur_background');
+    formData.append('n', '1');
+
     const response = await Promise.race([
       fetch('https://api.deepinfra.com/v1/openai/images/edits', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${settings.DEEPINFRA_API_KEY}`,
         },
-        body: JSON.stringify({
-          model: 'Bria/blur_background',
-          image: imageBase64,
-          n: 1,
-        }),
+        body: formData,
       }),
       this.createTimeoutPromise(BLUR_BACKGROUND_TIMEOUT),
     ]);
@@ -247,8 +253,15 @@ class ImageService {
       throw new Error('No blurred image data returned from DeepInfra API');
     }
 
+    const blurredBase64 = data.data[0].b64_json;
+    const fileData = await this.saveImageFile(blurredBase64, 'bria-blur');
     console.log('✅ Background blur applied successfully');
-    return data.data[0].b64_json;
+    return {
+      ...fileData,
+      b64_json: blurredBase64,
+      width: 1024,
+      height: 1024,
+    };
   }
 
   private createTimeoutPromise(timeoutMs: number): Promise<never> {

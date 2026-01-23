@@ -39,10 +39,7 @@ export function ImagePreviewModal({
 
   const handleDownload = () => {
     if (!imageUrl) return;
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = `data-portrait-${Date.now()}.png`;
-    link.click();
+    window.open(imageUrl, '_blank');
   };
 
   if (!imageUrl) return null;

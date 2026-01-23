@@ -218,25 +218,21 @@ class ImageService {
 
     console.log('🔘 Applying background blur via DeepInfra Bria API...');
 
-    const imageBuffer = Buffer.from(imageBase64, 'base64');
-    const formData = new FormData();
-    formData.append(
-      'image',
-      new Blob([imageBuffer], { type: 'image/png' }),
-      'image.png'
-    );
-    formData.append('prompt', 'blur background');
-    formData.append('model', 'Bria/blur_background');
-    formData.append('n', '1');
-
     const response = await Promise.race([
-      fetch('https://api.deepinfra.com/v1/openai/images/edits', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${settings.DEEPINFRA_API_KEY}`,
-        },
-        body: formData,
-      }),
+      fetch(
+        'https://api.deepinfra.com/v1/inference/Bria/blur_background?version=0ObxGWB8',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${settings.DEEPINFRA_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image: `data:image/png;base64,${imageBase64}`,
+            scale: 5,
+          }),
+        }
+      ),
       this.createTimeoutPromise(BLUR_BACKGROUND_TIMEOUT),
     ]);
 
@@ -247,13 +243,16 @@ class ImageService {
       );
     }
 
-    const data = (await response.json()) as DeepInfraResponse;
+    const data = (await response.json()) as { images: string[] };
 
-    if (!data.data || !data.data[0]?.b64_json) {
-      throw new Error('No blurred image data returned from DeepInfra API');
+    if (!data.images || !data.images[0]) {
+      throw new Error('No blurred image URL returned from DeepInfra API');
     }
 
-    const blurredBase64 = data.data[0].b64_json;
+    const imageUrl = data.images[0];
+    const imageResponse = await fetch(imageUrl);
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const blurredBase64 = Buffer.from(imageBuffer).toString('base64');
     const fileData = await this.saveImageFile(blurredBase64, 'bria-blur');
     console.log('✅ Background blur applied successfully');
     return {

@@ -55,15 +55,19 @@ const sampleOrders: PurchaseHistory[] = [
   },
   {
     order_id: 'demo-003',
-    brand: 'Office Depot',
+    brand: 'Goodreads',
     order_date: new Date('2024-01-08'),
-    order_total: '$34.99',
+    order_total: '$0.00',
     product_names: [
-      'Notebook Set (3-pack)',
-      'Blue Gel Pens (12-pack)',
-      'Sticky Notes Variety Pack',
+      'The Midnight Library',
+      'Atomic Habits',
+      'Project Hail Mary',
     ],
-    image_urls: ['/notebook.jpg', '/pen.jpg', '/sticky-notes.avif'],
+    image_urls: [
+      '/midnight-library.jpg',
+      '/atomic-habits.jpg',
+      '/project-hail-mary.jpg',
+    ],
   },
 ];
 
@@ -141,7 +145,7 @@ export function DataPortrait() {
 
   const loadSampleData = () => {
     setOrders(sampleOrders);
-    setConnectedBrands(['Amazon', 'Office Depot']);
+    setConnectedBrands(['Amazon', 'Goodreads']);
   };
 
   const clearData = () => {

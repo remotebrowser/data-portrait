@@ -60,6 +60,10 @@ GEMINI_API_KEY=your_gemini_api_key
 # If not configured, images are stored locally in the public/ directory
 GCS_BUCKET_NAME=data-portrait-imagegen
 GCS_PROJECT_ID=your_gcp_project_id
+
+# Feature Flags
+# Set to 'true' to enable face upload feature in the UI
+ALLOW_FACE_UPLOAD=false
 ```
 
 ## Development

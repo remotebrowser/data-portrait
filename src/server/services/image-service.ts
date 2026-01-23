@@ -15,6 +15,7 @@ const portkey = new Portkey({
 const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
 
 const IMAGE_GENERATION_TIMEOUT = 120000;
+const BLUR_BACKGROUND_TIMEOUT = 30000;
 
 type ImageProvider = 'portkey' | 'google-genai';
 
@@ -27,6 +28,13 @@ interface ImageData {
   height?: number;
   model?: string;
   provider?: string;
+}
+
+interface DeepInfraResponse {
+  created: number;
+  data: Array<{
+    b64_json: string;
+  }>;
 }
 
 function getImageProvider(): ImageProvider {
@@ -201,6 +209,46 @@ class ImageService {
     }
 
     throw new Error('No image data found in Gemini response');
+  }
+
+  async blurBackground(imageBase64: string): Promise<string> {
+    if (!settings.DEEPINFRA_API_KEY) {
+      throw new Error('DEEPINFRA_API_KEY not configured');
+    }
+
+    console.log('🔘 Applying background blur via DeepInfra Bria API...');
+
+    const response = await Promise.race([
+      fetch('https://api.deepinfra.com/v1/openai/images/edits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${settings.DEEPINFRA_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'Bria/blur_background',
+          image: imageBase64,
+          n: 1,
+        }),
+      }),
+      this.createTimeoutPromise(BLUR_BACKGROUND_TIMEOUT),
+    ]);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `DeepInfra API error: ${response.status} ${response.statusText} - ${errorText}`
+      );
+    }
+
+    const data = (await response.json()) as DeepInfraResponse;
+
+    if (!data.data || !data.data[0]?.b64_json) {
+      throw new Error('No blurred image data returned from DeepInfra API');
+    }
+
+    console.log('✅ Background blur applied successfully');
+    return data.data[0].b64_json;
   }
 
   private createTimeoutPromise(timeoutMs: number): Promise<never> {

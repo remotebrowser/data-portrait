@@ -52,6 +52,30 @@ export const handlePortraitGeneration = async (
 
     const imageData = await imageService.generate(prompt, uploadedFilePath);
 
+    const hasBackgroundBlur = parsedTraits.includes('background-blur');
+
+    if (hasBackgroundBlur && imageData.b64_json) {
+      console.log('🔘 Background blur trait detected - applying blur...');
+      try {
+        const blurredBase64 = await imageService.blurBackground(
+          imageData.b64_json
+        );
+        const fileData = await imageService.saveImageFile(
+          blurredBase64,
+          'bria-blur'
+        );
+        imageData.url = fileData.url;
+        imageData.filename = fileData.filename;
+        imageData.fileSize = fileData.fileSize;
+        imageData.b64_json = blurredBase64;
+      } catch (blurError) {
+        console.warn(
+          '⚠️ Background blur failed, returning original image:',
+          blurError
+        );
+      }
+    }
+
     res.json({
       success: true,
       image: {

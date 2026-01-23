@@ -15,4 +15,5 @@ export const settings = {
   SEGMENT_WRITE_KEY: process.env.SEGMENT_WRITE_KEY || '',
   GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || '',
   GCS_PROJECT_ID: process.env.GCS_PROJECT_ID || '',
+  DEEPINFRA_API_KEY: process.env.DEEPINFRA_API_KEY || '',
 } as const;

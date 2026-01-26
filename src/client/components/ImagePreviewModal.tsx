@@ -33,17 +33,6 @@ export function ImagePreviewModal({
 
   const shareUrl = getShareUrl();
 
-  const handleShare = async () => {
-    if (!shareUrl) return;
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      alert('Link copied to clipboard!');
-    } catch {
-      prompt('Copy this link:', shareUrl);
-    }
-  };
-
   const handleDownload = () => {
     if (!imageUrl) return;
     const link = document.createElement('a');
@@ -78,35 +67,9 @@ export function ImagePreviewModal({
           onClick={(e) => e.stopPropagation()}
         />
 
-        {/* Social share buttons */}
+        {/* Social share buttons and download button */}
         <div className="absolute bottom-4 right-4 flex gap-2 items-center">
           {shareUrl && <SocialShareButtons url={shareUrl} />}
-
-          {/* Copy share link button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleShare();
-            }}
-            className="bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
-            title="Copy share link"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-              />
-            </svg>
-          </Button>
 
           {/* Download button */}
           <Button

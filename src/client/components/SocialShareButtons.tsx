@@ -1,4 +1,13 @@
-import { Facebook, Instagram, Linkedin, MessageCircle, X } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Copy,
+  Facebook,
+  Instagram,
+  Linkedin,
+  MessageCircle,
+  Share2,
+  X,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 
 type SocialShareButtonsProps = {
@@ -66,6 +75,8 @@ export function SocialShareButtons({
   url,
   title = 'Generated Data Portrait',
 }: SocialShareButtonsProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   const handleShare = (platform: SharePlatform) => {
     try {
       if (navigator.share && platform.name !== 'instagram') {
@@ -82,25 +93,66 @@ export function SocialShareButtons({
         console.error(`Error sharing to ${platform.name}:`, error);
       }
     }
+    setIsOpen(false);
+  };
+
+  const handleCopyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+    } catch {
+      prompt('Copy this link:', url);
+    }
+    setIsOpen(false);
   };
 
   return (
-    <div className="flex gap-2">
-      {platforms.map((platform) => (
-        <Button
-          key={platform.name}
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleShare(platform);
-          }}
-          className="bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
-          title={`Share on ${platform.name}`}
-        >
-          {platform.icon}
-        </Button>
-      ))}
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        className="bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
+        title="Share on social media"
+      >
+        <Share2 className="w-5 h-5" />
+      </Button>
+
+      {isOpen && (
+        <div className="absolute bottom-full right-0 mb-2 bg-black bg-opacity-90 rounded-lg p-2 flex gap-1 flex-col md:flex-row">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCopyToClipboard();
+            }}
+            className="bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
+            title="Copy link to clipboard"
+          >
+            <Copy className="w-4 h-4" />
+          </Button>
+
+          {platforms.map((platform) => (
+            <Button
+              key={platform.name}
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleShare(platform);
+              }}
+              className="bg-black bg-opacity-50 text-white hover:bg-opacity-70 rounded-full p-2"
+              title={`Share on ${platform.name}`}
+            >
+              {platform.icon}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

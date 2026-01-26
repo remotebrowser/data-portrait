@@ -115,7 +115,7 @@ export function SocialShareButtons({
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className="bg-black bg-opacity-80 text-white hover:bg-opacity-100 rounded-full p-2 border border-white/20 shadow-lg"
+        className="bg-black bg-opacity-80 text-white hover:bg-white hover:text-black rounded-full p-2 border border-white/20 shadow-lg"
         title="Share on social media"
       >
         <Share2 className="w-5 h-5" />
@@ -130,7 +130,7 @@ export function SocialShareButtons({
               e.stopPropagation();
               handleCopyToClipboard();
             }}
-            className="bg-black bg-opacity-80 text-white hover:bg-opacity-100 rounded-full p-2 border border-white/20 shadow-lg"
+            className="bg-black bg-opacity-80 text-white hover:bg-white hover:text-black rounded-full p-2 border border-white/20 shadow-lg"
             title="Copy link to clipboard"
           >
             <Copy className="w-4 h-4" />
@@ -145,7 +145,7 @@ export function SocialShareButtons({
                 e.stopPropagation();
                 handleShare(platform);
               }}
-              className="bg-black bg-opacity-80 text-white hover:bg-opacity-100 rounded-full p-2 border border-white/20 shadow-lg"
+              className="bg-black bg-opacity-80 text-white hover:bg-white hover:text-black rounded-full p-2 border border-white/20 shadow-lg"
               title={`Share on ${platform.name}`}
             >
               {platform.icon}

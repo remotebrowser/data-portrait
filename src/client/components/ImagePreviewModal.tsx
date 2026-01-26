@@ -97,11 +97,6 @@ export function ImagePreviewModal({
             </svg>
           </Button>
         </div>
-
-        {/* Image info */}
-        <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded-lg text-sm">
-          Generated Data Portrait • Click to download or share
-        </div>
       </div>
     </div>
   );

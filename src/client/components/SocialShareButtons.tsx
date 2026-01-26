@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   Copy,
   Facebook,
-  Instagram,
   Linkedin,
   MessageCircle,
   Share2,
@@ -58,15 +57,6 @@ const platforms: SharePlatform[] = [
       );
       const whatsappUrl = `https://wa.me/?text=${text}`;
       window.open(whatsappUrl, '_blank');
-    },
-  },
-  {
-    name: 'instagram',
-    icon: <Instagram className="w-4 h-4" />,
-    share: () => {
-      alert(
-        'To share on Instagram, save the image and upload it through the Instagram app.'
-      );
     },
   },
 ];

@@ -68,6 +68,7 @@ router.get('/config', (_req, res) => {
     sentry: {
       dsn: settings.SENTRY_DSN || null,
     },
+    allowFaceUpload: settings.ALLOW_FACE_UPLOAD,
   });
 });
 

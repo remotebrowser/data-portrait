@@ -270,19 +270,14 @@ export function PersonaSelector({
         noOptionsMessage={() => "No options found"}
       />
 
-      {/* Helper text showing current selection summary */}
-      <div className="mt-3 p-2 bg-gray-50 rounded-lg">
-        <p className="text-xs text-gray-600">
-          {value.length === 0 ? (
-            'Select attributes to describe your portrait'
-          ) : (
-            <>
-              <span className="font-medium">Selected:</span>{' '}
-              {value.map((v) => v.label).join(', ')}
-            </>
-          )}
-        </p>
-      </div>
+      {/* Helper text */}
+      {value.length === 0 && (
+        <div className="mt-3 p-2 bg-gray-50 rounded-lg">
+          <p className="text-xs text-gray-600">
+            Select attributes to describe your portrait
+          </p>
+        </div>
+      )}
     </div>
   );
 }

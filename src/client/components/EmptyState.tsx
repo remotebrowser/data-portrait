@@ -42,7 +42,7 @@ export function EmptyState({
         <div className="space-y-2 text-sm text-blue-800">
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-            <span>Connect to Amazon, Office Depot, Wayfair, or GoodReads</span>
+            <span>Connect to Amazon, Wayfair, GoodReads, or GoFood</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>

@@ -18,6 +18,7 @@ import type { ImageData } from '../components/GeneratedImagesGrid.js';
 import { filterUniqueOrders } from '../utils/index.js';
 import { log } from '../utils/log.js';
 import { useAnalytics } from '../hooks/useAnalytics.js';
+import { useAppConfig } from '../hooks/useAppConfig.js';
 
 const amazonConfig = amazon as BrandConfig;
 const wayfairConfig = wayfair as BrandConfig;
@@ -54,20 +55,25 @@ const sampleOrders: PurchaseHistory[] = [
   },
   {
     order_id: 'demo-003',
-    brand: 'Office Depot',
+    brand: 'Goodreads',
     order_date: new Date('2024-01-08'),
-    order_total: '$34.99',
+    order_total: '$0.00',
     product_names: [
-      'Notebook Set (3-pack)',
-      'Blue Gel Pens (12-pack)',
-      'Sticky Notes Variety Pack',
+      'The Midnight Library',
+      'Atomic Habits',
+      'Project Hail Mary',
     ],
-    image_urls: ['/notebook.jpg', '/pen.jpg', '/sticky-notes.avif'],
+    image_urls: [
+      '/midnight-library.jpg',
+      '/atomic-habits.jpg',
+      '/project-hail-mary.jpg',
+    ],
   },
 ];
 
 export function DataPortrait() {
   const { trackEvent } = useAnalytics();
+  const { config: appConfig } = useAppConfig();
 
   const [orders, setOrders] = useState<PurchaseHistory[]>([]);
   const [connectedBrands, setConnectedBrands] = useState<string[]>([]);
@@ -87,10 +93,6 @@ export function DataPortrait() {
   >(null);
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
-
-  const enableImageUpload =
-    new URLSearchParams(window.location.search).get('enableImageUpload') ===
-    'true';
 
   // Track page view on component mount
   useEffect(() => {
@@ -143,7 +145,7 @@ export function DataPortrait() {
 
   const loadSampleData = () => {
     setOrders(sampleOrders);
-    setConnectedBrands(['Amazon', 'Office Depot']);
+    setConnectedBrands(['Amazon', 'Goodreads']);
   };
 
   const clearData = () => {
@@ -331,7 +333,7 @@ export function DataPortrait() {
         onImageStyleChange={setSelectedImageStyle}
         onGeneratePortrait={generatePortrait}
         onImageChange={setUploadedImage}
-        enableImageUpload={enableImageUpload}
+        enableImageUpload={appConfig.allowFaceUpload}
       />
 
       {/* Sign In Dialog */}

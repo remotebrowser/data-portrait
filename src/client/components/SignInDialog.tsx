@@ -86,6 +86,21 @@ export function SignInDialog({
     setCredentials(initial);
   }, [isOpen, brandConfig]);
 
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    // Prevent dialog from closing via ESC key when sign-in process is active
+    const handleCancel = (e: Event) => {
+      if (loadingState) {
+        e.preventDefault();
+      }
+    };
+
+    dialog.addEventListener('cancel', handleCancel);
+    return () => dialog.removeEventListener('cancel', handleCancel);
+  }, [loadingState]);
+
   const pollSigninStatus = async () => {
     if (!signinData) return;
 
@@ -195,7 +210,7 @@ export function SignInDialog({
     >
       <div
         className="fixed inset-0 flex items-center justify-center p-4"
-        onClick={onClose}
+        onClick={loadingState ? undefined : onClose}
         style={{ zIndex: 0 }}
       >
         <div

@@ -168,11 +168,6 @@ export function PurchaseDataDisplay({
                                     </span>
                                   )}
                                 </div>
-                                <div className="mt-1">
-                                  <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
-                                    Used for AI personalization
-                                  </span>
-                                </div>
                               </div>
                             </div>
                           ))

@@ -16,7 +16,7 @@ const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
 
 const IMAGE_GENERATION_TIMEOUT = 120000;
 
-type ImageProvider = 'portkey' | 'google-genai';
+type ImageProvider = 'portkey' | 'google-genai' | 'flux';
 
 interface ImageData {
   url?: string;
@@ -36,8 +36,11 @@ function getImageProvider(): ImageProvider {
   if (settings.GEMINI_API_KEY) {
     return 'google-genai';
   }
+  if (settings.FLUX_API_KEY) {
+    return 'flux';
+  }
   throw new Error(
-    'No image generation provider configured. Please set either PORTKEY_API_KEY or GEMINI_API_KEY in environment variables.'
+    'No image generation provider configured. Please set PORTKEY_API_KEY, GEMINI_API_KEY, or FLUX_API_KEY in environment variables.'
   );
 }
 
@@ -58,11 +61,15 @@ class ImageService {
     const imageData =
       provider === 'portkey'
         ? await this.generateWithPortkey(prompt, imagePath)
-        : await this.generateWithGoogleGenAI(prompt, imagePath);
+        : provider === 'flux'
+          ? await this.generateWithFlux(prompt, imagePath)
+          : await this.generateWithGoogleGenAI(prompt, imagePath);
 
+    const modelName =
+      provider === 'flux' ? 'flux-pro-1.1' : 'gemini-3-pro-image-preview';
     return {
       ...imageData,
-      model: 'gemini-3-pro-image-preview',
+      model: modelName,
       provider,
     };
   }
@@ -201,6 +208,102 @@ class ImageService {
     }
 
     throw new Error('No image data found in Gemini response');
+  }
+
+  private async generateWithFlux(
+    prompt: string,
+    imagePath?: string
+  ): Promise<ImageData> {
+    if (!settings.FLUX_API_KEY) {
+      throw new Error('FLUX_API_KEY not configured');
+    }
+
+    const payload: Record<string, unknown> = {
+      prompt,
+      width: 1024,
+      height: 1024,
+      prompt_upsampling: false,
+      seed: 42,
+      safety_tolerance: 2,
+      output_format: 'jpeg',
+    };
+
+    if (imagePath) {
+      const imageBase64 = await this.readImageAsBase64(imagePath);
+      payload.image_prompt = imageBase64;
+    }
+
+    const response = await fetch('https://api.bfl.ai/v1/flux-pro-1.1', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-key': settings.FLUX_API_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = (await response.json()) as {
+      polling_url?: string;
+      error?: string;
+    };
+
+    if (!data.polling_url) {
+      throw new Error(
+        `Flux API error: ${response.statusText} ${data.error || ''}`
+      );
+    }
+
+    const imageUrl = await this.pollFluxResult(data.polling_url);
+
+    const imageResponse = await fetch(imageUrl);
+    const buffer = Buffer.from(await imageResponse.arrayBuffer());
+    const base64Data = buffer.toString('base64');
+
+    const fileData = await this.saveImageFile(base64Data, 'flux-pro-1.1');
+
+    return {
+      ...fileData,
+      b64_json: base64Data,
+      width: 1024,
+      height: 1024,
+    };
+  }
+
+  private async pollFluxResult(pollingUrl: string): Promise<string> {
+    const startTime = Date.now();
+    const timeout = IMAGE_GENERATION_TIMEOUT;
+    const interval = 500;
+
+    while (Date.now() - startTime < timeout) {
+      const response = await fetch(pollingUrl, {
+        headers: { 'x-key': settings.FLUX_API_KEY },
+      });
+      const data = (await response.json()) as {
+        status: string;
+        result?: { sample: string };
+      };
+
+      if (data.status === 'Ready') {
+        if (!data.result?.sample) {
+          throw new Error('Flux API returned Ready status but no sample image');
+        }
+        return data.result.sample;
+      }
+
+      const errorStatuses = [
+        'Task not found',
+        'Request Moderated',
+        'Content Moderated',
+        'Error',
+      ];
+      if (errorStatuses.includes(data.status)) {
+        throw new Error(`Flux task failed: ${data.status}`);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, interval));
+    }
+
+    throw new Error('Flux generation timeout');
   }
 
   private createTimeoutPromise(timeoutMs: number): Promise<never> {

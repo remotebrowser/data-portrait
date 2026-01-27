@@ -127,18 +127,21 @@ app.use((req, res, next) => {
 
 app.use(new IPBlockerMiddleware(geolocationService).middleware);
 
+// Router
+// SSR routes - MUST be before static file serving
+app.use('/', ssrRoutes);
+
+app.use('/health', healthRoutes);
+app.use('/getgather', apiRoutes);
+
 // Serve static files from the React app
+// NOTE: Must be after specific routes to allow SSR to intercept /shared/:filename
 app.use(express.static(path.join(__dirname, '../client')));
 
 // Serve generated images from public directory
 app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Router
-// SSR routes - MUST be before the catch-all route
-app.use('/', ssrRoutes);
-
-app.use('/health', healthRoutes);
-app.use('/getgather', apiRoutes);
+// Catch-all route - serve index.html for client-side routing
 app.use('*name', (_req, res) => {
   res.sendFile(path.join(__dirname, '../client', 'index.html'));
 });

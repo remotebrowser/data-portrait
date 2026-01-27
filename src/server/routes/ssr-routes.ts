@@ -1,5 +1,10 @@
 import { Router, type Request, type Response } from 'express';
-import { renderSSR, renderError, getMetadata } from '../ssr/renderer.js';
+import {
+  renderSSR,
+  renderError,
+  getMetadata,
+  injectMetaTags,
+} from '../ssr/renderer.js';
 
 const router = Router();
 
@@ -17,16 +22,9 @@ router.get(
     try {
       const { html, status } = await renderSSR(filename);
 
-      // Inject OG tags
+      // Inject dynamic OG and Twitter meta tags, replacing any existing ones
       const metadata = getMetadata(filename);
-      const ogTags = Object.entries(metadata)
-        .map(
-          ([key, value]) =>
-            `<meta property="${key}" content="${value.replace(/"/g, '&quot;')}" />`
-        )
-        .join('\n    ');
-
-      const finalHtml = html.replace(/<\/head>/, `${ogTags}\n  </head>`);
+      const finalHtml = injectMetaTags(html, metadata);
 
       res.status(status).send(finalHtml);
     } catch (error) {

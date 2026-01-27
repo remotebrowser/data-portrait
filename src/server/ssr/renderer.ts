@@ -1,5 +1,6 @@
 import path from 'path';
 import { readFileSync } from 'fs';
+import * as cheerio from 'cheerio';
 
 const GCS_BUCKET_NAME = 'data-portrait-imagegen';
 
@@ -8,8 +9,7 @@ export interface RenderResult {
   status: number;
 }
 
-// Re-export getMetadata for use in routes
-// (This is imported from the client-side file during runtime)
+// Get metadata for a shared portrait
 export function getMetadata(filename: string): Record<string, string> {
   const imageUrl = `https://storage.googleapis.com/${GCS_BUCKET_NAME}/${filename}`;
   return {
@@ -21,6 +21,30 @@ export function getMetadata(filename: string): Record<string, string> {
     'twitter:card': 'summary_large_image',
     'twitter:image': imageUrl,
   };
+}
+
+/**
+ * Injects meta tags into HTML head, replacing any existing og: or twitter: meta tags
+ * Uses cheerio for reliable DOM manipulation
+ */
+export function injectMetaTags(
+  html: string,
+  metadata: Record<string, string>
+): string {
+  const $ = cheerio.load(html);
+
+  // Remove all existing og: and twitter: meta tags
+  $('head').find('meta[property^="og:"], meta[property^="twitter:"]').remove();
+
+  // Add new meta tags to head
+  const head = $('head');
+  Object.entries(metadata).forEach(([key, value]) => {
+    head.append(
+      `<meta property="${key}" content="${value.replace(/"/g, '&quot;')}" />`
+    );
+  });
+
+  return $.html();
 }
 
 export function renderError(message: string, status: number): RenderResult {
@@ -100,7 +124,7 @@ export async function renderSSR(filename: string): Promise<RenderResult> {
       return renderError('Failed to render page', 500);
     }
 
-    // For now, we'll render a simple HTML string that matches SharedPortrait
+    // Render a simple HTML string that matches SharedPortrait
     // The client will hydrate and take over
     const imageUrl = `https://storage.googleapis.com/${GCS_BUCKET_NAME}/${filename}`;
     const html = `<div class="fixed inset-0 bg-black flex items-center justify-center p-4"><div class="relative max-w-4xl max-h-[90vh] w-full h-full flex flex-col items-center"><a href="${imageUrl}" download="data-portrait-${Date.now()}.png" class="absolute top-4 right-4 bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">Download</a><img src="${imageUrl}" alt="Shared data portrait" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl" /><p class="text-white mt-4 text-center">Shared Data Portrait <a href="/" class="underline hover:text-gray-300">Create your own</a></p></div></div>`;

@@ -32,7 +32,7 @@ Data Portrait is a web app that transforms your shopping and reading history int
 
 - **Frontend:** React (Vite), TypeScript, Tailwind CSS.
 - **Backend:** Express.js, geolocation via MaxMind, reverse proxy to GetGather API.
-- **AI Models:** Google Gemini via Portkey or direct Google GenAI.
+- **AI Models:** Google Gemini via Portkey or direct Google GenAI, or FLUX.
 - **Storage:** Google Cloud Storage (optional) or local filesystem.
 - **Data Model:** Purchases include brand, order date, products, images, etc.
 
@@ -52,9 +52,11 @@ MAXMIND_LICENSE_KEY=your_maxmind_license_key
 # Image generation provider is automatically selected based on API key availability:
 # - If PORTKEY_API_KEY is set, uses Portkey (recommended for production)
 # - If only GEMINI_API_KEY is set, uses Google GenAI directly
-# - Both keys can be set; Portkey will be prioritized
+# - If only FLUX_API_KEY is set, uses FLUX directly
+# - Both keys can be set; priority order is: Portkey → Google GenAI → Flux
 PORTKEY_API_KEY=your_portkey_api_key
 GEMINI_API_KEY=your_gemini_api_key
+FLUX_API_KEY=your_flux_api_key
 
 # Google Cloud Storage (optional, for cloud image storage)
 # If not configured, images are stored locally in the public/ directory

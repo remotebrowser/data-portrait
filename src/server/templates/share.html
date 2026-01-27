@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Shared Data Portrait - GetGather</title>
+    <meta
+      name="description"
+      content="Check out this AI-generated data portrait from GetGather."
+    />
+
+    <!-- Open Graph Meta Tags -->
+    {{OPEN_GRAPH_TAGS}}
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/client/main.tsx"></script>
+    <noscript>
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          padding: 20px;
+          font-family: system-ui, sans-serif;
+          text-align: center;
+        "
+      >
+        <h1>Shared Data Portrait</h1>
+        <p>Check out this AI-generated data portrait from GetGather.</p>
+        <div
+          style="
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+          "
+        >
+          <img
+            src="{{IMAGE_URL}}"
+            alt="Data Portrait"
+            style="max-width: 100%; height: auto; border-radius: 8px"
+          />
+        </div>
+        <p style="color: #666">
+          Please enable JavaScript to view the full interactive experience.
+        </p>
+      </div>
+    </noscript>
+  </body>
+</html>

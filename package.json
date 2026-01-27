@@ -10,7 +10,7 @@
     "start": "NODE_ENV=production node dist/server/main.js",
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "vite build",
-    "build:backend": "tsc --project src/server/tsconfig.json",
+    "build:backend": "tsc --project src/server/tsconfig.json && cp -r src/server/templates dist/server/templates",
     "format": "prettier --write .",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

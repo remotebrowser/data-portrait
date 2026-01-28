@@ -4,28 +4,14 @@ import { Router, type Request, type Response } from 'express';
 
 const GCS_BUCKET_NAME = 'data-portrait-imagegen';
 
-function loadTemplate(templatePath: string): string {
-  return readFileSync(templatePath, 'utf-8');
-}
-
-function injectMetaTags(html: string, imageUrl: string): string {
-  const ogPattern = /<meta property="og:[^"]*" content="[^"]*" \/>/gi;
-  const twitterPattern = /<meta property="twitter:[^"]*" content="[^"]*" \/>/gi;
-
-  let finalHtml = html.replace(ogPattern, '');
-  finalHtml = finalHtml.replace(twitterPattern, '');
-
-  const metaTags = `<meta property="og:title" content="Data Portrait by GetGather" /><meta property="og:description" content="Transform your shopping history into stunning personalized portraits" /><meta property="og:image" content="${imageUrl}" /><meta property="og:type" content="website" /><meta property="twitter:card" content="summary_large_image" /><meta property="twitter:image" content="${imageUrl}" />`;
-
-  return finalHtml.replace('</head>', `${metaTags}</head>`);
-}
-
 function renderSSR(filename: string): string {
-  const baseTemplate = loadTemplate(
-    path.join(process.cwd(), 'dist/client/index.html')
+  const baseTemplate = readFileSync(
+    path.join(process.cwd(), 'dist/client/index.html'),
+    'utf-8'
   );
-  const sharedTemplate = loadTemplate(
-    path.join(process.cwd(), 'dist/client/templates/shared.html')
+  const sharedTemplate = readFileSync(
+    path.join(process.cwd(), 'dist/client/templates/shared.html'),
+    'utf-8'
   );
 
   const imageUrl = `https://storage.googleapis.com/${GCS_BUCKET_NAME}/${filename}`;
@@ -35,7 +21,13 @@ function renderSSR(filename: string): string {
 
   const finalHtml = baseTemplate.replace('<div id="root"></div>', innerHtml);
 
-  return injectMetaTags(finalHtml, imageUrl);
+  const ogPattern = /<meta property="og:[^"]*" content="[^"]*" \/>/gi;
+  const twitterPattern = /<meta property="twitter:[^"]*" content="[^"]*" \/>/gi;
+  let html = finalHtml.replace(ogPattern, '').replace(twitterPattern, '');
+
+  const metaTags = `<meta property="og:title" content="Data Portrait by GetGather" /><meta property="og:description" content="Transform your shopping history into stunning personalized portraits" /><meta property="og:image" content="${imageUrl}" /><meta property="og:type" content="website" /><meta property="twitter:card" content="summary_large_image" /><meta property="twitter:image" content="${imageUrl}" />`;
+
+  return html.replace('</head>', `${metaTags}</head>`);
 }
 
 const router = Router();

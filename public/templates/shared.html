@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Portrait</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta property="og:title" content="Data Portrait by GetGather" />
+    <meta
+      property="og:description"
+      content="Transform your data into stunning personalized portraits"
+    />
+    <meta property="og:image" content="{{imageUrl}}" />
+    <meta property="og:type" content="website" />
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:image" content="{{imageUrl}}" />
+  </head>
+  <body>
+    <div class="fixed inset-0 bg-black flex items-center justify-center p-4">
+      <div
+        class="relative max-w-4xl max-h-[90vh] w-full h-full flex flex-col items-center"
+      >
+        <a
+          href="{{imageUrl}}"
+          download="data-portrait-{{timestamp}}.png"
+          class="absolute top-4 right-4 bg-white text-black px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >Download</a
+        >
+        <img
+          src="{{imageUrl}}"
+          alt="Shared data portrait"
+          class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+        />
+        <p class="text-white mt-4 text-center">
+          Shared Data Portrait
+          <a href="/" class="underline hover:text-gray-300">Create your own</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -4,6 +4,7 @@ import express from 'express';
 import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health-routes.js';
 import { apiRoutes } from './routes/api-routes.js';
+import { router } from './routes/shared-routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { settings } from './config.js';
@@ -133,6 +134,7 @@ app.use(express.static(path.join(__dirname, '../client')));
 app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Router
+app.use('/', router);
 app.use('/health', healthRoutes);
 app.use('/getgather', apiRoutes);
 app.use('*name', (_req, res) => {

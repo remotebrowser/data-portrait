@@ -1,8 +1,7 @@
 import path from 'path';
 import { readFileSync } from 'fs';
 import { Router, type Request, type Response } from 'express';
-
-const GCS_BUCKET_NAME = 'data-portrait-imagegen';
+import { settings } from '../config.js';
 
 function renderSSR(filename: string): string {
   const baseTemplate = readFileSync(
@@ -14,7 +13,7 @@ function renderSSR(filename: string): string {
     'utf-8'
   );
 
-  const imageUrl = `https://storage.googleapis.com/${GCS_BUCKET_NAME}/${filename}`;
+  const imageUrl = `https://storage.googleapis.com/${settings.GCS_BUCKET_NAME}/${filename}`;
   const innerHtml = sharedTemplate
     .replace('{{imageUrl}}', imageUrl)
     .replace('{{timestamp}}', Date.now().toString());

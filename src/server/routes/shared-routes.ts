@@ -32,4 +32,4 @@ router.get(
   }
 );
 
-export { router as ssrRoutes };
+export { router };

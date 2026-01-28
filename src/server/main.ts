@@ -4,7 +4,7 @@ import express from 'express';
 import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health-routes.js';
 import { apiRoutes } from './routes/api-routes.js';
-import { ssrRoutes } from './routes/ssr-routes.js';
+import { ssrRoutes } from './routes/shared-routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { settings } from './config.js';

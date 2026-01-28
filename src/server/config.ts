@@ -10,6 +10,7 @@ export const settings = {
   MAXMIND_LICENSE_KEY: process.env.MAXMIND_LICENSE_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   PORTKEY_API_KEY: process.env.PORTKEY_API_KEY || '',
+  FLUX_API_KEY: process.env.FLUX_API_KEY || '',
   SENTRY_DSN: process.env.SENTRY_DSN || '',
   SESSION_SECRET: process.env.SESSION_SECRET || 'pleasereplacemeonprod',
   SEGMENT_WRITE_KEY: process.env.SEGMENT_WRITE_KEY || '',

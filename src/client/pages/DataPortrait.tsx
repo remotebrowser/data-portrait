@@ -188,7 +188,6 @@ export function DataPortrait() {
               imageStyle: selectedImageStyle,
               gender: selectedGender,
               traits: selectedTraits,
-              model: 'gemini',
               purchaseData: orders,
             }),
       });

@@ -11,23 +11,7 @@ interface RenderResult {
 
 function renderError(message: string, status: number): RenderResult {
   const templatePath = path.join(process.cwd(), 'templates/error.html');
-  let html: string;
-
-  try {
-    html = readFileSync(templatePath, 'utf-8');
-  } catch {
-    html = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Error ${status}</title>
-  </head>
-  <body>Error ${status}: ${message}</body>
-</html>`;
-  }
-
-  html = html
+  const html = readFileSync(templatePath, 'utf-8')
     .replace('{{status}}', status.toString())
     .replace('{{message}}', message);
 

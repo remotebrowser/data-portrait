@@ -1,7 +1,6 @@
 import { Image, Grid3x3 } from 'lucide-react';
 import { cn } from '@/lib/utils.js';
-
-export type ImageFormat = 'single' | 'stories';
+import type { ImageFormat } from '../modules/PortraitGeneration.js';
 
 type ImageFormatSelectorProps = {
   value: ImageFormat;

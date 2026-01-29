@@ -7,7 +7,6 @@ import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
 import { SignInDialog } from '../components/SignInDialog.js';
 import { Sidebar } from '../components/Sidebar.js';
-import type { ImageFormat } from '../components/ImageFormatSelector.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
 import officedepot from '../config/officedepot.json' with { type: 'json' };
@@ -15,7 +14,11 @@ import goodreads from '../config/goodreads.json' with { type: 'json' };
 import gofood from '../config/gofood.json' with { type: 'json' };
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
-import type { ImageData } from '../components/GeneratedImagesGrid.js';
+import type {
+  GeneratedImage,
+  ImageFormat,
+} from '../modules/PortraitGeneration.js';
+import { generatePortrait as generatePortraitModule } from '../modules/PortraitGeneration.js';
 import { filterUniqueOrders } from '../utils/index.js';
 import { getRandomGender } from '../modules/Gender.js';
 import { getRandomStyle } from '../modules/ImageStyle.js';
@@ -90,7 +93,7 @@ export function DataPortrait() {
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
 
-  const [generatedImages, setGeneratedImages] = useState<ImageData[]>([]);
+  const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedImagePreview, setSelectedImagePreview] = useState<
     string | null
@@ -169,76 +172,46 @@ export function DataPortrait() {
       selected_gender: selectedGender,
       selected_traits: selectedTraits,
       selected_image_style: selectedImageStyle,
+      image_format: imageFormat,
       has_uploaded_image: !!uploadedImage,
     });
 
     setIsGenerating(true);
 
     try {
-      const response = await fetch('/getgather/generate-portrait', {
-        method: 'POST',
-        headers: uploadedImage ? {} : { 'Content-Type': 'application/json' },
-        body: uploadedImage
-          ? (() => {
-              const formData = new FormData();
-              formData.append('image', uploadedImage);
-              formData.append('imageStyle', selectedImageStyle.join(','));
-              formData.append('gender', selectedGender);
-              formData.append('traits', selectedTraits.join(','));
-              formData.append('purchaseData', JSON.stringify(orders));
-              return formData;
-            })()
-          : JSON.stringify({
-              imageStyle: selectedImageStyle,
-              gender: selectedGender,
-              traits: selectedTraits,
-              model: 'gemini',
-              purchaseData: orders,
-            }),
+      const generatedImage = await generatePortraitModule(imageFormat, {
+        imageStyle: selectedImageStyle,
+        gender: selectedGender,
+        traits: selectedTraits,
+        purchaseData: orders,
+        uploadedImage,
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      setGeneratedImages((prev) => [
+        generatedImage,
+        ...prev.slice(0, 11), // Keep only the latest 12 images
+      ]);
 
-      const data = await response.json();
+      const firstImage = generatedImage.images[0];
+      trackEvent('portrait_generation_successful', {
+        model: firstImage?.model || 'gemini',
+        provider: firstImage?.provider || 'unknown',
+        image_style: selectedImageStyle,
+        image_format: imageFormat,
+        orders_count: orders.length,
+        used_uploaded_image: !!uploadedImage,
+      });
 
-      if (data.success && data.image) {
-        // Create image object with metadata
-        const imageData = {
-          url: `${data.image.url}?t=${Date.now()}`, // Add timestamp to prevent caching
-          model: data.model || 'gemini',
-          provider: data.provider || 'unknown',
-          timestamp: data.timestamp || new Date().toISOString(),
-          filename: data.image.filename || 'unknown',
-          style: selectedImageStyle,
-        };
-
-        setGeneratedImages((prev) => [
-          imageData,
-          ...prev.slice(0, 11), // Keep only the latest 12 images
-        ]);
-
-        trackEvent('portrait_generation_successful', {
-          model: data.model,
-          provider: data.provider,
-          image_style: selectedImageStyle,
-          orders_count: orders.length,
-          used_uploaded_image: !!uploadedImage,
-        });
-
-        // Close sidebar on mobile after successful generation
-        if (window.innerWidth < 1024) {
-          setIsSidebarOpen(false);
-        }
-      } else {
-        throw new Error(data.message || 'Failed to generate portrait');
+      // Close sidebar on mobile after successful generation
+      if (window.innerWidth < 1024) {
+        setIsSidebarOpen(false);
       }
     } catch (error: unknown) {
       trackEvent('portrait_generation_failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
         orders_count: orders.length,
         selected_image_style: selectedImageStyle,
+        image_format: imageFormat,
         used_uploaded_image: !!uploadedImage,
       });
       alert('Failed to generate portrait. Please try again.');

@@ -4,7 +4,7 @@ import { DataConnectors } from './DataConnectors.js';
 import { PersonaSelector } from './PersonaSelector.js';
 import { ImageUpload } from './ImageUpload.js';
 import { ImageFormatSelector } from './ImageFormatSelector.js';
-import type { ImageFormat } from './ImageFormatSelector.js';
+import type { ImageFormat } from '../modules/PortraitGeneration.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 

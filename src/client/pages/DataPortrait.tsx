@@ -16,6 +16,8 @@ import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type { ImageData } from '../components/GeneratedImagesGrid.js';
 import { filterUniqueOrders } from '../utils/index.js';
+import { getRandomGender } from '../modules/Gender.js';
+import { getRandomStyle } from '../modules/ImageStyle.js';
 import { log } from '../utils/log.js';
 import { useAnalytics } from '../hooks/useAnalytics.js';
 import { useAppConfig } from '../hooks/useAppConfig.js';
@@ -77,11 +79,11 @@ export function DataPortrait() {
 
   const [orders, setOrders] = useState<PurchaseHistory[]>([]);
   const [connectedBrands, setConnectedBrands] = useState<string[]>([]);
-  const [selectedGender, setSelectedGender] = useState('Female');
+  const [selectedGender, setSelectedGender] = useState(getRandomGender());
   const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedImageStyle, setSelectedImageStyle] = useState<string[]>([
-    'realistic',
+    getRandomStyle(),
   ]);
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);

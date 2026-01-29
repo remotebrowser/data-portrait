@@ -7,6 +7,7 @@ import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
 import { SignInDialog } from '../components/SignInDialog.js';
 import { Sidebar } from '../components/Sidebar.js';
+import type { ImageFormat } from '../components/ImageFormatSelector.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
 import officedepot from '../config/officedepot.json' with { type: 'json' };
@@ -85,6 +86,7 @@ export function DataPortrait() {
   const [selectedImageStyle, setSelectedImageStyle] = useState<string[]>([
     getRandomStyle(),
   ]);
+  const [imageFormat, setImageFormat] = useState<ImageFormat>('single');
   const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
 
@@ -327,12 +329,14 @@ export function DataPortrait() {
         selectedGender={selectedGender}
         selectedTraits={selectedTraits}
         selectedImageStyle={selectedImageStyle}
+        imageFormat={imageFormat}
         isGenerating={isGenerating}
         onSuccessConnect={handleSuccessConnect}
         onOpenSignInDialog={handleOpenSignInDialog}
         onGenderChange={setSelectedGender}
         onTraitsChange={setSelectedTraits}
         onImageStyleChange={setSelectedImageStyle}
+        onImageFormatChange={setImageFormat}
         onGeneratePortrait={generatePortrait}
         onImageChange={setUploadedImage}
         enableImageUpload={appConfig.allowFaceUpload}

@@ -1,6 +1,11 @@
-import Select, { components, type MultiValue, type StylesConfig } from 'react-select';
+import Select, {
+  components,
+  type MultiValue,
+  type StylesConfig,
+} from 'react-select';
 import { IMAGE_STYLES } from '../modules/ImageStyle.js';
 import { TRAITS_OPTIONS } from '../modules/Traits.js';
+import { GENDER_OPTIONS } from '../modules/Gender.js';
 
 export type PersonaOptionKind = 'gender' | 'style' | 'trait';
 
@@ -23,32 +28,14 @@ type PersonaSelectorProps = {
 };
 
 // Build unified options list
-const GENDER_OPTIONS: PersonaOption[] = [
-  {
-    kind: 'gender',
-    id: 'Female',
-    label: 'Female',
-    description: 'Female representation',
-    icon: '👩',
-    gradient: 'from-pink-100 to-rose-200',
-  },
-  {
-    kind: 'gender',
-    id: 'Male',
-    label: 'Male',
-    description: 'Male representation',
-    icon: '👨',
-    gradient: 'from-blue-100 to-indigo-200',
-  },
-  {
-    kind: 'gender',
-    id: 'Other',
-    label: 'Other',
-    description: 'Non-binary representation',
-    icon: '🧑',
-    gradient: 'from-purple-100 to-violet-200',
-  },
-];
+const GENDER_OPTIONS_MAPPED: PersonaOption[] = GENDER_OPTIONS.map((g) => ({
+  kind: 'gender',
+  id: g.id,
+  label: g.name,
+  description: g.description,
+  icon: g.icon,
+  gradient: g.gradient,
+}));
 
 const STYLE_OPTIONS: PersonaOption[] = IMAGE_STYLES.map((s) => ({
   kind: 'style',
@@ -68,7 +55,7 @@ const TRAIT_OPTIONS: PersonaOption[] = TRAITS_OPTIONS.map((t) => ({
 }));
 
 const ALL_OPTIONS: PersonaOption[] = [
-  ...GENDER_OPTIONS,
+  ...GENDER_OPTIONS_MAPPED,
   ...STYLE_OPTIONS,
   ...TRAIT_OPTIONS,
 ];
@@ -84,7 +71,9 @@ export function PersonaSelector({
   // Build current value from existing state
   const value: PersonaOption[] = [
     ...ALL_OPTIONS.filter((o) => o.kind === 'gender' && o.id === gender),
-    ...ALL_OPTIONS.filter((o) => o.kind === 'style' && imageStyles.includes(o.id)),
+    ...ALL_OPTIONS.filter(
+      (o) => o.kind === 'style' && imageStyles.includes(o.id)
+    ),
     ...ALL_OPTIONS.filter((o) => o.kind === 'trait' && traits.includes(o.id)),
   ];
 
@@ -93,10 +82,10 @@ export function PersonaSelector({
 
     // Extract gender options from selection
     const genderOptions = selectedArray.filter((o) => o.kind === 'gender');
-    
+
     // Handle gender: only keep the most recently selected one
     let newGender = gender; // default to current
-    
+
     if (genderOptions.length === 0) {
       // User removed gender chip - keep current gender, don't allow removing it
       newGender = gender;
@@ -151,7 +140,8 @@ export function PersonaSelector({
     menu: (base) => ({
       ...base,
       zIndex: 50,
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      boxShadow:
+        '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
     }),
     menuList: (base) => ({
       ...base,
@@ -180,15 +170,15 @@ export function PersonaSelector({
   const Option = (props: any) => {
     const { data, isSelected } = props;
     const option = data as PersonaOption;
-    
+
     return (
       <components.Option {...props}>
         <div className="flex items-center gap-3 py-1">
           {option.icon && (
             <div
               className={`w-6 h-6 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${
-                option.gradient 
-                  ? `bg-gradient-to-br ${option.gradient}` 
+                option.gradient
+                  ? `bg-gradient-to-br ${option.gradient}`
                   : 'bg-gray-100'
               }`}
             >
@@ -199,9 +189,7 @@ export function PersonaSelector({
             <div className="font-medium text-sm text-gray-900">
               {option.label}
             </div>
-            <div className="text-xs text-gray-500">
-              {option.description}
-            </div>
+            <div className="text-xs text-gray-500">{option.description}</div>
           </div>
           {isSelected && (
             <div className="ml-auto flex-shrink-0">
@@ -267,7 +255,7 @@ export function PersonaSelector({
           Option,
           MultiValueLabel,
         }}
-        noOptionsMessage={() => "No options found"}
+        noOptionsMessage={() => 'No options found'}
       />
 
       {/* Helper text */}

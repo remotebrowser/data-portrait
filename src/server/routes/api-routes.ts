@@ -9,6 +9,11 @@ import {
   handleDpageSigninCheck,
 } from '../handlers/mcp-handler.js';
 import { handleAnalytics } from '../handlers/analytics-handler.js';
+import {
+  handleStoriesGeneration,
+  handleStoriesPoll,
+  handleGetStories,
+} from '../handlers/stories-handler.js';
 import { settings } from '../config.js';
 
 const router = Router();
@@ -50,6 +55,11 @@ router.post(
   upload.single('image'),
   handlePortraitGeneration
 );
+
+// Stories generation endpoints
+router.post('/generate/stories', handleStoriesGeneration);
+router.get('/stories/poll/:id', handleStoriesPoll);
+router.get('/stories/:id', handleGetStories);
 
 router.post('/log', (req, res) => {
   // The client sends an object: { brand: string, orders: PurchaseHistory[] }

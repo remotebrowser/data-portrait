@@ -4,6 +4,7 @@ import { DataConnectors } from './DataConnectors.js';
 import { PersonaSelector } from './PersonaSelector.js';
 import { ImageUpload } from './ImageUpload.js';
 import { ImageFormatSelector } from './ImageFormatSelector.js';
+import { useStoryFeatureFlag } from '../hooks/useStoryFeatureFlag.js';
 import type { ImageFormat } from '../modules/PortraitGeneration.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
@@ -49,6 +50,8 @@ export function Sidebar({
   onImageChange,
   enableImageUpload = false,
 }: SidebarProps) {
+  const showImageFormatSelector = useStoryFeatureFlag();
+
   return (
     <>
       {/* Mobile Sidebar Overlay */}
@@ -107,10 +110,12 @@ export function Sidebar({
             onTraitsChange={onTraitsChange}
           />
 
-          <ImageFormatSelector
-            value={imageFormat}
-            onChange={onImageFormatChange}
-          />
+          {showImageFormatSelector && (
+            <ImageFormatSelector
+              value={imageFormat}
+              onChange={onImageFormatChange}
+            />
+          )}
         </div>
 
         {/* Sidebar Footer - Simple */}

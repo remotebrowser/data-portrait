@@ -5,6 +5,7 @@ import { EmptyState } from '../components/EmptyState.js';
 import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay.js';
 import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
+import { StoryPreviewModal } from '../components/StoryPreviewModal.js';
 import { SignInDialog } from '../components/SignInDialog.js';
 import { Sidebar } from '../components/Sidebar.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
@@ -95,9 +96,9 @@ export function DataPortrait() {
 
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [selectedImagePreview, setSelectedImagePreview] = useState<
-    string | null
-  >(null);
+  const [selectedPreview, setSelectedPreview] = useState<GeneratedImage | null>(
+    null
+  );
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
 
@@ -270,7 +271,7 @@ export function DataPortrait() {
               generatedImages={generatedImages}
               isGenerating={isGenerating}
               selectedImageStyle={selectedImageStyle}
-              onImageClick={setSelectedImagePreview}
+              onPreviewClick={setSelectedPreview}
             />
           )}
         </div>
@@ -325,11 +326,17 @@ export function DataPortrait() {
         />
       )}
 
-      {/* Image Preview Modal */}
-      <ImagePreviewModal
-        imageUrl={selectedImagePreview}
-        onClose={() => setSelectedImagePreview(null)}
-      />
+      {selectedPreview?.format === 'stories' ? (
+        <StoryPreviewModal
+          story={selectedPreview}
+          onClose={() => setSelectedPreview(null)}
+        />
+      ) : selectedPreview ? (
+        <ImagePreviewModal
+          imageUrl={selectedPreview.images[0]?.url || null}
+          onClose={() => setSelectedPreview(null)}
+        />
+      ) : null}
     </div>
   );
 }

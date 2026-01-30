@@ -9,14 +9,14 @@ type GeneratedImagesGridProps = {
   generatedImages: GeneratedImage[];
   isGenerating: boolean;
   selectedImageStyle?: string[];
-  onImageClick: (imageUrl: string) => void;
+  onPreviewClick: (image: GeneratedImage) => void;
 };
 
 export function GeneratedImagesGrid({
   generatedImages,
   isGenerating,
   selectedImageStyle,
-  onImageClick,
+  onPreviewClick,
 }: GeneratedImagesGridProps) {
   const primarySelectedStyleId = selectedImageStyle?.[0];
   const selectedStyle = IMAGE_STYLES.find(
@@ -91,15 +91,13 @@ export function GeneratedImagesGrid({
               {generatedImage.format === 'stories' ? (
                 <ImageStack
                   images={generatedImage.images}
-                  onClick={() =>
-                    onImageClick(generatedImage.images[0]?.url || '')
-                  }
+                  onClick={() => onPreviewClick(generatedImage)}
                 />
               ) : (
                 <Image
                   imageUrl={firstImage?.url || ''}
                   showBadge={i === 0}
-                  onClick={() => onImageClick(firstImage?.url || '')}
+                  onClick={() => onPreviewClick(generatedImage)}
                   key={firstImage?.url}
                 />
               )}

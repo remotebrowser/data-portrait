@@ -14,6 +14,7 @@ export type ImageData = {
 export type GeneratedImage = {
   format: ImageFormat;
   images: ImageData[];
+  id?: string;
 };
 
 type GenerationParams = {
@@ -77,11 +78,13 @@ function createImageData(
 
 function createGeneratedImage(
   format: ImageFormat,
-  images: ImageData[]
+  images: ImageData[],
+  id?: string
 ): GeneratedImage {
   return {
     format,
     images,
+    id,
   };
 }
 
@@ -201,7 +204,7 @@ async function generateStories(
     )
   );
 
-  return createGeneratedImage('stories', images);
+  return createGeneratedImage('stories', images, storiesData.id);
 }
 
 export async function generatePortrait(

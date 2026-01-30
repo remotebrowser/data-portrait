@@ -5,6 +5,7 @@ import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health-routes.js';
 import { apiRoutes } from './routes/api-routes.js';
 import { router } from './routes/shared-routes.js';
+import { storyRouter } from './routes/story-routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { settings } from './config.js';
@@ -127,6 +128,8 @@ app.use((req, res, next) => {
 
 app.use(new IPBlockerMiddleware(geolocationService).middleware);
 
+app.use('/', storyRouter);
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../client')));
 
@@ -137,6 +140,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 app.use('/', router);
 app.use('/health', healthRoutes);
 app.use('/getgather', apiRoutes);
+
 app.use('*name', (_req, res) => {
   res.sendFile(path.join(__dirname, '../client', 'index.html'));
 });

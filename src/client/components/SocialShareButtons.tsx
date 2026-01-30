@@ -105,14 +105,14 @@ export function SocialShareButtons({
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className="bg-black bg-opacity-80 text-white hover:bg-white hover:text-black rounded-full p-2 border border-white/20 shadow-lg"
+        className="text-white hover:bg-white/90 hover:text-black rounded-full p-2.5 transition-all duration-200 hover:ring-2 hover:ring-white/50 hover:scale-105 active:scale-95"
         title="Share on social media"
       >
         <Share2 className="w-5 h-5" />
       </Button>
 
       {isOpen && (
-        <div className="absolute bottom-full right-0 mb-2 bg-black bg-opacity-90 rounded-lg p-2 flex gap-1 flex-col md:flex-row z-50 border border-white/20 shadow-xl">
+        <div className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-2 flex gap-2 flex-col md:flex-row z-50 border border-white/20">
           <Button
             variant="ghost"
             size="sm"
@@ -120,7 +120,7 @@ export function SocialShareButtons({
               e.stopPropagation();
               handleCopyToClipboard();
             }}
-            className="bg-black bg-opacity-80 text-white hover:bg-white hover:text-black rounded-full p-2 border border-white/20 shadow-lg"
+            className="text-white hover:bg-white/90 hover:text-black rounded-full p-2 transition-all duration-200 hover:ring-2 hover:ring-white/50 hover:scale-105 active:scale-95"
             title="Copy link to clipboard"
           >
             <Copy className="w-4 h-4" />
@@ -135,7 +135,7 @@ export function SocialShareButtons({
                 e.stopPropagation();
                 handleShare(platform);
               }}
-              className="bg-black bg-opacity-80 text-white hover:bg-white hover:text-black rounded-full p-2 border border-white/20 shadow-lg"
+              className="text-white hover:bg-white/90 hover:text-black rounded-full p-2 transition-all duration-200 hover:ring-2 hover:ring-white/50 hover:scale-105 active:scale-95"
               title={`Share on ${platform.name}`}
             >
               {platform.icon}

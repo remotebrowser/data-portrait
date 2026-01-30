@@ -16,6 +16,13 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist/client',
+    emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        story: path.resolve(__dirname, 'public/templates/story.html'),
+      },
+    },
   },
   server: {
     proxy: {

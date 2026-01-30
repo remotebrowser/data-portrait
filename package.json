@@ -45,6 +45,7 @@
     "prettier": "^3.5.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-insta-stories": "^2.8.0",
     "react-router-dom": "^6.30.1",
     "react-select": "^5.10.2",
     "sharp": "^0.34.5",

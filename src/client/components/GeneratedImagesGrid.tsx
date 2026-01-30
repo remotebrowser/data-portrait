@@ -2,28 +2,21 @@ import { Card, CardContent } from '@/components/ui/card.js';
 import { Image } from '@/components/ui/image.js';
 import { Badge } from '@/components/ui/badge.js';
 import { IMAGE_STYLES } from '../modules/ImageStyle.js';
-
-export type ImageData = {
-  url: string;
-  model?: string;
-  provider?: string;
-  timestamp: string;
-  filename?: string;
-  style?: string[];
-};
+import { ImageStack } from './ImageStack.js';
+import type { GeneratedImage } from '../modules/PortraitGeneration.js';
 
 type GeneratedImagesGridProps = {
-  generatedImages: ImageData[];
+  generatedImages: GeneratedImage[];
   isGenerating: boolean;
   selectedImageStyle?: string[];
-  onImageClick: (imageUrl: string) => void;
+  onPreviewClick: (image: GeneratedImage) => void;
 };
 
 export function GeneratedImagesGrid({
   generatedImages,
   isGenerating,
   selectedImageStyle,
-  onImageClick,
+  onPreviewClick,
 }: GeneratedImagesGridProps) {
   const primarySelectedStyleId = selectedImageStyle?.[0];
   const selectedStyle = IMAGE_STYLES.find(
@@ -66,16 +59,21 @@ export function GeneratedImagesGrid({
       )}
 
       {/* Generated Images */}
-      {generatedImages.map((imageData, i) => {
-        const imagePrimaryStyleId = imageData.style?.[0];
+      {generatedImages.map((generatedImage, i) => {
+        const firstImage = generatedImage.images[0];
+        const imagePrimaryStyleId = firstImage?.style?.[0];
         const imageStyle = IMAGE_STYLES.find(
           (style) => style.id === imagePrimaryStyleId
         );
 
         return (
           <Card
-            key={`generated-${imageData.url}-${i}`}
-            className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow relative"
+            key={
+              generatedImage.format === 'stories'
+                ? `generated-stories-${i}`
+                : `generated-${firstImage?.url}-${i}`
+            }
+            className="cursor-pointer hover:shadow-lg transition-shadow relative"
           >
             <CardContent className="p-0 relative">
               {/* Style Badge for generated images - shows the actual style used for this image */}
@@ -90,13 +88,19 @@ export function GeneratedImagesGrid({
                   </Badge>
                 </div>
               )}
-
-              <Image
-                imageUrl={imageData.url}
-                showBadge={i === 0}
-                onClick={() => onImageClick(imageData.url)}
-                key={imageData.url}
-              />
+              {generatedImage.format === 'stories' ? (
+                <ImageStack
+                  images={generatedImage.images}
+                  onClick={() => onPreviewClick(generatedImage)}
+                />
+              ) : (
+                <Image
+                  imageUrl={firstImage?.url || ''}
+                  showBadge={i === 0}
+                  onClick={() => onPreviewClick(generatedImage)}
+                  key={firstImage?.url}
+                />
+              )}
             </CardContent>
           </Card>
         );

@@ -1,15 +1,146 @@
 import type { Request, Response } from 'express';
+import { storiesService, type StoryItem } from '../services/stories-service.js';
 
 export type StoryData = {
   id: string;
   stories: Array<{
     title: string;
     imageUrl: string;
+    storyText?: string;
   }>;
 };
 
-// Shared function to get story data - used by both API routes and SSR
+function convertStoriesToResponse(stories: StoryItem[]): StoryData['stories'] {
+  const response: StoryData['stories'] = [];
+
+  for (const story of stories) {
+    if (story.type === 'image' && story.imageUrl) {
+      response.push({
+        title: story.title,
+        imageUrl: story.imageUrl,
+      });
+    } else if (story.type === 'text') {
+      response.push({
+        title: story.title,
+        imageUrl: '',
+        storyText: story.content,
+      });
+    }
+  }
+
+  return response;
+}
+
+export const handleStoriesGeneration = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { purchaseData, imageStyle, gender, traits } = req.body;
+
+    const parsedImageStyle = Array.isArray(imageStyle)
+      ? imageStyle
+      : typeof imageStyle === 'string'
+        ? imageStyle.split(',').map((s) => s.trim())
+        : [];
+
+    const parsedTraits = Array.isArray(traits)
+      ? traits
+      : typeof traits === 'string'
+        ? traits.split(',').map((t) => t.trim())
+        : [];
+
+    const parsedPurchaseData = Array.isArray(purchaseData)
+      ? purchaseData
+      : typeof purchaseData === 'string'
+        ? JSON.parse(purchaseData)
+        : [];
+
+    const jobId = await storiesService.createGenerationJob(
+      parsedPurchaseData,
+      parsedImageStyle,
+      gender || 'neutral',
+      parsedTraits
+    );
+
+    res.json({
+      success: true,
+      id: jobId,
+    });
+  } catch (error) {
+    console.error('❌ Stories generation initiation failed:', error);
+    res.status(500).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Stories generation failed. Please try again.',
+      timestamp: new Date().toISOString(),
+    });
+  }
+};
+
+export const handleStoriesPoll = (req: Request, res: Response): void => {
+  const { id } = req.params;
+
+  const job = storiesService.getJobStatus(id);
+
+  if (!job) {
+    res.status(404).json({
+      id,
+      status: 'not_found',
+      progress: 0,
+    });
+    return;
+  }
+
+  res.json({
+    id,
+    status: job.status,
+    progress: job.progress,
+    error: job.error,
+  });
+};
+
+export const handleGetStories = (req: Request, res: Response): void => {
+  const { id } = req.params;
+
+  const stories = storiesService.getJobResult(id);
+
+  if (!stories) {
+    const job = storiesService.getJobStatus(id);
+    if (!job) {
+      res.status(404).json({
+        error: 'Story not found',
+        id,
+      });
+      return;
+    }
+
+    res.status(202).json({
+      id,
+      status: job.status,
+      progress: job.progress,
+      stories: [],
+    });
+    return;
+  }
+
+  res.json({
+    id,
+    stories: convertStoriesToResponse(stories),
+  });
+};
+
 export const getStoryData = (id: string): StoryData => {
+  const stories = storiesService.getJobResult(id);
+
+  if (stories) {
+    return {
+      id,
+      stories: convertStoriesToResponse(stories),
+    };
+  }
+
   return {
     id,
     stories: [
@@ -35,33 +166,4 @@ export const getStoryData = (id: string): StoryData => {
       },
     ],
   };
-};
-
-export const handleStoriesGeneration = (req: Request, res: Response) => {
-  const storyId = crypto.randomUUID();
-  setTimeout(() => {
-    res.json({
-      success: true,
-      id: storyId,
-    });
-  }, 500);
-};
-
-export const handleStoriesPoll = (req: Request, res: Response) => {
-  const { id } = req.params;
-  setTimeout(() => {
-    res.json({
-      id,
-      status: 'completed',
-      progress: 100,
-    });
-  }, 300);
-};
-
-export const handleGetStories = (req: Request, res: Response) => {
-  const { id } = req.params;
-  setTimeout(() => {
-    const storyData = getStoryData(id);
-    res.json(storyData);
-  }, 300);
 };

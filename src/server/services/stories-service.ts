@@ -1,0 +1,304 @@
+import { Portkey } from 'portkey-ai';
+import { settings } from '../config.js';
+import { imageService } from './image-service.js';
+import { nanoid } from 'nanoid';
+
+const portkey = new Portkey({
+  apiKey: settings.PORTKEY_API_KEY,
+});
+
+type StoryItem = {
+  type: 'image' | 'text';
+  title: string;
+  content: string;
+  imageUrl?: string;
+  filename?: string;
+};
+
+type StoryChapter = {
+  title: string;
+  imagePrompt: string;
+  storyText: string;
+};
+
+type GenerationJob = {
+  id: string;
+  status: 'pending' | 'generating' | 'completed' | 'failed';
+  progress: number;
+  stories: StoryItem[];
+  error?: string;
+};
+
+const generationJobs = new Map<string, GenerationJob>();
+
+const SYSTEM_PROMPT = `You are a Data Analyst and FLUX.2 Prompt Engineer creating Spotify Wrapped-style stories.
+
+TASK: Create a 2-chapter visual journey by analyzing the user history:
+1. Identify patterns in genres (Goodreads) and food brands (GoFood) across the timeline.
+2. Create 2 chapters that flow narratively from one to the next.
+3. For each chapter, generate:
+   - A compelling title (3-5 words)
+   - An 80-100 word FLUX.2 image prompt blending dominant brand(s) with genre(s)
+   - A 2-4 line Spotify Wrapped-style story with stats
+
+FLUX.2 PROMPT RULES:
+- Order: Subject + Action + Style + Context
+- Blend food brands into the book's world (e.g., Starship-themed Starbucks for sci-fi)
+- Aesthetics: Specify camera (Hasselblad/Sony), lens (35mm/85mm), and film stock (Kodak/Fujifilm)
+- Consistency: Protagonist must always be 'a traveler with a silver backpack'
+- Aspect Ratio: Always end each prompt with '9:16 vertical portrait orientation'
+
+STORY FORMAT - SPOTIFY WRAPPED STYLE:
+- Short, punchy lines optimized for image overlay
+- Include specific stats/counts from the data (e.g., '3 sci-fi books', '4 Starbucks visits')
+- Tell a brief journey across the year
+- Use emojis and engaging voice
+- Max 4 lines, 2-3 lines ideal
+- Examples:
+  "You explored 3 sci-fi worlds this winter. ✨
+  Fueled by 4 Starbucks stops, a cosmic year begins."
+
+  "5 fantasy reads, 2 brand adventures. 🐉
+  Summer was pure magic."
+
+CONTINUITY RULES:
+- Chapter 2's story must logically continue from Chapter 1's story
+- Maintain consistent character and plot progression
+- Each image prompt should reflect the current story state
+
+OUTPUT FORMAT:
+Return ONLY raw JSON array with chapter objects:
+[
+  {
+    "title": "Chapter title here",
+    "imagePrompt": "FLUX.2 prompt for chapter 1",
+    "storyText": "Story text for chapter 1"
+  },
+  {
+    "title": "Chapter title here", 
+    "imagePrompt": "FLUX.2 prompt for chapter 2",
+    "storyText": "Story text for chapter 2"
+  }
+]`;
+
+function stripMarkdown(content: string): string {
+  if (content.includes('```json')) {
+    return content.split('```json')[1].split('```')[0].trim();
+  } else if (content.includes('```')) {
+    return content.split('```')[1].split('```')[0].trim();
+  }
+  return content.trim();
+}
+
+function parsePurchaseData(purchaseData: unknown[]): {
+  gofoodBrands: string[];
+  goodreadsData: Array<{ title: string; genre: string }>;
+} {
+  const gofoodBrands: string[] = [];
+  const goodreadsData: Array<{ title: string; genre: string }> = [];
+
+  for (const order of purchaseData) {
+    const orderRecord = order as Record<string, unknown>;
+
+    if (
+      orderRecord.brand === 'GoFood' &&
+      Array.isArray(orderRecord.product_names)
+    ) {
+      gofoodBrands.push(...orderRecord.product_names.map(String));
+    }
+
+    if (orderRecord.brand === 'Goodreads') {
+      const productNames = Array.isArray(orderRecord.product_names)
+        ? orderRecord.product_names
+        : [];
+      const genres = Array.isArray(orderRecord.genres)
+        ? orderRecord.genres
+        : [];
+
+      for (let i = 0; i < productNames.length; i++) {
+        goodreadsData.push({
+          title: String(productNames[i]),
+          genre: String(genres[i] || 'Unknown'),
+        });
+      }
+    }
+  }
+
+  return { gofoodBrands, goodreadsData };
+}
+
+async function generateStoryChapters(
+  purchaseData: unknown[]
+): Promise<StoryChapter[]> {
+  const { gofoodBrands, goodreadsData } = parsePurchaseData(purchaseData);
+
+  const userContent = `User History:
+
+GoFood Brands: ${JSON.stringify(gofoodBrands)}
+Goodreads Books: ${JSON.stringify(goodreadsData)}
+
+Analyze this data and create a 2-chapter visual story.`;
+
+  const response = await portkey.chat.completions.create({
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: userContent },
+    ],
+    model: '@OpenRouter/google/gemini-2.5-pro-preview',
+    max_tokens: 8192,
+  });
+
+  const rawContent = response.choices?.[0]?.message?.content;
+  const content =
+    typeof rawContent === 'string'
+      ? rawContent
+      : Array.isArray(rawContent)
+        ? JSON.stringify(rawContent)
+        : undefined;
+  if (!content) {
+    throw new Error('No content received from story generation API');
+  }
+
+  const strippedContent = stripMarkdown(content);
+  const parsedData: unknown = JSON.parse(strippedContent);
+
+  if (!Array.isArray(parsedData) || parsedData.length === 0) {
+    throw new Error('Invalid chapters format received');
+  }
+
+  const chapters: StoryChapter[] = [];
+  for (const item of parsedData) {
+    if (
+      typeof item === 'object' &&
+      item !== null &&
+      'title' in item &&
+      'imagePrompt' in item &&
+      'storyText' in item &&
+      typeof (item as Record<string, unknown>).title === 'string' &&
+      typeof (item as Record<string, unknown>).imagePrompt === 'string' &&
+      typeof (item as Record<string, unknown>).storyText === 'string'
+    ) {
+      chapters.push({
+        title: String((item as Record<string, unknown>).title),
+        imagePrompt: String((item as Record<string, unknown>).imagePrompt),
+        storyText: String((item as Record<string, unknown>).storyText),
+      });
+    }
+  }
+
+  if (chapters.length === 0) {
+    throw new Error('No valid chapters found in response');
+  }
+
+  return chapters;
+}
+
+class StoriesService {
+  async createGenerationJob(
+    purchaseData: unknown[],
+    imageStyle: string[],
+    gender: string,
+    traits: string[]
+  ): Promise<string> {
+    const jobId = nanoid(16);
+
+    generationJobs.set(jobId, {
+      id: jobId,
+      status: 'pending',
+      progress: 0,
+      stories: [],
+    });
+
+    this.processGenerationJob(
+      jobId,
+      purchaseData,
+      imageStyle,
+      gender,
+      traits
+    ).catch((error) => {
+      console.error(`Story generation job ${jobId} failed:`, error);
+      const job = generationJobs.get(jobId);
+      if (job) {
+        job.status = 'failed';
+        job.error = error instanceof Error ? error.message : 'Unknown error';
+      }
+    });
+
+    return jobId;
+  }
+
+  private async processGenerationJob(
+    jobId: string,
+    purchaseData: unknown[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    imageStyle: string[],
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    gender: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    traits: string[]
+  ): Promise<void> {
+    const job = generationJobs.get(jobId);
+    if (!job) return;
+
+    job.status = 'generating';
+
+    try {
+      const chapters = await generateStoryChapters(purchaseData);
+      const stories: StoryItem[] = [];
+
+      for (let i = 0; i < chapters.length; i++) {
+        const chapter = chapters[i];
+
+        job.progress = Math.round(((i * 2) / (chapters.length * 2)) * 100);
+
+        const imageData = await imageService.generate(
+          chapter.imagePrompt,
+          undefined
+        );
+
+        stories.push({
+          type: 'image',
+          title: chapter.title,
+          content: chapter.imagePrompt,
+          imageUrl: imageData.url || '',
+          filename: imageData.filename,
+        });
+
+        stories.push({
+          type: 'text',
+          title: chapter.title,
+          content: chapter.storyText,
+        });
+
+        job.progress = Math.round(((i * 2 + 1) / (chapters.length * 2)) * 100);
+      }
+
+      job.stories = stories;
+      job.status = 'completed';
+      job.progress = 100;
+    } catch (error) {
+      job.status = 'failed';
+      job.error = error instanceof Error ? error.message : 'Generation failed';
+      throw error;
+    }
+  }
+
+  getJobStatus(jobId: string): GenerationJob | undefined {
+    return generationJobs.get(jobId);
+  }
+
+  getJobResult(jobId: string): StoryItem[] | undefined {
+    const job = generationJobs.get(jobId);
+    if (job?.status === 'completed') {
+      return job.stories;
+    }
+    return undefined;
+  }
+
+  cleanupJob(jobId: string): void {
+    generationJobs.delete(jobId);
+  }
+}
+
+export const storiesService = new StoriesService();
+export type { StoryItem, GenerationJob };

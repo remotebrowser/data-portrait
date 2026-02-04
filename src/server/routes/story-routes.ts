@@ -37,14 +37,17 @@ storyRouter.get('/story/:storyId', async (req: Request, res: Response) => {
   }
 
   // Production: serve story.html with injected meta tags (Vite builds it to public/templates/)
-  const storyHtmlPath = path.join(process.cwd(), 'dist/client/public/templates/story.html');
+  const storyHtmlPath = path.join(
+    process.cwd(),
+    'dist/client/public/templates/story.html'
+  );
 
   try {
     // Read the story HTML template
     let storyHtml = await fs.readFile(storyHtmlPath, 'utf-8');
 
     // Get story data from shared handler
-    const storyData = getStoryData(storyId);
+    const storyData = await getStoryData(storyId);
 
     // Inject dynamic meta tags
     const baseUrl = `${req.protocol}://${req.get('host')}`;

@@ -31,24 +31,24 @@ type GenerationJob = {
 
 const generationJobs = new Map<string, GenerationJob>();
 
-const SYSTEM_PROMPT = `You are a Data Analyst and FLUX.2 Prompt Engineer creating Spotify Wrapped-style stories.
+const SYSTEM_PROMPT = `You are a Data Analyst creating visual stories from user data.
 
 TASK: Create a 2-chapter visual journey by analyzing the user history:
 1. Identify patterns in genres (Goodreads) and food brands (GoFood) across the timeline.
 2. Create 2 chapters that flow narratively from one to the next.
 3. For each chapter, generate:
    - A compelling title (3-5 words)
-   - An 80-100 word FLUX.2 image prompt blending dominant brand(s) with genre(s)
-   - A 2-4 line Spotify Wrapped-style story with stats
+   - An 80-100 word image prompt blending dominant brand(s) with genre(s)
+   - A 2-4 line story with stats
 
-FLUX.2 PROMPT RULES:
+IMAGE PROMPT RULES:
 - Order: Subject + Action + Style + Context
 - Blend food brands into the book's world (e.g., Starship-themed Starbucks for sci-fi)
 - Aesthetics: Specify camera (Hasselblad/Sony), lens (35mm/85mm), and film stock (Kodak/Fujifilm)
 - Consistency: Protagonist must always be 'a traveler with a silver backpack'
 - Aspect Ratio: Always end each prompt with '9:16 vertical portrait orientation'
 
-STORY FORMAT - SPOTIFY WRAPPED STYLE:
+STORY FORMAT:
 - Short, punchy lines optimized for image overlay
 - Include specific stats/counts from the data (e.g., '3 sci-fi books', '4 Starbucks visits')
 - Tell a brief journey across the year
@@ -71,12 +71,12 @@ Return ONLY raw JSON array with chapter objects:
 [
   {
     "title": "Chapter title here",
-    "imagePrompt": "FLUX.2 prompt for chapter 1",
+    "imagePrompt": "Image prompt for chapter 1",
     "storyText": "Story text for chapter 1"
   },
   {
     "title": "Chapter title here", 
-    "imagePrompt": "FLUX.2 prompt for chapter 2",
+    "imagePrompt": "Image prompt for chapter 2",
     "storyText": "Story text for chapter 2"
   }
 ]`;

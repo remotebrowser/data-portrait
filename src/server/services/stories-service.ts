@@ -64,31 +64,7 @@ STORY FORMAT:
 CONTINUITY RULES:
 - Chapter 2's story must logically continue from Chapter 1's story
 - Maintain consistent character and plot progression
-- Each image prompt should reflect the current story state
-
-OUTPUT FORMAT:
-Return ONLY raw JSON array with chapter objects:
-[
-  {
-    "title": "Chapter title here",
-    "imagePrompt": "Image prompt for chapter 1",
-    "storyText": "Story text for chapter 1"
-  },
-  {
-    "title": "Chapter title here", 
-    "imagePrompt": "Image prompt for chapter 2",
-    "storyText": "Story text for chapter 2"
-  }
-]`;
-
-function stripMarkdown(content: string): string {
-  if (content.includes('```json')) {
-    return content.split('```json')[1].split('```')[0].trim();
-  } else if (content.includes('```')) {
-    return content.split('```')[1].split('```')[0].trim();
-  }
-  return content.trim();
-}
+- Each image prompt should reflect the current story state`;
 
 function parsePurchaseData(purchaseData: unknown[]): {
   gofoodBrands: string[];
@@ -146,21 +122,41 @@ Analyze this data and create a 2-chapter visual story.`;
     ],
     model: '@OpenRouter/google/gemini-2.5-pro-preview',
     max_tokens: 8192,
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'story_chapters',
+        description: 'Array of story chapters',
+        strict: true,
+        schema: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: {
+                type: 'string',
+                description: 'Chapter title (3-5 words)',
+              },
+              imagePrompt: {
+                type: 'string',
+                description: 'Image prompt (80-100 words)',
+              },
+              storyText: {
+                type: 'string',
+                description: 'Story text (2-4 lines)',
+              },
+            },
+            required: ['title', 'imagePrompt', 'storyText'],
+          },
+        },
+      },
+    },
   });
 
   const rawContent = response.choices?.[0]?.message?.content;
   const content =
-    typeof rawContent === 'string'
-      ? rawContent
-      : Array.isArray(rawContent)
-        ? JSON.stringify(rawContent)
-        : undefined;
-  if (!content) {
-    throw new Error('No content received from story generation API');
-  }
-
-  const strippedContent = stripMarkdown(content);
-  const parsedData: unknown = JSON.parse(strippedContent);
+    typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+  const parsedData: unknown = JSON.parse(content);
 
   if (!Array.isArray(parsedData) || parsedData.length === 0) {
     throw new Error('Invalid chapters format received');

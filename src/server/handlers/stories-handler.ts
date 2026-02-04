@@ -79,10 +79,13 @@ export const handleStoriesGeneration = async (
   }
 };
 
-export const handleStoriesPoll = (req: Request, res: Response): void => {
+export const handleStoriesPoll = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { id } = req.params;
 
-  const job = storiesService.getJobStatus(id);
+  const job = await storiesService.getJobStatusWithFallback(id);
 
   if (!job) {
     res.status(404).json({
@@ -101,13 +104,16 @@ export const handleStoriesPoll = (req: Request, res: Response): void => {
   });
 };
 
-export const handleGetStories = (req: Request, res: Response): void => {
+export const handleGetStories = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   const { id } = req.params;
 
-  const stories = storiesService.getJobResult(id);
+  const stories = await storiesService.getJobResultWithFallback(id);
 
   if (!stories) {
-    const job = storiesService.getJobStatus(id);
+    const job = await storiesService.getJobStatusWithFallback(id);
     if (!job) {
       res.status(404).json({
         error: 'Story not found',
@@ -131,8 +137,8 @@ export const handleGetStories = (req: Request, res: Response): void => {
   });
 };
 
-export const getStoryData = (id: string): StoryData => {
-  const stories = storiesService.getJobResult(id);
+export const getStoryData = async (id: string): Promise<StoryData> => {
+  const stories = await storiesService.getJobResultWithFallback(id);
 
   if (stories) {
     return {

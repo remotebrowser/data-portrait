@@ -1,6 +1,8 @@
 import { Portkey } from 'portkey-ai';
 import { settings } from '../config.js';
 import { imageService } from './image-service.js';
+import { gcsService, type StoryMetadata } from './gcs-service.js';
+import { promptService } from './prompt-service.js';
 import { nanoid } from 'nanoid';
 
 const portkey = new Portkey({
@@ -31,6 +33,37 @@ type GenerationJob = {
 
 const generationJobs = new Map<string, GenerationJob>();
 
+function hasGCSConfig(): boolean {
+  return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
+}
+
+function storyItemsToMetadata(
+  jobId: string,
+  stories: StoryItem[]
+): StoryMetadata {
+  return {
+    id: jobId,
+    createdAt: new Date().toISOString(),
+    stories: stories.map((story) => ({
+      type: story.type,
+      title: story.title,
+      content: story.content,
+      imageUrl: story.imageUrl,
+      filename: story.filename,
+    })),
+  };
+}
+
+function metadataToStoryItems(metadata: StoryMetadata): StoryItem[] {
+  return metadata.stories.map((story) => ({
+    type: story.type,
+    title: story.title,
+    content: story.content,
+    imageUrl: story.imageUrl,
+    filename: story.filename,
+  }));
+}
+
 const SYSTEM_PROMPT = `You are a Data Analyst creating visual stories from user data.
 
 TASK: Create a 2-chapter visual journey by analyzing the user history:
@@ -45,8 +78,9 @@ IMAGE PROMPT RULES:
 - Order: Subject + Action + Style + Context
 - Blend food brands into the book's world (e.g., Starship-themed Starbucks for sci-fi)
 - Aesthetics: Specify camera (Hasselblad/Sony), lens (35mm/85mm), and film stock (Kodak/Fujifilm)
-- Consistency: Protagonist must always be 'a traveler with a silver backpack'
+- Subject: The user themselves as the main character (not a generic traveler)
 - Aspect Ratio: Always end each prompt with '9:16 vertical portrait orientation'
+- Character: Use the provided character description to personalize the protagonist
 
 STORY FORMAT:
 - Short, punchy lines optimized for image overlay
@@ -63,8 +97,8 @@ STORY FORMAT:
 
 CONTINUITY RULES:
 - Chapter 2's story must logically continue from Chapter 1's story
-- Maintain consistent character and plot progression
-- Each image prompt should reflect the current story state`;
+- Maintain consistent character progression
+- Each image prompt should reflect the current story state and character appearance`;
 
 function parsePurchaseData(purchaseData: unknown[]): {
   gofoodBrands: string[];
@@ -104,16 +138,28 @@ function parsePurchaseData(purchaseData: unknown[]): {
 }
 
 async function generateStoryChapters(
-  purchaseData: unknown[]
+  purchaseData: unknown[],
+  imageStyle: string[],
+  gender: string,
+  traits: string[]
 ): Promise<StoryChapter[]> {
   const { gofoodBrands, goodreadsData } = parsePurchaseData(purchaseData);
+
+  // Build character description for the story
+  const characterPrompt = await promptService.buildPrompt({
+    imageStyle,
+    gender,
+    traits,
+    purchaseData,
+  });
 
   const userContent = `User History:
 
 GoFood Brands: ${JSON.stringify(gofoodBrands)}
 Goodreads Books: ${JSON.stringify(goodreadsData)}
+Character Description: ${characterPrompt}
 
-Analyze this data and create a 2-chapter visual story.`;
+Analyze this data and create a 2-chapter visual story featuring this specific character as the protagonist.`;
 
   const response = await portkey.chat.completions.create({
     messages: [
@@ -226,11 +272,8 @@ class StoriesService {
   private async processGenerationJob(
     jobId: string,
     purchaseData: unknown[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     imageStyle: string[],
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     gender: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     traits: string[]
   ): Promise<void> {
     const job = generationJobs.get(jobId);
@@ -239,7 +282,12 @@ class StoriesService {
     job.status = 'generating';
 
     try {
-      const chapters = await generateStoryChapters(purchaseData);
+      const chapters = await generateStoryChapters(
+        purchaseData,
+        imageStyle,
+        gender,
+        traits
+      );
       const stories: StoryItem[] = [];
 
       for (let i = 0; i < chapters.length; i++) {
@@ -272,6 +320,18 @@ class StoriesService {
       job.stories = stories;
       job.status = 'completed';
       job.progress = 100;
+
+      if (hasGCSConfig()) {
+        try {
+          const metadata = storyItemsToMetadata(jobId, stories);
+          await gcsService.uploadMetadata(metadata);
+        } catch (error) {
+          console.error(
+            `Failed to persist story metadata for job ${jobId}:`,
+            error
+          );
+        }
+      }
     } catch (error) {
       job.status = 'failed';
       job.error = error instanceof Error ? error.message : 'Generation failed';
@@ -280,7 +340,35 @@ class StoriesService {
   }
 
   getJobStatus(jobId: string): GenerationJob | undefined {
-    return generationJobs.get(jobId);
+    const inMemoryJob = generationJobs.get(jobId);
+    if (inMemoryJob) {
+      return inMemoryJob;
+    }
+
+    return undefined;
+  }
+
+  async getJobStatusWithFallback(
+    jobId: string
+  ): Promise<GenerationJob | undefined> {
+    const inMemoryJob = generationJobs.get(jobId);
+    if (inMemoryJob) {
+      return inMemoryJob;
+    }
+
+    if (hasGCSConfig()) {
+      const metadata = await gcsService.downloadMetadata(jobId);
+      if (metadata) {
+        return {
+          id: jobId,
+          status: 'completed',
+          progress: 100,
+          stories: metadataToStoryItems(metadata),
+        };
+      }
+    }
+
+    return undefined;
   }
 
   getJobResult(jobId: string): StoryItem[] | undefined {
@@ -288,6 +376,24 @@ class StoriesService {
     if (job?.status === 'completed') {
       return job.stories;
     }
+    return undefined;
+  }
+
+  async getJobResultWithFallback(
+    jobId: string
+  ): Promise<StoryItem[] | undefined> {
+    const inMemoryResult = this.getJobResult(jobId);
+    if (inMemoryResult) {
+      return inMemoryResult;
+    }
+
+    if (hasGCSConfig()) {
+      const metadata = await gcsService.downloadMetadata(jobId);
+      if (metadata) {
+        return metadataToStoryItems(metadata);
+      }
+    }
+
     return undefined;
   }
 

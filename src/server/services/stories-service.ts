@@ -100,51 +100,12 @@ CONTINUITY RULES:
 - Maintain consistent character progression
 - Each image prompt should reflect the current story state and character appearance`;
 
-function parsePurchaseData(purchaseData: unknown[]): {
-  gofoodBrands: string[];
-  goodreadsData: Array<{ title: string; genre: string }>;
-} {
-  const gofoodBrands: string[] = [];
-  const goodreadsData: Array<{ title: string; genre: string }> = [];
-
-  for (const order of purchaseData) {
-    const orderRecord = order as Record<string, unknown>;
-
-    if (
-      orderRecord.brand === 'GoFood' &&
-      Array.isArray(orderRecord.product_names)
-    ) {
-      gofoodBrands.push(...orderRecord.product_names.map(String));
-    }
-
-    if (orderRecord.brand === 'Goodreads') {
-      const productNames = Array.isArray(orderRecord.product_names)
-        ? orderRecord.product_names
-        : [];
-      const genres = Array.isArray(orderRecord.genres)
-        ? orderRecord.genres
-        : [];
-
-      for (let i = 0; i < productNames.length; i++) {
-        goodreadsData.push({
-          title: String(productNames[i]),
-          genre: String(genres[i] || 'Unknown'),
-        });
-      }
-    }
-  }
-
-  return { gofoodBrands, goodreadsData };
-}
-
 async function generateStoryChapters(
   purchaseData: unknown[],
   imageStyle: string[],
   gender: string,
   traits: string[]
 ): Promise<StoryChapter[]> {
-  const { gofoodBrands, goodreadsData } = parsePurchaseData(purchaseData);
-
   // Build character description for the story
   const characterPrompt = await promptService.buildPrompt({
     imageStyle,
@@ -153,13 +114,10 @@ async function generateStoryChapters(
     purchaseData,
   });
 
-  const userContent = `User History:
-
-GoFood Brands: ${JSON.stringify(gofoodBrands)}
-Goodreads Books: ${JSON.stringify(goodreadsData)}
+  const userContent = `User Purchase History: ${JSON.stringify(purchaseData)}
 Character Description: ${characterPrompt}
 
-Analyze this data and create a 2-chapter visual story featuring this specific character as the protagonist.`;
+Analyze this complete purchase data and create a 2-chapter visual story featuring this specific character as the protagonist. Focus on patterns across all brands and product categories to create a comprehensive narrative.`;
 
   const response = await portkey.chat.completions.create({
     messages: [

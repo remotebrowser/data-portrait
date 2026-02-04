@@ -1,0 +1,64 @@
+{
+  "brand_id": "garmin",
+  "brand_name": "Garmin",
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Garmin_logo_2006.svg",
+  "is_mandatory": false,
+  "is_dpage": true,
+  "schema": [
+    {
+      "name": "email",
+      "type": "email",
+      "prompt": "Email"
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "prompt": "Password"
+    },
+    {
+      "name": "continue,sign_in",
+      "type": "click",
+      "prompt": "Sign In",
+      "dependsOnFields": "email"
+    }
+  ],
+  "dataTransform": {
+    "dataPath": "garmin_activity_history",
+    "fieldMappings": [
+      {
+        "outputKey": "brand",
+        "sourcePath": "brand",
+        "defaultValue": "Garmin"
+      },
+      {
+        "outputKey": "order_date",
+        "sourcePath": "activity_date",
+        "defaultValue": "N/A",
+        "transform": "date"
+      },
+      {
+        "outputKey": "order_total",
+        "sourcePath": "time",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "order_id",
+        "sourcePath": "activity_name",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "product_names",
+        "sourcePath": "activity_name",
+        "defaultValue": "N/A",
+        "convertToArray": true
+      },
+      {
+        "outputKey": "image_urls",
+        "sourcePath": "activity_icon",
+        "defaultValue": "N/A",
+        "transform": "image",
+        "convertToArray": true
+      }
+    ]
+  }
+}

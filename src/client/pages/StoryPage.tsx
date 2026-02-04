@@ -8,6 +8,7 @@ type StoriesApiResponse = {
   stories: Array<{
     title: string;
     imageUrl: string;
+    storyText?: string;
   }>;
 };
 
@@ -44,6 +45,8 @@ export function StoryPage() {
             url: story.imageUrl,
             filename: `story-${index + 1}.png`,
             timestamp: new Date().toISOString(),
+            storyText: story.storyText,
+            title: story.title,
           })),
         };
 

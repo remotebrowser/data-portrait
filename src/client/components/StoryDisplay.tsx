@@ -3,7 +3,10 @@ import Stories from 'react-insta-stories';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { SocialShareButtons } from './SocialShareButtons.js';
-import type { GeneratedImage } from '../modules/PortraitGeneration.js';
+import type {
+  GeneratedImage,
+  ImageData,
+} from '../modules/PortraitGeneration.js';
 import type { Story } from 'react-insta-stories/dist/interfaces.js';
 
 const StoriesComponent = Stories as unknown as React.ComponentType<{
@@ -26,6 +29,63 @@ type StoryDisplayProps = {
 };
 
 /**
+ * Create a text story content component for react-insta-stories
+ */
+function createTextStoryContent(storyText: string, title?: string) {
+  return () => (
+    <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col items-center justify-center p-8 text-center">
+      <div className="max-w-full overflow-y-auto">
+        {title && (
+          <h2 className="text-2xl font-bold text-white mb-6 drop-shadow-lg">
+            {title}
+          </h2>
+        )}
+        <p className="text-lg text-white leading-relaxed drop-shadow-md whitespace-pre-wrap">
+          {storyText}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Transform ImageData array to react-insta-stories Story array
+ * - If imageUrl exists (and is not empty), render as image story
+ * - If storyText exists, render as text story
+ * - If neither exists, skip the story
+ */
+function transformToStories(images: ImageData[]): Story[] {
+  const stories: Story[] = [];
+
+  for (const image of images) {
+    const hasImage = image.url && image.url.trim() !== '';
+    const hasText = image.storyText && image.storyText.trim() !== '';
+
+    if (hasImage) {
+      stories.push({
+        url: image.url,
+        header: {
+          heading: image.title || 'Your Data Portrait',
+          subheading: image.filename || '',
+          profileImage: '',
+        },
+      });
+    } else if (hasText) {
+      stories.push({
+        content: createTextStoryContent(image.storyText!, image.title),
+        header: {
+          heading: image.title || 'Your Story',
+          subheading: '',
+          profileImage: '',
+        },
+      });
+    }
+  }
+
+  return stories;
+}
+
+/**
  * Reusable story display component using react-insta-stories.
  * Used by both StoryPreviewModal (modal context) and StoryPage (fullscreen).
  */
@@ -38,24 +98,21 @@ export function StoryDisplay({
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
 
   const stories: Story[] = useMemo(
-    () =>
-      story.images.map((image) => ({
-        url: image.url,
-        header: {
-          heading: 'Your Data Portrait',
-          subheading: image.filename || '',
-          profileImage: '',
-        },
-      })),
+    () => transformToStories(story.images),
     [story.images]
   );
 
   const handleDownloadCurrent = () => {
     const currentImage = story.images[currentStoryIndex];
-    if (currentImage) {
+    if (currentImage?.url) {
       window.open(currentImage.url, '_blank');
     }
   };
+
+  // Check if current story is an image (has url)
+  const isCurrentStoryImage = story.images[currentStoryIndex]?.url
+    ? true
+    : false;
 
   const shareUrl = story.id
     ? `${window.location.origin}/story/${story.id}`
@@ -86,7 +143,7 @@ export function StoryDisplay({
       <div className="absolute bottom-4 right-4 z-[999] flex gap-2 items-center">
         {showShare && shareUrl && <SocialShareButtons url={shareUrl} />}
 
-        {showDownload && (
+        {showDownload && isCurrentStoryImage && (
           <Button
             variant="ghost"
             size="sm"

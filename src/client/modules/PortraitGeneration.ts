@@ -9,6 +9,8 @@ export type ImageData = {
   timestamp: string;
   filename?: string;
   style?: string[];
+  storyText?: string;
+  title?: string;
 };
 
 export type GeneratedImage = {
@@ -51,6 +53,7 @@ type StoriesPollResponse = {
 type StoryItem = {
   title?: string;
   imageUrl: string;
+  storyText?: string;
 };
 
 type StoriesResponse = {
@@ -64,7 +67,9 @@ function createImageData(
   model: string = 'gemini',
   provider: string = 'unknown',
   timestamp: string = new Date().toISOString(),
-  filename: string = 'unknown'
+  filename: string = 'unknown',
+  storyText?: string,
+  title?: string
 ): ImageData {
   return {
     url,
@@ -73,6 +78,8 @@ function createImageData(
     timestamp,
     filename,
     style: imageStyle,
+    storyText,
+    title,
   };
 }
 
@@ -200,7 +207,8 @@ async function generateStories(
       'gemini',
       'unknown',
       new Date().toISOString(),
-      story.title || 'unknown'
+      story.title || 'unknown',
+      story.storyText
     )
   );
 

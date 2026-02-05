@@ -13,33 +13,10 @@ type LogContext = {
 export class ServerLogger {
   static info(message: string, context?: LogContext) {
     console.log(`[INFO] ${message}`, context ? JSON.stringify(context) : '');
-
-    try {
-      // Check if logfire is available
-      if (process.env.LOGFIRE_TOKEN) {
-        const logfire = require('@pydantic/logfire-node');
-        logfire.info(message, context || {});
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Logger.info] Logfire error:', error);
-      }
-    }
   }
 
   static warn(message: string, context?: LogContext) {
     console.warn(`[WARN] ${message}`, context ? JSON.stringify(context) : '');
-
-    try {
-      if (process.env.LOGFIRE_TOKEN) {
-        const logfire = require('@pydantic/logfire-node');
-        logfire.warning(message, context || {});
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Logger.warn] Logfire error:', error);
-      }
-    }
   }
 
   static error(message: string, error?: Error, context?: LogContext) {
@@ -48,17 +25,6 @@ export class ServerLogger {
       error?.message || '',
       context ? JSON.stringify(context) : ''
     );
-
-    try {
-      if (process.env.LOGFIRE_TOKEN) {
-        const logfire = require('@pydantic/logfire-node');
-        logfire.error(message, { ...context, error: error?.message });
-      }
-    } catch (err) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('[Logger.error] Logfire error:', err);
-      }
-    }
 
     Sentry.withScope((scope: Sentry.Scope) => {
       if (context?.component) scope.setTag('component', context.component);
@@ -89,15 +55,6 @@ export class ServerLogger {
         `[DEBUG] ${message}`,
         context ? JSON.stringify(context, null, 2) : ''
       );
-
-      try {
-        if (process.env.LOGFIRE_TOKEN) {
-          const logfire = require('@pydantic/logfire-node');
-          logfire.debug(message, context || {});
-        }
-      } catch (error) {
-        // Silently fail if logfire is not configured
-      }
     }
   }
 }

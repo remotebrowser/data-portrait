@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { ClientLogger } from '../../utils/logger/client.js';
+import { ClientLogger } from '@/utils/logger/client.js';
 
 const logger = new ClientLogger();
 

@@ -1,4 +1,4 @@
-import { ClientLogger } from '../../utils/logger/client.js';
+import { ClientLogger } from '@/utils/logger/client.js';
 
 export type PurchaseHistory = {
   brand: string;

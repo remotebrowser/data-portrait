@@ -1,6 +1,6 @@
 import { Request } from 'express';
 import { City, WebServiceClient } from '@maxmind/geoip2-node';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 export interface LocationData {
   ip: string;
@@ -27,7 +27,7 @@ class GeolocationService {
 
   getClientLocationFromCache(ipAddress: string) {
     const cachedLocationData = this.ipCache.get(ipAddress);
-    ServerLogger.debug('Retrieved cached location data', {
+    Logger.debug('Retrieved cached location data', {
       component: 'geolocation-service',
       operation: 'get-from-cache',
       ipAddress,
@@ -55,7 +55,7 @@ class GeolocationService {
         postal_code: cachedLocationData?.postal?.code ?? null,
       };
 
-      ServerLogger.debug('Client location resolved', {
+      Logger.debug('Client location resolved', {
         component: 'geolocation-service',
         operation: 'resolve-location',
         ...requestLocationData,
@@ -65,7 +65,7 @@ class GeolocationService {
   }
 
   async getClientLocation(ipAddress: string): Promise<City | null> {
-    ServerLogger.debug('Getting client location', {
+    Logger.debug('Getting client location', {
       component: 'geolocation-service',
       operation: 'get-location',
       ipAddress,
@@ -81,7 +81,7 @@ class GeolocationService {
 
     const cached = this.ipCache.get(ipAddress);
     if (cached) {
-      ServerLogger.debug('Using cached location response', {
+      Logger.debug('Using cached location response', {
         component: 'geolocation-service',
         operation: 'get-location',
         ipAddress,
@@ -91,7 +91,7 @@ class GeolocationService {
 
     // MaxMind API call with built-in timeout
     if (!settings.MAXMIND_ACCOUNT_ID || !settings.MAXMIND_LICENSE_KEY) {
-      ServerLogger.warn('MaxMind account ID or license key not configured', {
+      Logger.warn('MaxMind account ID or license key not configured', {
         component: 'geolocation-service',
         operation: 'initialization',
       });
@@ -107,14 +107,14 @@ class GeolocationService {
 
       const response = await client.city(ipAddress);
       this.ipCache.set(ipAddress, response);
-      ServerLogger.debug('Cached location response', {
+      Logger.debug('Cached location response', {
         component: 'geolocation-service',
         operation: 'cache-set',
         ipAddress,
       });
       return response;
     } catch (error) {
-      ServerLogger.error('Error geolocating IP', error as Error, {
+      Logger.error('Error geolocating IP', error as Error, {
         component: 'geolocation-service',
         operation: 'get-location',
         ipAddress,

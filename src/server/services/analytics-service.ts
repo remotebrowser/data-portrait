@@ -1,5 +1,5 @@
 import { Analytics } from '@segment/analytics-node';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 
 class AnalyticsService {
@@ -15,7 +15,7 @@ class AnalyticsService {
         writeKey: settings.SEGMENT_WRITE_KEY,
       });
     }
-    ServerLogger.info('Analytics disabled - no write key configured', {
+    Logger.info('Analytics disabled - no write key configured', {
       component: 'analytics-service',
       operation: 'initialization',
     });
@@ -40,7 +40,7 @@ class AnalyticsService {
         traits: finalTraits,
       });
     } catch (error) {
-      ServerLogger.error('Analytics identify failed', error as Error, {
+      Logger.error('Analytics identify failed', error as Error, {
         component: 'analytics-service',
         operation: 'identify',
       });
@@ -65,7 +65,7 @@ class AnalyticsService {
         },
       });
     } catch (error) {
-      ServerLogger.error('Analytics track failed', error as Error, {
+      Logger.error('Analytics track failed', error as Error, {
         component: 'analytics-service',
         operation: 'track',
       });
@@ -78,7 +78,7 @@ class AnalyticsService {
     try {
       await this.analytics.closeAndFlush();
     } catch (error) {
-      ServerLogger.error('Analytics flush failed', error as Error, {
+      Logger.error('Analytics flush failed', error as Error, {
         component: 'analytics-service',
         operation: 'flush',
       });

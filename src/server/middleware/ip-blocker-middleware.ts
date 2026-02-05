@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { GeolocationService } from '../services/geolocation-service.js';
 
 const blockedDomains = [
@@ -70,7 +70,7 @@ export class IPBlockerMiddleware {
     response: Response,
     next: NextFunction
   ): Promise<void> => {
-    ServerLogger.debug('IPBlockerMiddleware middleware called', {
+    Logger.debug('IPBlockerMiddleware middleware called', {
       component: 'ip-blocker',
     });
     try {
@@ -78,7 +78,7 @@ export class IPBlockerMiddleware {
       const locationData =
         await this.geolocationService.getClientLocation(clientIp);
 
-      ServerLogger.debug('IPBlockerMiddleware checking domain', {
+      Logger.debug('IPBlockerMiddleware checking domain', {
         component: 'ip-blocker',
         domain: locationData?.traits?.domain,
       });
@@ -91,15 +91,12 @@ export class IPBlockerMiddleware {
           )
         ) {
           const delay = 3000 + Math.random() * 5000;
-          ServerLogger.warn(
-            'IPBlockerMiddleware blocked cloud provider domain',
-            {
-              component: 'ip-blocker',
-              domain,
-              delay,
-              operation: 'block-domain',
-            }
-          );
+          Logger.warn('IPBlockerMiddleware blocked cloud provider domain', {
+            component: 'ip-blocker',
+            domain,
+            delay,
+            operation: 'block-domain',
+          });
           setTimeout(() => {
             response.status(403).send('Access denied.');
           }, delay);
@@ -109,13 +106,9 @@ export class IPBlockerMiddleware {
 
       next();
     } catch (error) {
-      ServerLogger.error(
-        'IPBlockerMiddleware middleware error',
-        error as Error,
-        {
-          component: 'ip-blocker',
-        }
-      );
+      Logger.error('IPBlockerMiddleware middleware error', error as Error, {
+        component: 'ip-blocker',
+      });
       next();
     }
   };

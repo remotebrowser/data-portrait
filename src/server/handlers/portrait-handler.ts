@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { promptService } from '../services/prompt-service.js';
 import { imageService } from '../services/image-service.js';
 import { unlink } from 'fs/promises';
@@ -28,7 +28,7 @@ export const handlePortraitGeneration = async (
     if (uploadedFile) {
       filesToClean.push(uploadedFile.path);
 
-      ServerLogger.info('Processing uploaded image', {
+      Logger.info('Processing uploaded image', {
         component: 'portrait-handler',
         operation: 'upload-process',
         originalName: uploadedFile.originalname,
@@ -87,7 +87,7 @@ export const handlePortraitGeneration = async (
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    ServerLogger.error('Portrait generation failed', error as Error, {
+    Logger.error('Portrait generation failed', error as Error, {
       component: 'portrait-handler',
       operation: 'generate-portrait',
     });
@@ -103,13 +103,13 @@ export const handlePortraitGeneration = async (
     for (const filePath of filesToClean) {
       try {
         await unlink(filePath);
-        ServerLogger.debug('Cleaned up temporary file', {
+        Logger.debug('Cleaned up temporary file', {
           component: 'portrait-handler',
           operation: 'cleanup',
           filePath,
         });
       } catch (error) {
-        ServerLogger.warn('Failed to cleanup temporary file', {
+        Logger.warn('Failed to cleanup temporary file', {
           component: 'portrait-handler',
           operation: 'cleanup',
           filePath,

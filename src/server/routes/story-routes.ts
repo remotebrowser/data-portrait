@@ -1,7 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { getStoryData, type StoryData } from '../handlers/stories-handler.js';
 
 export const storyRouter = Router();
@@ -58,7 +58,7 @@ storyRouter.get('/story/:storyId', async (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'text/html');
     res.send(storyHtml);
   } catch (error) {
-    ServerLogger.error('Error serving story page', error as Error, {
+    Logger.error('Error serving story page', error as Error, {
       component: 'story-routes',
       operation: 'serve-story',
       storyId,

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { handlePortraitGeneration } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
@@ -64,7 +64,7 @@ router.get('/stories/:id', handleGetStories);
 
 router.post('/log', (req, res) => {
   // Log received orders from client
-  ServerLogger.info('Received orders from client', {
+  Logger.info('Received orders from client', {
     component: 'api-routes',
     operation: 'receive-orders',
     brand: req.body.brand,

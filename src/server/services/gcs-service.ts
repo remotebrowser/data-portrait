@@ -1,5 +1,5 @@
 import { Storage } from '@google-cloud/storage';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 
 type UploadResult = {
@@ -112,7 +112,7 @@ export const gcsService = {
 
       return null;
     } catch (error) {
-      ServerLogger.error('Failed to download metadata', error as Error, {
+      Logger.error('Failed to download metadata', error as Error, {
         component: 'gcs-service',
         operation: 'download-metadata',
         jobId,

@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 
 const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
@@ -127,17 +127,14 @@ etc.`;
         response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
       if (!result) {
-        ServerLogger.warn(
-          'Product simplification failed, using original names',
-          {
-            component: 'prompt-service',
-            operation: 'simplify-products',
-          }
-        );
+        Logger.warn('Product simplification failed, using original names', {
+          component: 'prompt-service',
+          operation: 'simplify-products',
+        });
         return products;
       }
 
-      ServerLogger.debug('AI simplification result', {
+      Logger.debug('AI simplification result', {
         component: 'prompt-service',
         operation: 'simplify-products',
         result,
@@ -151,7 +148,7 @@ etc.`;
 
       // Ensure we have the same number of items
       if (simplifiedItems.length !== products.length) {
-        ServerLogger.warn('Mismatch in product count', {
+        Logger.warn('Mismatch in product count', {
           component: 'prompt-service',
           operation: 'simplify-products',
           originalCount: products.length,
@@ -160,14 +157,14 @@ etc.`;
         return products;
       }
 
-      ServerLogger.info(`Simplified products successfully`, {
+      Logger.info(`Simplified products successfully`, {
         component: 'prompt-service',
         operation: 'simplify-products',
         count: products.length,
       });
       return simplifiedItems;
     } catch (error) {
-      ServerLogger.error('Product simplification failed', error as Error, {
+      Logger.error('Product simplification failed', error as Error, {
         component: 'prompt-service',
         operation: 'simplify-products',
       });

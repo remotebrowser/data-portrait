@@ -1,5 +1,5 @@
 import { Portkey } from 'portkey-ai';
-import { ServerLogger } from '../utils/logger/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 import { imageService } from './image-service.js';
 import { gcsService, type StoryMetadata } from './gcs-service.js';
@@ -217,7 +217,7 @@ class StoriesService {
       gender,
       traits
     ).catch((error) => {
-      ServerLogger.error('Story generation job failed', error as Error, {
+      Logger.error('Story generation job failed', error as Error, {
         component: 'stories-service',
         operation: 'process-generation-job',
         jobId,
@@ -289,15 +289,11 @@ class StoriesService {
           const metadata = storyItemsToMetadata(jobId, stories);
           await gcsService.uploadMetadata(metadata);
         } catch (error) {
-          ServerLogger.error(
-            'Failed to persist story metadata',
-            error as Error,
-            {
-              component: 'stories-service',
-              operation: 'persist-metadata',
-              jobId,
-            }
-          );
+          Logger.error('Failed to persist story metadata', error as Error, {
+            component: 'stories-service',
+            operation: 'persist-metadata',
+            jobId,
+          });
         }
       }
     } catch (error) {

@@ -4,7 +4,7 @@ import {
   type CompatibilityCallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { ServerLogger } from './utils/logger/index.js';
+import { ServerLogger as Logger } from './utils/logger/index.js';
 import { settings } from './config.js';
 import { geolocationService } from './services/geolocation-service.js';
 
@@ -76,7 +76,7 @@ class MCPClient {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        ServerLogger.info('Calling MCP tool', {
+        Logger.info('Calling MCP tool', {
           component: 'mcp-client',
           operation: 'call-tool',
           toolName: params.name,
@@ -91,7 +91,7 @@ class MCPClient {
         if (attempt === maxRetries) {
           throw err;
         }
-        ServerLogger.warn(
+        Logger.warn(
           `callTool failed (attempt ${attempt + 1}/${maxRetries + 1}), attempting MCP client reconnect...`,
           {
             component: 'mcp-client',

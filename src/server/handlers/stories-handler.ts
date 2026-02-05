@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { ServerLogger } from '../utils/logger/index.js';
 import { storiesService, type StoryItem } from '../services/stories-service.js';
 
 export type StoryData = {
@@ -68,7 +69,10 @@ export const handleStoriesGeneration = async (
       id: jobId,
     });
   } catch (error) {
-    console.error('❌ Stories generation initiation failed:', error);
+    ServerLogger.error('Stories generation initiation failed', error as Error, {
+      component: 'stories-handler',
+      operation: 'generate-stories',
+    });
     res.status(500).json({
       error:
         error instanceof Error

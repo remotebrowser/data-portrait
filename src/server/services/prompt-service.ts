@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { ServerLogger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 
 const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
@@ -126,11 +127,21 @@ etc.`;
         response.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
       if (!result) {
-        console.warn('⚠️ Product simplification failed, using original names');
+        ServerLogger.warn(
+          'Product simplification failed, using original names',
+          {
+            component: 'prompt-service',
+            operation: 'simplify-products',
+          }
+        );
         return products;
       }
 
-      console.log('🔍 AI simplification result:', result);
+      ServerLogger.debug('AI simplification result', {
+        component: 'prompt-service',
+        operation: 'simplify-products',
+        result,
+      });
 
       // Parse the numbered list response
       const simplifiedItems = result
@@ -140,16 +151,26 @@ etc.`;
 
       // Ensure we have the same number of items
       if (simplifiedItems.length !== products.length) {
-        console.warn(
-          `⚠️ Mismatch in product count: ${products.length} original vs ${simplifiedItems.length} simplified`
-        );
+        ServerLogger.warn('Mismatch in product count', {
+          component: 'prompt-service',
+          operation: 'simplify-products',
+          originalCount: products.length,
+          simplifiedCount: simplifiedItems.length,
+        });
         return products;
       }
 
-      console.log(`✅ Simplified ${products.length} products`);
+      ServerLogger.info(`Simplified products successfully`, {
+        component: 'prompt-service',
+        operation: 'simplify-products',
+        count: products.length,
+      });
       return simplifiedItems;
     } catch (error) {
-      console.error('❌ Product simplification failed:', error);
+      ServerLogger.error('Product simplification failed', error as Error, {
+        component: 'prompt-service',
+        operation: 'simplify-products',
+      });
       return products;
     }
   }
@@ -169,10 +190,7 @@ etc.`;
   }): string {
     const styleIds = Array.isArray(imageStyle) ? imageStyle : [imageStyle];
     const stylePromptParts = styleIds
-      .map(
-        (id) =>
-          STYLE_PROMPTS[id as keyof typeof STYLE_PROMPTS]
-      )
+      .map((id) => STYLE_PROMPTS[id as keyof typeof STYLE_PROMPTS])
       .filter(Boolean);
 
     const stylePrompt =

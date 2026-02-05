@@ -4,6 +4,7 @@ import {
   type CompatibilityCallToolResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { ServerLogger } from './utils/logger/index.js';
 import { settings } from './config.js';
 import { geolocationService } from './services/geolocation-service.js';
 
@@ -75,9 +76,13 @@ class MCPClient {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        console.log(
-          `Calling tool: ${params.name} with sessionId: ${this.sessionId}`
-        );
+        ServerLogger.info('Calling MCP tool', {
+          component: 'mcp-client',
+          operation: 'call-tool',
+          toolName: params.name,
+          sessionId: this.sessionId,
+          brandId: this.brandId,
+        });
         return await this.client.callTool(params, undefined, {
           timeout: 6000000,
           maxTotalTimeout: 6000000,
@@ -86,9 +91,17 @@ class MCPClient {
         if (attempt === maxRetries) {
           throw err;
         }
-        console.warn(
+        ServerLogger.warn(
           `callTool failed (attempt ${attempt + 1}/${maxRetries + 1}), attempting MCP client reconnect...`,
-          err
+          {
+            component: 'mcp-client',
+            operation: 'call-tool-retry',
+            attempt: attempt + 1,
+            maxRetries: maxRetries + 1,
+            sessionId: this.sessionId,
+            brandId: this.brandId,
+            error: (err as Error).message,
+          }
         );
         await this.reconnect();
       }

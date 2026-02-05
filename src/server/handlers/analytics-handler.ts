@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { ServerLogger } from '../utils/logger/index.js';
 import { analytics } from '../services/analytics-service.js';
 
 export async function handleAnalytics(req: Request, res: Response) {
@@ -8,7 +9,8 @@ export async function handleAnalytics(req: Request, res: Response) {
   res.json({ success: true });
 
   if (!req.sessionID) {
-    console.warn('Analytics called without session', {
+    ServerLogger.warn('Analytics called without session', {
+      component: 'analytics-handler',
       sessionId: req.sessionID,
     });
     return;
@@ -18,7 +20,8 @@ export async function handleAnalytics(req: Request, res: Response) {
     await analytics.identify(req.sessionID, properties);
   } else {
     if (!event) {
-      console.warn('Analytics track called without event name', {
+      ServerLogger.warn('Analytics track called without event name', {
+        component: 'analytics-handler',
         sessionId: req.sessionID,
       });
       return;

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import multer from 'multer';
+import { ServerLogger } from '../utils/logger/index.js';
 import { handlePortraitGeneration } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
@@ -62,11 +63,13 @@ router.get('/stories/poll/:id', handleStoriesPoll);
 router.get('/stories/:id', handleGetStories);
 
 router.post('/log', (req, res) => {
-  // The client sends an object: { brand: string, orders: PurchaseHistory[] }
-  console.log(
-    'Received orders from client:',
-    JSON.stringify(req.body, null, 2)
-  );
+  // Log received orders from client
+  ServerLogger.info('Received orders from client', {
+    component: 'api-routes',
+    operation: 'receive-orders',
+    brand: req.body.brand,
+    orderCount: req.body.orders?.length || 0,
+  });
   // Respond with 204 No Content to signal successful receipt without extra payload
   res.sendStatus(204);
 });

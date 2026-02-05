@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { ServerLogger } from '../utils/logger/index.js';
 import { GeolocationService } from '../services/geolocation-service.js';
 
 const blockedDomains = [
@@ -69,16 +70,18 @@ export class IPBlockerMiddleware {
     response: Response,
     next: NextFunction
   ): Promise<void> => {
-    console.log('[IPBlockerMiddleware] middleware');
+    ServerLogger.debug('IPBlockerMiddleware middleware called', {
+      component: 'ip-blocker',
+    });
     try {
       const clientIp = this.geolocationService.getClientIp(request);
       const locationData =
         await this.geolocationService.getClientLocation(clientIp);
 
-      console.log(
-        '[IPBlockerMiddleware] domain: ',
-        locationData?.traits?.domain
-      );
+      ServerLogger.debug('IPBlockerMiddleware checking domain', {
+        component: 'ip-blocker',
+        domain: locationData?.traits?.domain,
+      });
       if (locationData?.traits?.domain) {
         const domain = locationData?.traits?.domain;
 
@@ -88,11 +91,14 @@ export class IPBlockerMiddleware {
           )
         ) {
           const delay = 3000 + Math.random() * 5000;
-          console.log(
-            '[IPBlockerMiddleware] blocked domain: ',
-            domain,
-            ' with delay: ',
-            delay
+          ServerLogger.warn(
+            'IPBlockerMiddleware blocked cloud provider domain',
+            {
+              component: 'ip-blocker',
+              domain,
+              delay,
+              operation: 'block-domain',
+            }
           );
           setTimeout(() => {
             response.status(403).send('Access denied.');
@@ -103,7 +109,13 @@ export class IPBlockerMiddleware {
 
       next();
     } catch (error) {
-      console.error('[IPBlockerMiddleware] middleware error:', error);
+      ServerLogger.error(
+        'IPBlockerMiddleware middleware error',
+        error as Error,
+        {
+          component: 'ip-blocker',
+        }
+      );
       next();
     }
   };

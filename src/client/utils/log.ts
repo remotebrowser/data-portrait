@@ -1,3 +1,7 @@
+import { ClientLogger } from '../../utils/logger/client.js';
+
+const clientLogger = new ClientLogger();
+
 export function log({
   message,
   data,
@@ -8,7 +12,7 @@ export function log({
   type?: 'client' | 'server';
 }) {
   if (type === 'client') {
-    console.log(message, data);
+    clientLogger.info(message, data);
   } else {
     fetch('/getgather/log', {
       method: 'POST',

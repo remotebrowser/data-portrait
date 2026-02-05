@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ClientLogger } from '../../utils/logger/client.js';
 
 type AppConfig = {
   allowFaceUpload: boolean;
@@ -21,7 +22,10 @@ export function useAppConfig() {
           });
         }
       } catch (error) {
-        console.error('Failed to fetch app config:', error);
+        const logger = new ClientLogger();
+        logger.error('Failed to fetch app config', error as Error, {
+          component: 'use-app-config',
+        });
         // Keep default values on error
       } finally {
         setIsLoading(false);

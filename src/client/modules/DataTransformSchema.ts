@@ -211,6 +211,7 @@ export function transformData(
     }
 
     if (!Array.isArray(dataArray)) {
+      // Log warning for data transformation issues
       console.warn('Data path does not resolve to an array:', schema.dataPath);
       return [];
     }
@@ -227,6 +228,7 @@ export function transformData(
       return transformedItem;
     });
   } catch (error) {
+    // Log error for data transformation issues
     console.error('Error transforming data:', error);
     return [];
   }

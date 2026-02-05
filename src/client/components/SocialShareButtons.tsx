@@ -7,6 +7,7 @@ import {
   Share2,
   X,
 } from 'lucide-react';
+import { ClientLogger } from '../../utils/logger/client.js';
 import { Button } from '@/components/ui/button.js';
 
 type SocialShareButtonsProps = {
@@ -66,6 +67,7 @@ export function SocialShareButtons({
   title = 'Generated Data Portrait',
 }: SocialShareButtonsProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const logger = new ClientLogger();
 
   const handleShare = (platform: SharePlatform) => {
     try {
@@ -80,7 +82,10 @@ export function SocialShareButtons({
       }
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
-        console.error(`Error sharing to ${platform.name}:`, error);
+        logger.error('Error sharing to platform', error as Error, {
+          component: 'social-share-buttons',
+          platform: platform.name,
+        });
       }
     }
     setIsOpen(false);

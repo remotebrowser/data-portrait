@@ -197,11 +197,12 @@ function applyTransform(
 /**
  * Transform raw data using schema configuration
  */
+const logger = new ClientLogger();
+
 export function transformData(
   rawData: Array<object> | object,
   schema: DataTransformSchema
 ): { [key: string]: string | (string | Date)[] | Date }[] {
-  const logger = new ClientLogger();
   try {
     // Handle both pre-processed arrays and raw objects that need path extraction.
     // Some data sources (like MCP calls) return pre-processed arrays,

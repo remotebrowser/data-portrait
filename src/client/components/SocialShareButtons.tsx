@@ -10,6 +10,8 @@ import {
 import { ClientLogger } from '../../utils/logger/client.js';
 import { Button } from '@/components/ui/button.js';
 
+const logger = new ClientLogger();
+
 type SocialShareButtonsProps = {
   url: string;
   title?: string;
@@ -67,7 +69,6 @@ export function SocialShareButtons({
   title = 'Generated Data Portrait',
 }: SocialShareButtonsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const logger = new ClientLogger();
 
   const handleShare = (platform: SharePlatform) => {
     try {

@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { ClientLogger } from '../../utils/logger/client.js';
 
+const logger = new ClientLogger();
+
 export const useAnalytics = () => {
   const trackEvent = useCallback(
     (event: string, properties: Record<string, any> = {}) => {
@@ -12,7 +14,6 @@ export const useAnalytics = () => {
           properties,
         }),
       }).catch((error) => {
-        const logger = new ClientLogger();
         logger.warn('Failed to send analytics event', {
           component: 'use-analytics',
           event,
@@ -32,7 +33,6 @@ export const useAnalytics = () => {
         properties,
       }),
     }).catch((error) => {
-      const logger = new ClientLogger();
       logger.warn('Failed to send analytics identify', {
         component: 'use-analytics',
         error: (error as Error).message,

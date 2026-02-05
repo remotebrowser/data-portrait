@@ -201,8 +201,8 @@ export function transformData(
   rawData: Array<object> | object,
   schema: DataTransformSchema
 ): { [key: string]: string | (string | Date)[] | Date }[] {
+  const logger = new ClientLogger();
   try {
-    const logger = new ClientLogger();
     // Handle both pre-processed arrays and raw objects that need path extraction.
     // Some data sources (like MCP calls) return pre-processed arrays,
     // while others (like Wayfair GraphQL) require extracting data using schema.dataPath

@@ -1,3 +1,5 @@
+import { ClientLogger } from '../../utils/logger/client.js';
+
 export type PurchaseHistory = {
   brand: string;
   order_date?: Date | null;
@@ -200,6 +202,7 @@ export function transformData(
   schema: DataTransformSchema
 ): { [key: string]: string | (string | Date)[] | Date }[] {
   try {
+    const logger = new ClientLogger();
     // Handle both pre-processed arrays and raw objects that need path extraction.
     // Some data sources (like MCP calls) return pre-processed arrays,
     // while others (like Wayfair GraphQL) require extracting data using schema.dataPath
@@ -212,7 +215,10 @@ export function transformData(
 
     if (!Array.isArray(dataArray)) {
       // Log warning for data transformation issues
-      console.warn('Data path does not resolve to an array:', schema.dataPath);
+      logger.warn('Data path does not resolve to an array', {
+        component: 'data-transform-schema',
+        dataPath: schema.dataPath,
+      });
       return [];
     }
 
@@ -229,7 +235,9 @@ export function transformData(
     });
   } catch (error) {
     // Log error for data transformation issues
-    console.error('Error transforming data:', error);
+    logger.error('Error transforming data', error as Error, {
+      component: 'data-transform-schema',
+    });
     return [];
   }
 }

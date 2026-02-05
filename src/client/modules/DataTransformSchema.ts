@@ -215,7 +215,6 @@ export function transformData(
     }
 
     if (!Array.isArray(dataArray)) {
-      // Log warning for data transformation issues
       logger.warn('Data path does not resolve to an array', {
         component: 'data-transform-schema',
         dataPath: schema.dataPath,
@@ -235,7 +234,6 @@ export function transformData(
       return transformedItem;
     });
   } catch (error) {
-    // Log error for data transformation issues
     logger.error('Error transforming data', error as Error, {
       component: 'data-transform-schema',
     });

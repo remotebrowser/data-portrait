@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import { transformData } from '../modules/DataTransformSchema.js';
-import { ClientLogger } from '../../utils/logger/client.js';
+import { ClientLogger } from '@/utils/logger/client.js';
 import { Button } from '@/components/ui/button.js';
 import { FollowUpForm } from './FollowUpForm.js';
 

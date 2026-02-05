@@ -7,7 +7,7 @@ import {
   Share2,
   X,
 } from 'lucide-react';
-import { ClientLogger } from '../../utils/logger/client.js';
+import { ClientLogger } from '@/utils/logger/client.js';
 import { Button } from '@/components/ui/button.js';
 
 const logger = new ClientLogger();

@@ -71,6 +71,23 @@ export const handlePortraitGeneration = async (
 
     const imageData = await imageService.generate(prompt, resizedPath);
 
+    const hasBackgroundBlur = parsedTraits.includes('background-blur');
+
+    if (hasBackgroundBlur && imageData.b64_json) {
+      console.log('🔘 Background blur trait detected - applying blur...');
+      try {
+        const blurredImageData = await imageService.blurBackground(
+          imageData.b64_json
+        );
+        Object.assign(imageData, blurredImageData);
+      } catch (blurError) {
+        console.warn(
+          '⚠️ Background blur failed, returning original image:',
+          blurError
+        );
+      }
+    }
+
     res.json({
       success: true,
       image: {

@@ -15,10 +15,11 @@ const portkey = new Portkey({
 const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
 
 const IMAGE_GENERATION_TIMEOUT = 120000;
+const BLUR_BACKGROUND_TIMEOUT = 30000;
 
 type ImageProvider = 'portkey' | 'google-genai' | 'flux';
 
-interface ImageData {
+type ImageData = {
   url?: string;
   filename?: string;
   fileSize?: number;
@@ -27,7 +28,7 @@ interface ImageData {
   height?: number;
   model?: string;
   provider?: string;
-}
+};
 
 function getImageProvider(): ImageProvider {
   if (settings.PORTKEY_API_KEY) {
@@ -304,6 +305,58 @@ class ImageService {
     }
 
     throw new Error('Flux generation timeout');
+  }
+
+  async blurBackground(imageBase64: string): Promise<ImageData> {
+    if (!settings.DEEPINFRA_API_KEY) {
+      throw new Error('DEEPINFRA_API_KEY not configured');
+    }
+
+    console.log('🔘 Applying background blur via DeepInfra Bria API...');
+
+    const response = await Promise.race([
+      fetch(
+        'https://api.deepinfra.com/v1/inference/Bria/blur_background?version=0ObxGWB8',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${settings.DEEPINFRA_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image: `data:image/png;base64,${imageBase64}`,
+            scale: 5,
+          }),
+        }
+      ),
+      this.createTimeoutPromise(BLUR_BACKGROUND_TIMEOUT),
+    ]);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `DeepInfra API error: ${response.status} ${response.statusText} - ${errorText}`
+      );
+    }
+
+    const data = (await response.json()) as { images: string[] };
+
+    if (!Array.isArray(data.images) || data.images.length < 1) {
+      throw new Error('No blurred image URL returned from DeepInfra API');
+    }
+
+    const imageUrl = data.images[0];
+    const imageResponse = await fetch(imageUrl);
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const blurredBase64 = Buffer.from(imageBuffer).toString('base64');
+    const fileData = await this.saveImageFile(blurredBase64, 'bria-blur');
+    console.log('✅ Background blur applied successfully');
+    return {
+      ...fileData,
+      b64_json: blurredBase64,
+      width: 1024,
+      height: 1024,
+    };
   }
 
   private createTimeoutPromise(timeoutMs: number): Promise<never> {

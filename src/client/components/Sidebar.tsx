@@ -3,6 +3,9 @@ import { Button } from '@/components/ui/button.js';
 import { DataConnectors } from './DataConnectors.js';
 import { PersonaSelector } from './PersonaSelector.js';
 import { ImageUpload } from './ImageUpload.js';
+import { ImageFormatSelector } from './ImageFormatSelector.js';
+import { useStoryFeatureFlag } from '../hooks/useStoryFeatureFlag.js';
+import type { ImageFormat } from '../modules/PortraitGeneration.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 
@@ -14,12 +17,14 @@ type SidebarProps = {
   selectedGender: string;
   selectedTraits: string[];
   selectedImageStyle: string[];
+  imageFormat: ImageFormat;
   isGenerating: boolean;
   onSuccessConnect: (brandName: string, data: PurchaseHistory[]) => void;
   onOpenSignInDialog: (brandConfig: BrandConfig) => void;
   onGenderChange: (genderId: string) => void;
   onTraitsChange: (traits: string[]) => void;
   onImageStyleChange: (styleIds: string[]) => void;
+  onImageFormatChange: (format: ImageFormat) => void;
   onGeneratePortrait: () => void;
   onImageChange?: (file: File | null) => void;
   enableImageUpload?: boolean;
@@ -33,16 +38,20 @@ export function Sidebar({
   selectedGender,
   selectedTraits,
   selectedImageStyle,
+  imageFormat,
   isGenerating,
   onSuccessConnect,
   onOpenSignInDialog,
   onGenderChange,
   onTraitsChange,
   onImageStyleChange,
+  onImageFormatChange,
   onGeneratePortrait,
   onImageChange,
   enableImageUpload = false,
 }: SidebarProps) {
+  const showImageFormatSelector = useStoryFeatureFlag();
+
   return (
     <>
       {/* Mobile Sidebar Overlay */}
@@ -100,6 +109,13 @@ export function Sidebar({
             onImageStylesChange={onImageStyleChange}
             onTraitsChange={onTraitsChange}
           />
+
+          {showImageFormatSelector && (
+            <ImageFormatSelector
+              value={imageFormat}
+              onChange={onImageFormatChange}
+            />
+          )}
         </div>
 
         {/* Sidebar Footer - Simple */}

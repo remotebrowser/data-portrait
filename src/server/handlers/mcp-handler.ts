@@ -7,7 +7,7 @@ import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
 
 const tools: Record<string, string[]> = {
-  amazon: ['amazon_dpage_get_purchase_history'],
+  amazon: ['amazon_get_purchase_history'],
   officedepot: [
     'officedepot_get_order_history',
     'officedepot_get_order_history_details',

@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { DataPortrait } from './pages/DataPortrait.js';
-import { SharedPortrait } from './pages/SharedPortrait.js';
+import { StoryPage } from './pages/StoryPage.js';
 
 export const router = createBrowserRouter([
   {
@@ -8,7 +8,7 @@ export const router = createBrowserRouter([
     element: <DataPortrait />,
   },
   {
-    path: '/shared/:filename',
-    element: <SharedPortrait />,
+    path: '/story/:storyId',
+    element: <StoryPage />,
   },
 ]);

@@ -113,3 +113,7 @@ export const STYLE_CATEGORIES = {
   artistic: { name: 'Artistic', icon: '🎨' },
   futuristic: { name: 'Futuristic', icon: '🚀' },
 };
+
+export function getRandomStyle(): string {
+  return IMAGE_STYLES[Math.floor(Math.random() * IMAGE_STYLES.length)].id;
+}

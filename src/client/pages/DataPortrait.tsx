@@ -13,6 +13,7 @@ import wayfair from '../config/wayfair.json' with { type: 'json' };
 import officedepot from '../config/officedepot.json' with { type: 'json' };
 import goodreads from '../config/goodreads.json' with { type: 'json' };
 import gofood from '../config/gofood.json' with { type: 'json' };
+import garmin from '../config/garmin.json' with { type: 'json' };
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type {
@@ -32,6 +33,7 @@ const wayfairConfig = wayfair as BrandConfig;
 const officedepotConfig = officedepot as BrandConfig;
 const goodreadsConfig = goodreads as BrandConfig;
 const gofoodConfig = gofood as BrandConfig;
+const garminConfig = garmin as BrandConfig;
 
 const BRANDS: Array<BrandConfig> = [
   amazonConfig,
@@ -39,11 +41,16 @@ const BRANDS: Array<BrandConfig> = [
   wayfairConfig,
   goodreadsConfig,
   gofoodConfig,
+  garminConfig,
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [
   // NOTE: exclude officedepot for now until successfully migrated to dpage
   officedepotConfig.brand_id,
+];
+
+const EXCLUDED_BRAND_FROM_UNIQUE_FILTER: Array<string> = [
+  garminConfig.brand_name,
 ];
 
 // Sample data for demo purposes
@@ -125,9 +132,13 @@ export function DataPortrait() {
     });
 
     setConnectedBrands((prev) => [...prev, brandName]);
+
+    const shouldSkipUniqueFilter =
+      EXCLUDED_BRAND_FROM_UNIQUE_FILTER.includes(brandName);
+
     setOrders((prev) => {
       const combined = [...prev, ...data];
-      return filterUniqueOrders(combined);
+      return shouldSkipUniqueFilter ? combined : filterUniqueOrders(combined);
     });
   };
 

@@ -76,6 +76,21 @@ export function parseOrderDate(orderDateStr: string) {
     return new Date(orderMatch[1]);
   }
 
+  // Handle Garmin date format: "3 Feb 2026" (day month year)
+  const garminMatch = orderDateStr.match(/^(\d{1,2})\s+(\w+)\s+(\d{4})$/);
+  if (garminMatch) {
+    const [, day, month, year] = garminMatch;
+    return new Date(`${month} ${day}, ${year}`);
+  }
+
+  // Handle Garmin date format: "3 Feb" (day month) - will use current year
+  const garminShortMatch = orderDateStr.match(/^(\d{1,2})\s+(\w+)$/);
+  if (garminShortMatch) {
+    const [, day, month] = garminShortMatch;
+    const currentYear = new Date().getFullYear();
+    return new Date(`${month} ${day}, ${currentYear}`);
+  }
+
   return null;
 }
 

@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { logger } from '@/utils/logger/index.js';
 
 export const useAnalytics = () => {
   const trackEvent = useCallback(
@@ -11,7 +12,11 @@ export const useAnalytics = () => {
           properties,
         }),
       }).catch((error) => {
-        console.warn('Failed to send analytics event:', error);
+        logger.warn('Failed to send analytics event', {
+          component: 'use-analytics',
+          event,
+          error: (error as Error).message,
+        });
       });
     },
     []
@@ -26,7 +31,10 @@ export const useAnalytics = () => {
         properties,
       }),
     }).catch((error) => {
-      console.warn('Failed to send analytics identify:', error);
+      logger.warn('Failed to send analytics identify', {
+        component: 'use-analytics',
+        error: (error as Error).message,
+      });
     });
   }, []);
 

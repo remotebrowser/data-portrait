@@ -7,6 +7,7 @@ import {
   Share2,
   X,
 } from 'lucide-react';
+import { logger } from '@/utils/logger/index.js';
 import { Button } from '@/components/ui/button.js';
 
 type SocialShareButtonsProps = {
@@ -80,7 +81,10 @@ export function SocialShareButtons({
       }
     } catch (error) {
       if (error instanceof Error && error.name !== 'AbortError') {
-        console.error(`Error sharing to ${platform.name}:`, error);
+        logger.error('Error sharing to platform', error as Error, {
+          component: 'social-share-buttons',
+          platform: platform.name,
+        });
       }
     }
     setIsOpen(false);

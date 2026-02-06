@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/utils/logger/index.js';
 
 type AppConfig = {
   allowFaceUpload: boolean;
@@ -21,7 +22,9 @@ export function useAppConfig() {
           });
         }
       } catch (error) {
-        console.error('Failed to fetch app config:', error);
+        logger.error('Failed to fetch app config', error as Error, {
+          component: 'use-app-config',
+        });
         // Keep default values on error
       } finally {
         setIsLoading(false);

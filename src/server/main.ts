@@ -6,6 +6,7 @@ import { healthRoutes } from './routes/health-routes.js';
 import { apiRoutes } from './routes/api-routes.js';
 import { router } from './routes/shared-routes.js';
 import { storyRouter } from './routes/story-routes.js';
+import { ServerLogger as Logger } from './utils/logger/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { settings } from './config.js';
@@ -62,7 +63,10 @@ const createProxy = (path: string) =>
         req: express.Request,
         res: express.Response | Socket
       ) => {
-        console.error(`Proxy req: ${req} error: ${err}`);
+        Logger.error('Proxy request error', err, {
+          component: 'proxy-middleware',
+          operation: 'proxy-request',
+        });
         if ('status' in res) {
           res.status(500).send('Proxy error occurred');
         }
@@ -152,5 +156,8 @@ app.listen(3000, () => {
   if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
   }
-  console.log('🚀 Server is listening on port 3000...');
+  Logger.info('Server started successfully', {
+    port: 3000,
+    component: 'server',
+  });
 });

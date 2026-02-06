@@ -1,4 +1,4 @@
-import { ClientLogger } from '@/utils/logger/client.js';
+import { logger } from '@/utils/logger/index.js';
 
 export type PurchaseHistory = {
   brand: string;
@@ -197,8 +197,6 @@ function applyTransform(
 /**
  * Transform raw data using schema configuration
  */
-const logger = new ClientLogger();
-
 export function transformData(
   rawData: Array<object> | object,
   schema: DataTransformSchema

@@ -1,1 +1,1 @@
-export { ClientLogger } from './client.js';
+export { ClientLogger, logger } from './client.js';

@@ -1,6 +1,4 @@
-import { ClientLogger } from '@/utils/logger/client.js';
-
-const logger = new ClientLogger();
+import { logger } from '@/utils/logger/index.js';
 
 export function log({
   message,

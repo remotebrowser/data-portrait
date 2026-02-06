@@ -29,7 +29,6 @@ export class ClientLogger {
       context: context ? JSON.stringify(context) : '',
     });
 
-    // Send to Sentry with context
     Sentry.withScope((scope: Sentry.Scope) => {
       if (context?.sessionId || this.sessionId) {
         scope.setTag(
@@ -58,3 +57,5 @@ export class ClientLogger {
     }
   }
 }
+
+export const logger = new ClientLogger();

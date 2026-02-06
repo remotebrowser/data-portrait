@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import { transformData } from '../modules/DataTransformSchema.js';
-import { ClientLogger } from '@/utils/logger/client.js';
+import { logger } from '@/utils/logger/index.js';
 import { Button } from '@/components/ui/button.js';
 import { FollowUpForm } from './FollowUpForm.js';
 
@@ -32,7 +32,6 @@ export function SignInDialog({
   const [loadingState, setLoadingState] = useState<LoadingState>(null);
   const [signinData, setSigninData] = useState<SigninData | null>(null);
   const [showFollowUpForm, setShowFollowUpForm] = useState(false);
-  const logger = new ClientLogger();
 
   const loadPurchaseDataStream = async () => {
     try {

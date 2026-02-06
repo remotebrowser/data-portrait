@@ -7,10 +7,8 @@ import {
   Share2,
   X,
 } from 'lucide-react';
-import { ClientLogger } from '@/utils/logger/client.js';
+import { logger } from '@/utils/logger/index.js';
 import { Button } from '@/components/ui/button.js';
-
-const logger = new ClientLogger();
 
 type SocialShareButtonsProps = {
   url: string;

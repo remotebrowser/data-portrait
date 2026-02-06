@@ -19,7 +19,7 @@ const BLUR_BACKGROUND_TIMEOUT = 30000;
 
 type ImageProvider = 'portkey' | 'google-genai';
 
-interface ImageData {
+type ImageData = {
   url?: string;
   filename?: string;
   fileSize?: number;
@@ -28,14 +28,7 @@ interface ImageData {
   height?: number;
   model?: string;
   provider?: string;
-}
-
-interface DeepInfraResponse {
-  created: number;
-  data: Array<{
-    b64_json: string;
-  }>;
-}
+};
 
 function getImageProvider(): ImageProvider {
   if (settings.PORTKEY_API_KEY) {
@@ -245,7 +238,7 @@ class ImageService {
 
     const data = (await response.json()) as { images: string[] };
 
-    if (!data.images || !data.images[0]) {
+    if (!Array.isArray(data.images) || data.images.length < 1) {
       throw new Error('No blurred image URL returned from DeepInfra API');
     }
 

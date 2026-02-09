@@ -48,7 +48,7 @@ export const gcsService = {
 
     await file.makePublic();
 
-    const publicUrl = `https://storage.googleapis.com/${settings.GCS_BUCKET_NAME}/${filename}`;
+    const publicUrl = `${settings.PUBLIC_URL}/shared/image/${filename}`;
 
     return {
       url: publicUrl,

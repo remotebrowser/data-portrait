@@ -14,7 +14,10 @@ type PurchaseDataDisplayProps = {
   orders: PurchaseHistory[];
   connectedBrands: string[];
   expandedOrders: Set<string>;
+  selectedItems: Set<string>;
   onToggleOrderExpansion: (orderId: string, productName: string) => void;
+  onToggleItemSelection: (orderId: string, productName: string) => void;
+  onToggleBrandSelection: (brand: string, selectAll: boolean) => void;
   onClearData: () => void;
 };
 
@@ -22,7 +25,10 @@ export function PurchaseDataDisplay({
   orders,
   connectedBrands,
   expandedOrders,
+  selectedItems,
   onToggleOrderExpansion,
+  onToggleItemSelection,
+  onToggleBrandSelection,
   onClearData,
 }: PurchaseDataDisplayProps) {
   const groupedOrdersByBrand = useMemo(() => {
@@ -90,6 +96,15 @@ export function PurchaseDataDisplay({
               (total, order) => total + order.product_names.length,
               0
             );
+            const selectedCount = brandOrders.reduce((count, order) => {
+              return (
+                count +
+                order.product_names.filter((productName) =>
+                  selectedItems.has(`${order.order_id}__${productName}`)
+                ).length
+              );
+            }, 0);
+            const allSelected = selectedCount === totalItems && totalItems > 0;
             const brandKey = `${brand}__brand`;
             const isExpanded = expandedOrders.has(brandKey);
 
@@ -112,9 +127,19 @@ export function PurchaseDataDisplay({
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex items-center gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleBrandSelection(brand, !allSelected);
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        {allSelected ? 'Deselect All' : 'Select All'}
+                      </button>
                       <div className="text-sm font-medium text-gray-900">
-                        {totalItems} {totalItems === 1 ? 'item' : 'items'}
+                        {selectedCount}/{totalItems}{' '}
+                        {totalItems === 1 ? 'item' : 'items'}
                       </div>
                     </div>
                   </button>
@@ -123,54 +148,94 @@ export function PurchaseDataDisplay({
                     <div className="px-3 pb-3 border-t border-gray-100">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {brandOrders.flatMap((order) =>
-                          order.product_names.map((productName, index) => (
-                            <div
-                              key={`${order.order_id}_${productName}_${index}`}
-                              className="flex items-start gap-2 py-2 px-1 bg-gray-50 rounded"
-                            >
-                              <div className="flex-shrink-0 w-8 h-8 bg-white rounded overflow-hidden border">
-                                {order.image_urls?.[index] ? (
-                                  <img
-                                    src={order.image_urls[index]}
-                                    alt={productName}
-                                    className="w-full h-full object-contain"
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
-                                    <svg
-                                      className="w-5 h-5"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={1.5}
-                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                                      />
-                                    </svg>
+                          order.product_names.map((productName, index) => {
+                            const itemKey = `${order.order_id}__${productName}`;
+                            const isSelected = selectedItems.has(itemKey);
+
+                            return (
+                              <div
+                                key={`${order.order_id}_${productName}_${index}`}
+                                onClick={() =>
+                                  onToggleItemSelection(
+                                    order.order_id,
+                                    productName
+                                  )
+                                }
+                                className={`flex items-start gap-2 py-2 px-1 rounded cursor-pointer transition-colors ${
+                                  isSelected
+                                    ? 'bg-blue-50 border border-blue-200'
+                                    : 'bg-gray-50 border border-transparent hover:bg-gray-100'
+                                }`}
+                              >
+                                <div className="flex-shrink-0 mt-0.5">
+                                  <div
+                                    className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                                      isSelected
+                                        ? 'bg-blue-500 border-blue-500'
+                                        : 'border-gray-300 bg-white'
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <svg
+                                        className="w-3 h-3 text-white"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={3}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
-                                  {productName}
-                                </p>
-                                <div className="flex items-center gap-3 text-xs text-gray-500">
-                                  <span>🛍️ {order.brand}</span>
-                                  {!!order.order_date && (
-                                    <span>
-                                      📅{' '}
-                                      {typeof order.order_date === 'string'
-                                        ? order.order_date
-                                        : order.order_date.toLocaleDateString()}
-                                    </span>
+                                </div>
+                                <div className="flex-shrink-0 w-8 h-8 bg-white rounded overflow-hidden border">
+                                  {order.image_urls?.[index] ? (
+                                    <img
+                                      src={order.image_urls[index]}
+                                      alt={productName}
+                                      className="w-full h-full object-contain"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400">
+                                      <svg
+                                        className="w-5 h-5"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={1.5}
+                                          d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                                        />
+                                      </svg>
+                                    </div>
                                   )}
                                 </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
+                                    {productName}
+                                  </p>
+                                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                                    <span>🛍️ {order.brand}</span>
+                                    {!!order.order_date && (
+                                      <span>
+                                        📅{' '}
+                                        {typeof order.order_date === 'string'
+                                          ? order.order_date
+                                          : order.order_date.toLocaleDateString()}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          ))
+                            );
+                          })
                         )}
                       </div>
                     </div>
@@ -183,8 +248,8 @@ export function PurchaseDataDisplay({
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
           <p className="text-xs text-blue-700">
-            💡 Your data helps us understand your style preferences for creating
-            personalized AI portraits.
+            💡 Click items to select/deselect them. Only selected items will be
+            used for portrait generation.
           </p>
         </div>
       </CardContent>

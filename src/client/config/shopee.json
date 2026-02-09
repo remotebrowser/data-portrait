@@ -1,14 +1,19 @@
 {
-  "brand_id": "tokopedia",
-  "brand_name": "Tokopedia",
-  "logo_url": "https://lf-web-assets.tokopedia-static.net/obj/tokopedia-web-sg/arael_v3/0c292173.png",
+  "brand_id": "shopee",
+  "brand_name": "Shopee",
+  "logo_url": "https://i.pinimg.com/736x/89/f3/62/89f362b04423b091aee923a0387c5c35.jpg",
   "is_mandatory": false,
   "is_dpage": true,
   "schema": [
     {
-      "name": "login",
-      "type": "email",
-      "prompt": "Email"
+      "name": "loginKey",
+      "type": "text",
+      "prompt": "No. Handphone/Username/Email"
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "prompt": "Password"
     },
     {
       "name": "submit",
@@ -18,16 +23,16 @@
     }
   ],
   "dataTransform": {
-    "dataPath": "purchase_history",
+    "dataPath": "",
     "fieldMappings": [
       {
         "outputKey": "brand",
         "sourcePath": "brand",
-        "defaultValue": "Tokopedia"
+        "defaultValue": "Shopee"
       },
       {
         "outputKey": "order_date",
-        "sourcePath": "payment_date",
+        "sourcePath": "order_date",
         "defaultValue": "N/A",
         "transform": "date"
       },
@@ -38,18 +43,18 @@
       },
       {
         "outputKey": "order_id",
-        "sourcePath": "purchase_detail_url",
+        "sourcePath": "store_nae",
         "defaultValue": "N/A"
       },
       {
         "outputKey": "product_names",
-        "sourcePath": "products.title",
+        "sourcePath": "product_name",
         "defaultValue": "N/A",
         "convertToArray": true
       },
       {
         "outputKey": "image_urls",
-        "sourcePath": "products.imageURL",
+        "sourcePath": "product_image",
         "defaultValue": "N/A",
         "transform": "image",
         "convertToArray": true

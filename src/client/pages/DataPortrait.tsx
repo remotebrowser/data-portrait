@@ -14,8 +14,10 @@ import officedepot from '../config/officedepot.json' with { type: 'json' };
 import goodreads from '../config/goodreads.json' with { type: 'json' };
 import gofood from '../config/gofood.json' with { type: 'json' };
 import garmin from '../config/garmin.json' with { type: 'json' };
+import tokopedia from '../config/tokopedia.json' with { type: 'json' };
+import shopee from '../config/shopee.json' with { type: 'json' };
 import type { BrandConfig } from '../modules/Config.js';
-import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
+import { type PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type {
   GeneratedImage,
   ImageFormat,
@@ -34,7 +36,8 @@ const officedepotConfig = officedepot as BrandConfig;
 const goodreadsConfig = goodreads as BrandConfig;
 const gofoodConfig = gofood as BrandConfig;
 const garminConfig = garmin as BrandConfig;
-
+const tokopediaConfig = tokopedia as BrandConfig;
+const shopeeConfig = shopee as BrandConfig;
 const BRANDS: Array<BrandConfig> = [
   amazonConfig,
   officedepotConfig,
@@ -42,6 +45,8 @@ const BRANDS: Array<BrandConfig> = [
   goodreadsConfig,
   gofoodConfig,
   garminConfig,
+  tokopediaConfig,
+  shopeeConfig,
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [

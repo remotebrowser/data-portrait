@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger/index.js';
+
 export function log({
   message,
   data,
@@ -8,7 +10,7 @@ export function log({
   type?: 'client' | 'server';
 }) {
   if (type === 'client') {
-    console.log(message, data);
+    logger.info(message, data);
   } else {
     fetch('/getgather/log', {
       method: 'POST',

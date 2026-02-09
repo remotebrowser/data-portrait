@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 
 interface AppError extends Error {
   statusCode?: number;
@@ -15,13 +16,12 @@ export const errorHandler = (
   const message = err.message || 'Internal Server Error';
 
   // Log error details
-  console.error('🚨 Error occurred:', {
+  Logger.error('Express error occurred', err, {
+    component: 'error-handler',
     method: req.method,
     path: req.path,
     statusCode,
-    message,
-    stack: err.stack,
-    timestamp: new Date().toISOString(),
+    operation: 'request-error',
   });
 
   // Send error response

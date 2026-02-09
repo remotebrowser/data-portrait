@@ -1,5 +1,6 @@
 import { Request } from 'express';
 import { City, WebServiceClient } from '@maxmind/geoip2-node';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 export interface LocationData {
   ip: string;
@@ -26,11 +27,11 @@ class GeolocationService {
 
   getClientLocationFromCache(ipAddress: string) {
     const cachedLocationData = this.ipCache.get(ipAddress);
-    console.log(
-      '[getClientLocationFromCache] cached location data for ip address: ',
+    Logger.debug('Retrieved cached location data', {
+      component: 'geolocation-service',
+      operation: 'get-from-cache',
       ipAddress,
-      cachedLocationData
-    );
+    });
     if (!cachedLocationData) {
       return null;
     }
@@ -54,15 +55,21 @@ class GeolocationService {
         postal_code: cachedLocationData?.postal?.code ?? null,
       };
 
-      console.log(
-        `🔍 Client Location: city: ${requestLocationData.city}, country: ${requestLocationData.country}, state: ${requestLocationData.state}, postal_code: ${requestLocationData.postal_code}`
-      );
+      Logger.debug('Client location resolved', {
+        component: 'geolocation-service',
+        operation: 'resolve-location',
+        ...requestLocationData,
+      });
     }
     return requestLocationData;
   }
 
   async getClientLocation(ipAddress: string): Promise<City | null> {
-    console.log(`🔍 Getting client location for IP: ${ipAddress}`);
+    Logger.debug('Getting client location', {
+      component: 'geolocation-service',
+      operation: 'get-location',
+      ipAddress,
+    });
 
     if (
       ipAddress === 'unknown' ||
@@ -74,16 +81,20 @@ class GeolocationService {
 
     const cached = this.ipCache.get(ipAddress);
     if (cached) {
-      console.log(
-        '[getClientLocation] cached response for ip address: ',
-        ipAddress
-      );
+      Logger.debug('Using cached location response', {
+        component: 'geolocation-service',
+        operation: 'get-location',
+        ipAddress,
+      });
       return cached;
     }
 
     // MaxMind API call with built-in timeout
     if (!settings.MAXMIND_ACCOUNT_ID || !settings.MAXMIND_LICENSE_KEY) {
-      console.warn('MaxMind account ID or license key not configured');
+      Logger.warn('MaxMind account ID or license key not configured', {
+        component: 'geolocation-service',
+        operation: 'initialization',
+      });
       return null;
     }
 
@@ -96,10 +107,18 @@ class GeolocationService {
 
       const response = await client.city(ipAddress);
       this.ipCache.set(ipAddress, response);
-      console.log('[getClientLocation] set cache for ip address: ', ipAddress);
+      Logger.debug('Cached location response', {
+        component: 'geolocation-service',
+        operation: 'cache-set',
+        ipAddress,
+      });
       return response;
     } catch (error) {
-      console.error(`Error geolocating IP ${ipAddress}:`, error);
+      Logger.error('Error geolocating IP', error as Error, {
+        component: 'geolocation-service',
+        operation: 'get-location',
+        ipAddress,
+      });
       return null;
     }
   }

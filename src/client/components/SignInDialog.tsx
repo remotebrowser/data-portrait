@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import { transformData } from '../modules/DataTransformSchema.js';
+import { logger } from '@/utils/logger/index.js';
 import { Button } from '@/components/ui/button.js';
 import { FollowUpForm } from './FollowUpForm.js';
 
@@ -55,7 +56,10 @@ export function SignInDialog({
         link_id: data.link_id,
       });
     } catch (error) {
-      console.error('Error loading purchase data stream', error);
+      logger.error('Error loading purchase data stream', error as Error, {
+        component: 'signin-dialog',
+        brandId: brandConfig.brand_id,
+      });
       setPollingError(
         error instanceof Error ? error.message : 'Failed to load purchase data'
       );
@@ -140,7 +144,10 @@ export function SignInDialog({
 
         await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error) {
-        console.error('Polling error', error);
+        logger.error('Polling error', error as Error, {
+          component: 'signin-dialog',
+          brandId: brandConfig.brand_id,
+        });
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }
@@ -174,7 +181,10 @@ export function SignInDialog({
         pollSigninStatus();
       }
     } catch (error) {
-      console.error('Error submitting credentials', error);
+      logger.error('Error submitting credentials', error as Error, {
+        component: 'signin-dialog',
+        brandId: brandConfig.brand_id,
+      });
       setPollingError(
         error instanceof Error ? error.message : 'Failed to submit credentials'
       );
@@ -189,7 +199,10 @@ export function SignInDialog({
     try {
       await loadPurchaseDataStream();
     } catch (error) {
-      console.error('Error starting connection', error);
+      logger.error('Error starting connection', error as Error, {
+        component: 'signin-dialog',
+        brandId: brandConfig.brand_id,
+      });
       setPollingError('Failed to start connection. Please try again.');
       setLoadingState(null);
     }
@@ -256,7 +269,7 @@ export function SignInDialog({
               <FollowUpForm
                 signinUrl={signinData?.url}
                 onFinishSignin={(signinId) => {
-                  console.log('Follow-up form completed', { signinId });
+                  logger.info('Follow-up form completed', { signinId });
                 }}
               />
             </>

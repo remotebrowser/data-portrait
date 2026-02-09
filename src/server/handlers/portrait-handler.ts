@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { promptService } from '../services/prompt-service.js';
 import { imageService } from '../services/image-service.js';
 import { unlink } from 'fs/promises';
@@ -27,11 +28,12 @@ export const handlePortraitGeneration = async (
     if (uploadedFile) {
       filesToClean.push(uploadedFile.path);
 
-      console.log('🖼️ Uploaded image:', {
+      Logger.info('Processing uploaded image', {
+        component: 'portrait-handler',
+        operation: 'upload-process',
         originalName: uploadedFile.originalname,
         size: uploadedFile.size,
         mimetype: uploadedFile.mimetype,
-        path: uploadedFile.path,
       });
 
       // Resize image to reduce base64 size
@@ -102,7 +104,10 @@ export const handlePortraitGeneration = async (
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('❌ Portrait generation failed:', error);
+    Logger.error('Portrait generation failed', error as Error, {
+      component: 'portrait-handler',
+      operation: 'generate-portrait',
+    });
     res.status(500).json({
       error:
         error instanceof Error
@@ -115,9 +120,18 @@ export const handlePortraitGeneration = async (
     for (const filePath of filesToClean) {
       try {
         await unlink(filePath);
-        console.log('🗑️ Cleaned up file:', filePath);
+        Logger.debug('Cleaned up temporary file', {
+          component: 'portrait-handler',
+          operation: 'cleanup',
+          filePath,
+        });
       } catch (error) {
-        console.warn('⚠️ Failed to cleanup file:', filePath, error);
+        Logger.warn('Failed to cleanup temporary file', {
+          component: 'portrait-handler',
+          operation: 'cleanup',
+          filePath,
+          error: (error as Error).message,
+        });
       }
     }
   }

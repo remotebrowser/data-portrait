@@ -1,5 +1,6 @@
 import { Portkey } from 'portkey-ai';
 import { GoogleGenAI, Modality } from '@google/genai';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
 import { gcsService } from './gcs-service.js';
@@ -51,13 +52,14 @@ class ImageService {
   }
 
   async generate(prompt: string, imagePath?: string): Promise<ImageData> {
-    console.log(`🎨 Final prompt: "${prompt}"`);
-    if (imagePath) {
-      console.log(`🖼️ Using reference image: ${imagePath}`);
-    }
-
     const provider = getImageProvider();
-    console.log(`🔧 Using image provider: ${provider}`);
+    Logger.info('Starting image generation', {
+      component: 'image-service',
+      operation: 'generate',
+      prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+      hasReferenceImage: Boolean(imagePath),
+      provider,
+    });
 
     const imageData =
       provider === 'portkey'

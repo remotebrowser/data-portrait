@@ -1,3 +1,5 @@
+import { logger } from '@/utils/logger/index.js';
+
 export type PurchaseHistory = {
   brand: string;
   order_date?: Date | null;
@@ -226,7 +228,10 @@ export function transformData(
     }
 
     if (!Array.isArray(dataArray)) {
-      console.warn('Data path does not resolve to an array:', schema.dataPath);
+      logger.warn('Data path does not resolve to an array', {
+        component: 'data-transform-schema',
+        dataPath: schema.dataPath,
+      });
       return [];
     }
 
@@ -242,7 +247,9 @@ export function transformData(
       return transformedItem;
     });
   } catch (error) {
-    console.error('Error transforming data:', error);
+    logger.error('Error transforming data', error as Error, {
+      component: 'data-transform-schema',
+    });
     return [];
   }
 }

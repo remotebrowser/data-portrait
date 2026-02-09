@@ -43,6 +43,7 @@ const TRAIT_MAPPINGS = {
   beard: 'with beard',
   'young-adult': 'young adult appearance',
   'middle-aged': 'middle-aged appearance',
+  'background-blur': '',
 };
 
 const PROMPT_TEMPLATE =
@@ -169,10 +170,7 @@ etc.`;
   }): string {
     const styleIds = Array.isArray(imageStyle) ? imageStyle : [imageStyle];
     const stylePromptParts = styleIds
-      .map(
-        (id) =>
-          STYLE_PROMPTS[id as keyof typeof STYLE_PROMPTS]
-      )
+      .map((id) => STYLE_PROMPTS[id as keyof typeof STYLE_PROMPTS])
       .filter(Boolean);
 
     const stylePrompt =

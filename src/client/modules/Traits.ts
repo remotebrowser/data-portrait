@@ -98,4 +98,11 @@ export const TRAITS_OPTIONS: Trait[] = [
     icon: '👨',
     category: 'age',
   },
+  {
+    id: 'background-blur',
+    name: 'Background Blur',
+    description: 'Blur the background for professional focus',
+    icon: '🔘',
+    category: 'effects',
+  },
 ];

@@ -128,11 +128,10 @@ async function generateSingleImage(
         imageStyle,
         gender,
         traits,
-        model: 'gemini',
         purchaseData,
       });
 
-  const response = await fetch('/getgather/generate-portrait', {
+  const response = await fetch('/getgather/generate-from-purchase', {
     method: 'POST',
     headers: uploadedImage ? {} : { 'Content-Type': 'application/json' },
     body,

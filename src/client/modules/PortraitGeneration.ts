@@ -131,7 +131,7 @@ async function generateSingleImage(
         purchaseData,
       });
 
-  const response = await fetch('/getgather/generate-from-purchase', {
+  const response = await fetch('/getgather/generate-portrait', {
     method: 'POST',
     headers: uploadedImage ? {} : { 'Content-Type': 'application/json' },
     body,

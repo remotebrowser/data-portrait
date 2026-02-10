@@ -83,6 +83,24 @@ const sampleOrders: PurchaseHistory[] = [
       '/project-hail-mary.jpg',
     ],
   },
+  {
+    order_id: 'demo-004',
+    brand: 'GoFood',
+    order_date: new Date('2024-01-20'),
+    order_total: 'Rp 125,000',
+    product_names: [
+      'Nasi Goreng Special',
+      'Ayam Bakar Madu',
+      'Es Teh Manis',
+      'Pisang Goreng',
+    ],
+    image_urls: [
+      '/nasi-goreng.jpg',
+      '/ayam-bakar.jpg',
+      '/es-teh.jpg',
+      '/pisang-goreng.jpg',
+    ],
+  },
 ];
 
 export function DataPortrait() {

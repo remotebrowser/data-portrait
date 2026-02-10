@@ -80,13 +80,6 @@ class ImageService {
   /**
    * Generate image from purchase data with LLM-powered dynamic prompt generation.
    * Uses an LLM to analyze purchase data and create a creative, contextual image prompt.
-   *
-   * @param purchaseData - User's purchase history for context
-   * @param imageStyle - Visual style(s) for the portrait
-   * @param gender - Gender for character appearance
-   * @param traits - Physical traits and characteristics
-   * @param imagePath - Optional reference image path
-   * @returns Image data with URL, filename, and metadata
    */
   async generateFromPurchase(
     purchaseData: unknown[],

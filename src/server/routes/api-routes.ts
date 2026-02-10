@@ -1,7 +1,10 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
-import { handlePortraitGeneration } from '../handlers/portrait-handler.js';
+import {
+  handlePortraitGeneration,
+  handleGenerateFromPurchase,
+} from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
   handleMcpPoll,
@@ -55,6 +58,13 @@ router.post(
   '/generate-portrait',
   upload.single('image'),
   handlePortraitGeneration
+);
+
+// Generate portrait from purchase data with dynamic prompt generation
+router.post(
+  '/generate-from-purchase',
+  upload.single('image'),
+  handleGenerateFromPurchase
 );
 
 // Stories generation endpoints

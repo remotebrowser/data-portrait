@@ -77,6 +77,117 @@ class ImageService {
     };
   }
 
+  /**
+   * Generate image from purchase data with LLM-powered dynamic prompt generation.
+   * Uses an LLM to analyze purchase data and create a creative, contextual image prompt.
+   *
+   * @param purchaseData - User's purchase history for context
+   * @param imageStyle - Visual style(s) for the portrait
+   * @param gender - Gender for character appearance
+   * @param traits - Physical traits and characteristics
+   * @param imagePath - Optional reference image path
+   * @returns Image data with URL, filename, and metadata
+   */
+  async generateFromPurchase(
+    purchaseData: unknown[],
+    imageStyle: string[],
+    gender: string,
+    traits: string[],
+    imagePath?: string
+  ): Promise<ImageData> {
+    Logger.info('Starting image generation from purchase data', {
+      component: 'image-service',
+      operation: 'generateFromPurchase',
+      purchaseCount: purchaseData.length,
+      styles: imageStyle,
+      hasReferenceImage: Boolean(imagePath),
+    });
+
+    // Generate creative prompt using LLM
+    const prompt = await this.generatePromptWithLLM({
+      purchaseData,
+      imageStyle,
+      gender,
+      traits,
+    });
+
+    Logger.debug('LLM-generated prompt from purchase data', {
+      component: 'image-service',
+      operation: 'generateFromPurchase',
+      promptLength: prompt.length,
+    });
+
+    // Reuse existing generation logic
+    return this.generate(prompt, imagePath);
+  }
+
+  private async generatePromptWithLLM({
+    purchaseData,
+    imageStyle,
+    gender,
+    traits,
+  }: {
+    purchaseData: unknown[];
+    imageStyle: string[];
+    gender: string;
+    traits: string[];
+  }): Promise<string> {
+    const systemPrompt = `You are an expert Prompt Engineer specializing in creating compelling AI image generation prompts.
+
+TASK: Analyze the user's purchase history and create a detailed, creative image prompt for a personalized portrait.
+
+INPUT DATA:
+- Purchase History: The user's actual purchase data showing brands, products, and categories
+- Image Style: The visual aesthetic requested
+- Character Details: Gender and physical traits for the portrait subject
+
+OUTPUT: Generate a single image generation prompt (80-120 words) that:
+1. Places the user as the main character/subject
+2. Creatively incorporates their purchase interests into the scene context
+3. Blends their actual brands/products into the environment naturally
+4. Uses the specified visual style throughout
+5. Includes professional photography details (camera, lens, lighting)
+6. Ends with "9:16 vertical portrait orientation"
+
+PROMPT STRUCTURE:
+- Subject: Describe the person using gender and traits provided
+- Setting: Create a creative environment based on their purchase patterns
+- Details: Include subtle references to their brands/products in the scene
+- Style: Apply the requested image style to the entire composition
+- Technical: Add camera specs and "9:16 vertical portrait orientation"
+
+EXAMPLE:
+If user buys coffee and books, don't just say "person with coffee and books" - create a scene like "A person relaxing in a cozy literary café with steaming latte, surrounded by shelves of science fiction novels, warm ambient lighting, Hasselblad X2D, 80mm lens, Kodak film, 9:16 vertical portrait orientation"`;
+
+    const userContent = `Create an image generation prompt based on this data:
+
+Purchase History: ${JSON.stringify(purchaseData)}
+Image Style: ${imageStyle.join(', ')}
+Gender: ${gender}
+Traits: ${traits.join(', ')}
+
+Generate only the image prompt text, nothing else.`;
+
+    const response = await portkey.chat.completions.create({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userContent },
+      ],
+      model: '@OpenRouter/google/gemini-2.5-pro-preview',
+      max_tokens: 2048,
+    });
+
+    const content = response.choices?.[0]?.message?.content;
+    const prompt =
+      typeof content === 'string' ? content.trim() : JSON.stringify(content);
+
+    if (!prompt || prompt.length === 0) {
+      throw new Error('Failed to generate prompt from LLM');
+    }
+
+    return prompt;
+  }
+
   private async generateWithPortkey(
     prompt: string,
     imagePath?: string

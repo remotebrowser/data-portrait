@@ -128,7 +128,6 @@ async function generateSingleImage(
         imageStyle,
         gender,
         traits,
-        model: 'gemini',
         purchaseData,
       });
 

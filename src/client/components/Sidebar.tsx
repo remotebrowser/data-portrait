@@ -19,6 +19,7 @@ type SidebarProps = {
   selectedImageStyle: string[];
   imageFormat: ImageFormat;
   isGenerating: boolean;
+  selectedItemsCount: number;
   onSuccessConnect: (brandName: string, data: PurchaseHistory[]) => void;
   onOpenSignInDialog: (brandConfig: BrandConfig) => void;
   onGenderChange: (genderId: string) => void;
@@ -40,6 +41,7 @@ export function Sidebar({
   selectedImageStyle,
   imageFormat,
   isGenerating,
+  selectedItemsCount,
   onSuccessConnect,
   onOpenSignInDialog,
   onGenderChange,
@@ -122,7 +124,7 @@ export function Sidebar({
         <div className="flex-shrink-0 p-6 border-t border-gray-100">
           <Button
             onClick={onGeneratePortrait}
-            disabled={isGenerating || connectedBrands.length === 0}
+            disabled={isGenerating || connectedBrands.length === 0 || selectedItemsCount === 0}
             size="lg"
             className="w-full"
           >

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
@@ -227,6 +227,14 @@ export function DataPortrait() {
       .filter((order): order is PurchaseHistory => order !== null);
   };
 
+  const selectedItemsCount = useMemo(() => {
+    const filteredOrders = getFilteredOrdersForGeneration();
+    return filteredOrders.reduce(
+      (total, order) => total + order.product_names.length,
+      0
+    );
+  }, [orders, selectedItems]);
+
   const loadSampleData = () => {
     setOrders(sampleOrders);
     setConnectedBrands(['Amazon', 'Goodreads']);
@@ -254,10 +262,11 @@ export function DataPortrait() {
 
   const generatePortrait = async () => {
     const filteredOrders = getFilteredOrdersForGeneration();
-    const selectedItemsCount = filteredOrders.reduce(
-      (total, order) => total + order.product_names.length,
-      0
-    );
+
+    if (selectedItemsCount === 0) {
+      alert('Please select at least one item to generate a portrait.');
+      return;
+    }
 
     trackEvent('portrait_generation_started', {
       orders_count: orders.length,
@@ -302,12 +311,6 @@ export function DataPortrait() {
         setIsSidebarOpen(false);
       }
     } catch (error: unknown) {
-      const filteredOrders = getFilteredOrdersForGeneration();
-      const selectedItemsCount = filteredOrders.reduce(
-        (total, order) => total + order.product_names.length,
-        0
-      );
-
       trackEvent('portrait_generation_failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
         orders_count: orders.length,
@@ -386,7 +389,7 @@ export function DataPortrait() {
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30 lg:hidden">
           <Button
             onClick={generatePortrait}
-            disabled={isGenerating}
+            disabled={isGenerating || selectedItemsCount === 0}
             size="lg"
             className="px-8 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
           >
@@ -409,6 +412,7 @@ export function DataPortrait() {
         selectedImageStyle={selectedImageStyle}
         imageFormat={imageFormat}
         isGenerating={isGenerating}
+        selectedItemsCount={selectedItemsCount}
         onSuccessConnect={handleSuccessConnect}
         onOpenSignInDialog={handleOpenSignInDialog}
         onGenderChange={setSelectedGender}

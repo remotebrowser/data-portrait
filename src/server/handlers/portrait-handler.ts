@@ -12,7 +12,7 @@ export const handleGeneratePortrait = async (
   const filesToClean: string[] = [];
 
   try {
-    const { purchaseData, imageStyle, gender, traits, imagePath } = req.body;
+    const { purchaseData, imageStyle, gender, traits } = req.body;
 
     // Parse purchaseData
     const parsedPurchaseData = Array.isArray(purchaseData)
@@ -37,7 +37,7 @@ export const handleGeneratePortrait = async (
 
     // Handle uploaded image file (from multer middleware)
     const uploadedFile = (req as Request & { file?: Express.Multer.File }).file;
-    let resolvedImagePath: string | undefined = imagePath;
+    let imagePath: string | undefined;
 
     if (uploadedFile) {
       filesToClean.push(uploadedFile.path);
@@ -63,7 +63,7 @@ export const handleGeneratePortrait = async (
         .toFile(resizedPath);
 
       filesToClean.push(resizedPath);
-      resolvedImagePath = resizedPath;
+      imagePath = resizedPath;
     }
 
     Logger.info('Starting generate-from-purchase', {
@@ -72,7 +72,7 @@ export const handleGeneratePortrait = async (
       purchaseCount: parsedPurchaseData.length,
       styleCount: parsedImageStyle.length,
       traitCount: parsedTraits.length,
-      hasReferenceImage: Boolean(resolvedImagePath),
+      hasReferenceImage: Boolean(imagePath),
     });
 
     const imageData = await imageService.generateFromPurchase(
@@ -80,7 +80,7 @@ export const handleGeneratePortrait = async (
       parsedImageStyle,
       gender || '',
       parsedTraits,
-      resolvedImagePath
+      imagePath
     );
 
     const hasBackgroundBlur = parsedTraits.includes('background-blur');

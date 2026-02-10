@@ -5,6 +5,7 @@ dotenv.config();
 
 export const settings = {
   APP_HOST: process.env.APP_HOST || '',
+  PUBLIC_URL: process.env.PUBLIC_URL || 'http://localhost:5173',
   GETGATHER_URL: process.env.GETGATHER_URL || '',
   MAXMIND_ACCOUNT_ID: process.env.MAXMIND_ACCOUNT_ID || '',
   MAXMIND_LICENSE_KEY: process.env.MAXMIND_LICENSE_KEY || '',

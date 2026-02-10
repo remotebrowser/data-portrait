@@ -35,6 +35,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/dpage/, '/dpage'),
       },
+      '/shared': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
     },
   },
 });

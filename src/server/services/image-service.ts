@@ -168,24 +168,51 @@ Traits: ${traits.join(', ')}
 
 Generate only the image prompt text, nothing else.`;
 
-    const response = await portkey.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent },
-      ],
-      model: '@OpenRouter/google/gemini-2.5-pro-preview',
-      max_tokens: 2048,
-    });
+    // Use Portkey if available
+    if (settings.PORTKEY_API_KEY) {
+      const response = await portkey.chat.completions.create({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent },
+        ],
+        model: '@OpenRouter/google/gemini-2.5-pro-preview',
+        max_tokens: 2048,
+      });
 
-    const content = response.choices?.[0]?.message?.content;
-    const prompt =
-      typeof content === 'string' ? content.trim() : JSON.stringify(content);
+      const content = response.choices?.[0]?.message?.content;
+      const prompt =
+        typeof content === 'string' ? content.trim() : JSON.stringify(content);
 
-    if (!prompt || prompt.length === 0) {
-      throw new Error('Failed to generate prompt from LLM');
+      if (!prompt || prompt.length === 0) {
+        throw new Error('Failed to generate prompt from LLM');
+      }
+
+      return prompt;
     }
 
-    return prompt;
+    // Use Gemini if available
+    if (settings.GEMINI_API_KEY) {
+      const response = await genAI.models.generateContent({
+        model: 'gemini-3-pro-preview',
+        contents: {
+          role: 'user',
+          parts: [{ text: systemPrompt }, { text: userContent }],
+        },
+      });
+
+      const content = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      const prompt = content?.trim();
+
+      if (!prompt || prompt.length === 0) {
+        throw new Error('Failed to generate prompt from Gemini');
+      }
+
+      return prompt;
+    }
+
+    throw new Error(
+      'No LLM provider configured. Please set PORTKEY_API_KEY or GEMINI_API_KEY.'
+    );
   }
 
   private async generateWithPortkey(

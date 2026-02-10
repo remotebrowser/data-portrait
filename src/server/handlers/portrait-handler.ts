@@ -9,30 +9,28 @@ export const handleGeneratePortrait = async (
   req: Request,
   res: Response
 ): Promise<void> => {
+  // to track file that need to be delete after process done
   const filesToClean: string[] = [];
 
   try {
-    const { purchaseData, imageStyle, gender, traits } = req.body;
+    const { imageStyle, gender, traits, purchaseData } = req.body;
 
-    // Parse purchaseData
-    const parsedPurchaseData = Array.isArray(purchaseData)
-      ? purchaseData
-      : typeof purchaseData === 'string'
-        ? JSON.parse(purchaseData)
-        : [];
-
-    // Parse imageStyle
     const parsedImageStyle = Array.isArray(imageStyle)
       ? imageStyle
       : typeof imageStyle === 'string' && imageStyle.length > 0
         ? imageStyle.split(',').map((s) => s.trim())
         : [];
 
-    // Parse traits
     const parsedTraits = Array.isArray(traits)
       ? traits
       : typeof traits === 'string' && traits.length > 0
         ? traits.split(',').map((t) => t.trim())
+        : [];
+
+    const parsedPurchaseData = Array.isArray(purchaseData)
+      ? purchaseData
+      : typeof purchaseData === 'string'
+        ? JSON.parse(purchaseData)
         : [];
 
     // Handle uploaded image file (from multer middleware)
@@ -50,6 +48,7 @@ export const handleGeneratePortrait = async (
         mimetype: uploadedFile.mimetype,
       });
 
+      // Resize image to reduce base64 size
       const resizedPath = join(
         'uploads',
         `resized-${Date.now()}-${uploadedFile.originalname}`
@@ -117,18 +116,19 @@ export const handleGeneratePortrait = async (
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    Logger.error('Generate from purchase failed', error as Error, {
+    Logger.error('Portrait generation failed', error as Error, {
       component: 'portrait-handler',
-      operation: 'generate-from-purchase',
+      operation: 'generate-portrait',
     });
     res.status(500).json({
       error:
         error instanceof Error
           ? error.message
-          : 'Image generation failed. Please try again.',
+          : 'Portrait generation failed. Please try again.',
       timestamp: new Date().toISOString(),
     });
   } finally {
+    // Clean up files
     for (const filePath of filesToClean) {
       try {
         await unlink(filePath);

@@ -5,7 +5,7 @@ import { unlink } from 'fs/promises';
 import sharp from 'sharp';
 import { join } from 'path';
 
-export const handleGenerateFromPurchase = async (
+export const handleGeneratePortrait = async (
   req: Request,
   res: Response
 ): Promise<void> => {

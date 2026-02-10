@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
-import { handleGenerateFromPurchase as handleGeneratePortrait } from '../handlers/portrait-handler.js';
+import { handleGeneratePortrait } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
   handleMcpPoll,

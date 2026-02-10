@@ -16,6 +16,8 @@ const tools: Record<string, string[]> = {
   goodreads: ['goodreads_get_book_list'],
   gofood: ['gofood_get_purchase_history'],
   garmin: ['garmin_get_activities'],
+  tokopedia: ['tokopedia_get_purchase_history'],
+  shopee: ['shopee_get_purchase_history'],
 };
 
 const McpResponse = z.object({

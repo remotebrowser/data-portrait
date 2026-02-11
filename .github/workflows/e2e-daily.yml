@@ -1,9 +1,6 @@
 name: E2E Tests - Daily
 
 on:
-  # TODO: Remove pull_request trigger before merging to main
-  # This is temporary for testing the workflow in PR
-  pull_request:
   schedule:
     # Run daily at 9:00 AM UTC (adjust as needed)
     - cron: '0 9 * * *'

@@ -1,12 +1,11 @@
 import { Request, Response } from 'express';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
-import { promptService } from '../services/prompt-service.js';
 import { imageService } from '../services/image-service.js';
 import { unlink } from 'fs/promises';
 import sharp from 'sharp';
 import { join } from 'path';
 
-export const handlePortraitGeneration = async (
+export const handleGeneratePortrait = async (
   req: Request,
   res: Response
 ): Promise<void> => {
@@ -22,8 +21,21 @@ export const handlePortraitGeneration = async (
         ? imageStyle.split(',').map((s) => s.trim())
         : [];
 
-    const uploadedFile = req.file;
-    let resizedPath: string | undefined;
+    const parsedTraits = Array.isArray(traits)
+      ? traits
+      : typeof traits === 'string' && traits.length > 0
+        ? traits.split(',').map((t) => t.trim())
+        : [];
+
+    const parsedPurchaseData = Array.isArray(purchaseData)
+      ? purchaseData
+      : typeof purchaseData === 'string'
+        ? JSON.parse(purchaseData)
+        : [];
+
+    // Handle uploaded image file (from multer middleware)
+    const uploadedFile = (req as Request & { file?: Express.Multer.File }).file;
+    let imagePath: string | undefined;
 
     if (uploadedFile) {
       filesToClean.push(uploadedFile.path);
@@ -37,7 +49,7 @@ export const handlePortraitGeneration = async (
       });
 
       // Resize image to reduce base64 size
-      resizedPath = join(
+      const resizedPath = join(
         'uploads',
         `resized-${Date.now()}-${uploadedFile.originalname}`
       );
@@ -50,43 +62,43 @@ export const handlePortraitGeneration = async (
         .toFile(resizedPath);
 
       filesToClean.push(resizedPath);
+      imagePath = resizedPath;
     }
 
-    const parsedTraits = Array.isArray(traits)
-      ? traits
-      : typeof traits === 'string'
-        ? traits.split(',').map((t) => t.trim())
-        : [];
-
-    const parsedPurchaseData = Array.isArray(purchaseData)
-      ? purchaseData
-      : typeof purchaseData === 'string'
-        ? JSON.parse(purchaseData)
-        : [];
-
-    const prompt = await promptService.buildPrompt({
-      imageStyle: parsedImageStyle,
-      gender,
-      traits: parsedTraits,
-      purchaseData: parsedPurchaseData,
+    Logger.info('Starting generate-from-purchase', {
+      component: 'portrait-handler',
+      operation: 'generate-from-purchase',
+      purchaseCount: parsedPurchaseData.length,
+      styleCount: parsedImageStyle.length,
+      traitCount: parsedTraits.length,
+      hasReferenceImage: Boolean(imagePath),
     });
 
-    const imageData = await imageService.generate(prompt, resizedPath);
+    const imageData = await imageService.generateFromPurchase(
+      parsedPurchaseData,
+      parsedImageStyle,
+      gender || '',
+      parsedTraits,
+      imagePath
+    );
 
     const hasBackgroundBlur = parsedTraits.includes('background-blur');
-
     if (hasBackgroundBlur && imageData.b64_json) {
-      console.log('🔘 Background blur trait detected - applying blur...');
+      Logger.info('Background blur trait detected - applying blur', {
+        component: 'portrait-handler',
+        operation: 'blur-background',
+      });
       try {
         const blurredImageData = await imageService.blurBackground(
           imageData.b64_json
         );
         Object.assign(imageData, blurredImageData);
       } catch (blurError) {
-        console.warn(
-          '⚠️ Background blur failed, returning original image:',
-          blurError
-        );
+        Logger.warn('Background blur failed, returning original image', {
+          component: 'portrait-handler',
+          operation: 'blur-background',
+          error: blurError instanceof Error ? blurError.message : 'Unknown',
+        });
       }
     }
 

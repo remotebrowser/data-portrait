@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
-import { handlePortraitGeneration } from '../handlers/portrait-handler.js';
+import { handleGeneratePortrait } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
   handleMcpPoll,
@@ -50,11 +50,11 @@ router.get(
 // MCP poll endpoint
 router.get('/mcp-poll/:brandId/:linkId', handleMcpPoll);
 
-// Portrait generation endpoint (supports both with and without image upload)
+// Portrait generation endpoint
 router.post(
   '/generate-portrait',
   upload.single('image'),
-  handlePortraitGeneration
+  handleGeneratePortrait
 );
 
 // Stories generation endpoints

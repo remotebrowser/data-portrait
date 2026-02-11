@@ -199,7 +199,8 @@ class StoriesService {
     purchaseData: unknown[],
     imageStyle: string[],
     gender: string,
-    traits: string[]
+    traits: string[],
+    imagePath?: string
   ): Promise<string> {
     const jobId = nanoid(16);
 
@@ -215,7 +216,8 @@ class StoriesService {
       purchaseData,
       imageStyle,
       gender,
-      traits
+      traits,
+      imagePath
     ).catch((error) => {
       Logger.error('Story generation job failed', error as Error, {
         component: 'stories-service',
@@ -237,7 +239,8 @@ class StoriesService {
     purchaseData: unknown[],
     imageStyle: string[],
     gender: string,
-    traits: string[]
+    traits: string[],
+    imagePath?: string
   ): Promise<void> {
     const job = generationJobs.get(jobId);
     if (!job) return;
@@ -260,7 +263,7 @@ class StoriesService {
 
         const imageData = await imageService.generate(
           chapter.imagePrompt,
-          undefined
+          imagePath
         );
 
         stories.push({

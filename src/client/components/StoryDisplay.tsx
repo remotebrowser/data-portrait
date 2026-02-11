@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, type RefObject } from 'react';
 import Stories from 'react-insta-stories';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { SocialShareButtons } from './SocialShareButtons.js';
+import { toPng } from 'html-to-image';
 import type {
   GeneratedImage,
   ImageData,
@@ -30,10 +31,18 @@ type StoryDisplayProps = {
 
 /**
  * Create a text story content component for react-insta-stories
+ * Optionally attaches a ref to the root container so it can be captured.
  */
-function createTextStoryContent(storyText: string, title?: string) {
+function createTextStoryContent(
+  storyText: string,
+  title: string | undefined,
+  containerRef?: RefObject<HTMLDivElement | null>
+) {
   return () => (
-    <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col items-center justify-center p-8 text-center">
+    <div
+      ref={containerRef}
+      className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col items-center justify-center p-8 text-center"
+    >
       <div className="max-w-full overflow-y-auto">
         {title && (
           <h2 className="text-2xl font-bold text-white mb-6 drop-shadow-lg">
@@ -54,7 +63,10 @@ function createTextStoryContent(storyText: string, title?: string) {
  * - If storyText exists, render as text story
  * - If neither exists, skip the story
  */
-function transformToStories(images: ImageData[]): Story[] {
+function transformToStories(
+  images: ImageData[],
+  textStoryRef?: RefObject<HTMLDivElement | null>
+): Story[] {
   const stories: Story[] = [];
 
   for (const image of images) {
@@ -72,7 +84,11 @@ function transformToStories(images: ImageData[]): Story[] {
       });
     } else if (hasText) {
       stories.push({
-        content: createTextStoryContent(image.storyText!, image.title),
+        content: createTextStoryContent(
+          image.storyText!,
+          image.title,
+          textStoryRef
+        ),
         header: {
           heading: image.title || 'Your Story',
           subheading: '',
@@ -96,23 +112,45 @@ export function StoryDisplay({
   showDownload = true,
 }: StoryDisplayProps) {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+  const storiesRef = useRef<HTMLDivElement | null>(null);
 
   const stories: Story[] = useMemo(
-    () => transformToStories(story.images),
+    () => transformToStories(story.images, storiesRef),
     [story.images]
   );
 
-  const handleDownloadCurrent = () => {
-    const currentImage = story.images[currentStoryIndex];
-    if (currentImage?.url) {
-      window.open(currentImage.url, '_blank');
-    }
+  const onDownload = (url: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link); // Required for Firefox
+    link.click();
+    document.body.removeChild(link);
   };
 
-  // Check if current story is an image (has url)
-  const isCurrentStoryImage = story.images[currentStoryIndex]?.url
-    ? true
-    : false;
+  const onDownloadCurrent = async () => {
+    const currentImage = story.images[currentStoryIndex];
+    const isImage = currentImage?.url && currentImage.url.trim() !== '';
+    const isText =
+      currentImage?.storyText && currentImage.storyText.trim() !== '';
+
+    let dataUrl: string | undefined;
+    let filename: string;
+
+    if (isImage) {
+      dataUrl = currentImage.url;
+      filename = `story-image-${currentStoryIndex + 1}.png`;
+    } else if (isText && storiesRef.current) {
+      dataUrl = await toPng(storiesRef.current as HTMLElement, {
+        pixelRatio: 2,
+      });
+      filename = `story-text-${currentStoryIndex + 1}.png`;
+    } else {
+      return; // Nothing to download
+    }
+
+    onDownload(dataUrl, filename);
+  };
 
   const shareUrl = story.id
     ? `${window.location.origin}/story/${story.id}`
@@ -143,11 +181,11 @@ export function StoryDisplay({
       <div className="absolute bottom-4 right-4 z-[999] flex gap-2 items-center">
         {showShare && shareUrl && <SocialShareButtons url={shareUrl} />}
 
-        {showDownload && isCurrentStoryImage && (
+        {showDownload && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleDownloadCurrent}
+            onClick={onDownloadCurrent}
             className="text-white hover:bg-white/90 hover:text-black rounded-full p-2.5 transition-all duration-200 hover:ring-2 hover:ring-white/50 hover:scale-105 active:scale-95"
             title="Download current story"
           >

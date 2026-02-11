@@ -1,9 +1,6 @@
 import type { Request, Response } from 'express';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { storiesService, type StoryItem } from '../services/stories-service.js';
-import { unlink } from 'fs/promises';
-import sharp from 'sharp';
-import { join } from 'path';
 
 export type StoryData = {
   id: string;
@@ -39,9 +36,6 @@ export const handleStoriesGeneration = async (
   req: Request,
   res: Response
 ): Promise<void> => {
-  // to track file that need to be delete after process done
-  const filesToClean: string[] = [];
-
   try {
     const { purchaseData, imageStyle, gender, traits } = req.body;
 
@@ -65,35 +59,7 @@ export const handleStoriesGeneration = async (
 
     // Handle uploaded image file (from multer middleware)
     const uploadedFile = (req as Request & { file?: Express.Multer.File }).file;
-    let imagePath: string | undefined;
-
-    if (uploadedFile) {
-      filesToClean.push(uploadedFile.path);
-
-      Logger.info('Processing uploaded image for stories', {
-        component: 'stories-handler',
-        operation: 'upload-process',
-        originalName: uploadedFile.originalname,
-        size: uploadedFile.size,
-        mimetype: uploadedFile.mimetype,
-      });
-
-      // Resize image to reduce base64 size
-      const resizedPath = join(
-        'uploads',
-        `resized-${Date.now()}-${uploadedFile.originalname}`
-      );
-      await sharp(uploadedFile.path)
-        .resize(1024, 1024, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .jpeg({ quality: 85 })
-        .toFile(resizedPath);
-
-      filesToClean.push(resizedPath);
-      imagePath = resizedPath;
-    }
+    const imagePath = uploadedFile?.path;
 
     const jobId = await storiesService.createGenerationJob(
       parsedPurchaseData,
@@ -119,25 +85,6 @@ export const handleStoriesGeneration = async (
           : 'Stories generation failed. Please try again.',
       timestamp: new Date().toISOString(),
     });
-  } finally {
-    // Clean up files
-    for (const filePath of filesToClean) {
-      try {
-        await unlink(filePath);
-        Logger.debug('Cleaned up temporary file', {
-          component: 'stories-handler',
-          operation: 'cleanup',
-          filePath,
-        });
-      } catch (error) {
-        Logger.warn('Failed to cleanup temporary file', {
-          component: 'stories-handler',
-          operation: 'cleanup',
-          filePath,
-          error: (error as Error).message,
-        });
-      }
-    }
   }
 };
 

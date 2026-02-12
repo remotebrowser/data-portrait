@@ -17,13 +17,13 @@ export const handleGeneratePortrait = async (
 
     const parsedImageStyle = Array.isArray(imageStyle)
       ? imageStyle
-      : typeof imageStyle === 'string' && imageStyle.length > 0
+      : typeof imageStyle === 'string'
         ? imageStyle.split(',').map((s) => s.trim())
         : [];
 
     const parsedTraits = Array.isArray(traits)
       ? traits
-      : typeof traits === 'string' && traits.length > 0
+      : typeof traits === 'string'
         ? traits.split(',').map((t) => t.trim())
         : [];
 

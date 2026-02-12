@@ -23,7 +23,7 @@ export const handleGeneratePortrait = async (
 
     const parsedTraits = Array.isArray(traits)
       ? traits
-      : typeof traits === 'string' && traits.length > 0
+      : typeof traits === 'string'
         ? traits.split(',').map((t) => t.trim())
         : [];
 

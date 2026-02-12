@@ -162,17 +162,29 @@ async function generateSingleImage(
 async function generateStories(
   params: GenerationParams
 ): Promise<GeneratedImage> {
-  const { imageStyle, gender, traits, purchaseData } = params;
+  const { imageStyle, gender, traits, purchaseData, uploadedImage } = params;
+
+  const body = uploadedImage
+    ? (() => {
+        const formData = new FormData();
+        formData.append('image', uploadedImage);
+        formData.append('imageStyle', imageStyle.join(','));
+        formData.append('gender', gender);
+        formData.append('traits', traits.join(','));
+        formData.append('purchaseData', JSON.stringify(purchaseData));
+        return formData;
+      })()
+    : JSON.stringify({
+        imageStyle,
+        gender,
+        traits,
+        purchaseData,
+      });
 
   const initResponse = await fetch('/getgather/generate/stories', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      imageStyle,
-      gender,
-      traits,
-      purchaseData,
-    }),
+    headers: uploadedImage ? {} : { 'Content-Type': 'application/json' },
+    body,
   });
 
   if (!initResponse.ok) {

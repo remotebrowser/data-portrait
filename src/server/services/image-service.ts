@@ -31,6 +31,10 @@ type ImageData = {
   provider?: string;
 };
 
+type GenerateOptions = {
+  beforeSave?: (base64: string) => Promise<string>;
+};
+
 function getImageProvider(): ImageProvider {
   if (settings.PORTKEY_API_KEY) {
     return 'portkey';
@@ -51,7 +55,11 @@ class ImageService {
     return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
   }
 
-  async generate(prompt: string, imagePath?: string): Promise<ImageData> {
+  async generate(
+    prompt: string,
+    imagePath?: string,
+    options?: GenerateOptions
+  ): Promise<ImageData> {
     const provider = getImageProvider();
     Logger.info('Starting image generation', {
       component: 'image-service',
@@ -63,10 +71,10 @@ class ImageService {
 
     const imageData =
       provider === 'portkey'
-        ? await this.generateWithPortkey(prompt, imagePath)
+        ? await this.generateWithPortkey(prompt, imagePath, options)
         : provider === 'flux'
-          ? await this.generateWithFlux(prompt, imagePath)
-          : await this.generateWithGoogleGenAI(prompt, imagePath);
+          ? await this.generateWithFlux(prompt, imagePath, options)
+          : await this.generateWithGoogleGenAI(prompt, imagePath, options);
 
     const modelName =
       provider === 'flux' ? 'flux-pro-1.1' : 'gemini-3-pro-image-preview';
@@ -210,7 +218,8 @@ Generate only the image prompt text, nothing else.`;
 
   private async generateWithPortkey(
     prompt: string,
-    imagePath?: string
+    imagePath?: string,
+    options?: GenerateOptions
   ): Promise<ImageData> {
     if (!settings.PORTKEY_API_KEY) {
       throw new Error('PORTKEY_API_KEY not configured');
@@ -258,11 +267,13 @@ Generate only the image prompt text, nothing else.`;
       throw new Error('No image URL returned from Portkey API');
     }
 
-    const base64Data = imageUrl.split(',')[1];
+    let base64Data = imageUrl.split(',')[1];
     if (!base64Data) {
       throw new Error('No image data returned from Portkey API');
     }
-
+    if (options?.beforeSave) {
+      base64Data = await options.beforeSave(base64Data);
+    }
     const fileData = await this.saveImageFile(base64Data, 'gemini');
     return {
       ...fileData,
@@ -274,7 +285,8 @@ Generate only the image prompt text, nothing else.`;
 
   private async generateWithGoogleGenAI(
     prompt: string,
-    imagePath?: string
+    imagePath?: string,
+    options?: GenerateOptions
   ): Promise<ImageData> {
     if (!settings.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY not configured');
@@ -328,13 +340,14 @@ Generate only the image prompt text, nothing else.`;
 
     for (const part of candidate.content.parts) {
       if (part.inlineData?.data) {
-        const fileData = await this.saveImageFile(
-          part.inlineData.data,
-          'gemini'
-        );
+        let base64Data = part.inlineData.data;
+        if (options?.beforeSave) {
+          base64Data = await options.beforeSave(base64Data);
+        }
+        const fileData = await this.saveImageFile(base64Data, 'gemini');
         return {
           ...fileData,
-          b64_json: part.inlineData.data,
+          b64_json: base64Data,
           width: 1024,
           height: 1024,
         };
@@ -346,7 +359,8 @@ Generate only the image prompt text, nothing else.`;
 
   private async generateWithFlux(
     prompt: string,
-    imagePath?: string
+    imagePath?: string,
+    options?: GenerateOptions
   ): Promise<ImageData> {
     if (!settings.FLUX_API_KEY) {
       throw new Error('FLUX_API_KEY not configured');
@@ -391,8 +405,10 @@ Generate only the image prompt text, nothing else.`;
 
     const imageResponse = await fetch(imageUrl);
     const buffer = Buffer.from(await imageResponse.arrayBuffer());
-    const base64Data = buffer.toString('base64');
-
+    let base64Data = buffer.toString('base64');
+    if (options?.beforeSave) {
+      base64Data = await options.beforeSave(base64Data);
+    }
     const fileData = await this.saveImageFile(base64Data, 'flux-pro-1.1');
 
     return {

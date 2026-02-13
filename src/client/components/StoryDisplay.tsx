@@ -10,6 +10,8 @@ import type {
 } from '../modules/PortraitGeneration.js';
 import type { Story } from 'react-insta-stories/dist/interfaces.js';
 
+const STORY_LINK_OVERLAY_TEXT = 'dataportrait.app';
+
 const StoriesComponent = Stories as unknown as React.ComponentType<{
   stories: Story[];
   defaultInterval: number;
@@ -41,7 +43,7 @@ function createTextStoryContent(
   return () => (
     <div
       ref={containerRef}
-      className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col items-center justify-center p-8 text-center"
+      className="relative w-full h-full bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 flex flex-col items-center justify-center p-8 text-center"
     >
       <div className="max-w-full overflow-y-auto">
         {title && (
@@ -53,6 +55,9 @@ function createTextStoryContent(
           {storyText}
         </p>
       </div>
+      <span className="absolute bottom-5 left-5 text-white text-sm font-medium drop-shadow-md">
+        {STORY_LINK_OVERLAY_TEXT}
+      </span>
     </div>
   );
 }

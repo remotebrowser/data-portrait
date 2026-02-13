@@ -104,6 +104,14 @@ export const IMAGE_STYLES: Array<ImageStyle> = [
     gradient: 'from-green-100 to-blue-200',
     category: 'gaming',
   },
+  {
+    id: 'caricature',
+    name: 'Caricature',
+    description: 'Exaggerated, humorous portrait style',
+    preview: '🤪',
+    gradient: 'from-orange-100 to-yellow-200',
+    category: 'artistic',
+  },
 ];
 
 export const STYLE_CATEGORIES = {

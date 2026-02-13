@@ -1,6 +1,8 @@
-import { CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import { CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert.js';
 import { Badge } from '@/components/ui/badge.js';
+import { Button } from '@/components/ui/button.js';
 import { DataSource } from './DataSource.js';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
@@ -12,12 +14,23 @@ type DataConnectorsProps = {
   onOpenSignInDialog: (brandConfig: BrandConfig) => void;
 };
 
+const ITEMS_PER_ROW = 3;
+
 export function DataConnectors({
   brands,
   connectedBrands,
   onSuccessConnect,
   onOpenSignInDialog,
 }: DataConnectorsProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const visibleBrands = isExpanded ? brands : brands.slice(0, ITEMS_PER_ROW);
+  const hasMoreBrands = brands.length > ITEMS_PER_ROW;
+
+  const onToggleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <>
       {/* Data Connection Status Alert */}
@@ -62,7 +75,7 @@ export function DataConnectors({
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          {brands.map((brandConfig) => (
+          {visibleBrands.map((brandConfig) => (
             <DataSource
               key={brandConfig.brand_id}
               brandConfig={brandConfig}
@@ -74,6 +87,29 @@ export function DataConnectors({
             />
           ))}
         </div>
+
+        {hasMoreBrands && (
+          <div className="flex justify-center mt-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleExpand}
+              className="flex items-center gap-2"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  Show Less Connectors
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  Show More Connectors ({brands.length - ITEMS_PER_ROW} more)
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );

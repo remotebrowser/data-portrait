@@ -1,5 +1,7 @@
 import Select, {
   components,
+  MultiValueGenericProps,
+  OptionProps,
   type MultiValue,
   type StylesConfig,
 } from 'react-select';
@@ -167,7 +169,7 @@ export function PersonaSelector({
     }),
   };
 
-  const Option = (props: any) => {
+  const Option = (props: OptionProps<PersonaOption, true>) => {
     const { data, isSelected } = props;
     const option = data as PersonaOption;
 
@@ -213,7 +215,9 @@ export function PersonaSelector({
     );
   };
 
-  const MultiValueLabel = (props: any) => {
+  const MultiValueLabel = (
+    props: MultiValueGenericProps<PersonaOption, true>
+  ) => {
     const option = props.data as PersonaOption;
     return (
       <components.MultiValueLabel {...props}>

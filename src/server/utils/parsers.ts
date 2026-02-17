@@ -8,3 +8,18 @@ export function parseArray(value: unknown): string[] {
   }
   return [];
 }
+
+// Parse JSON array or return empty array on failure.
+export function parseJsonArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}

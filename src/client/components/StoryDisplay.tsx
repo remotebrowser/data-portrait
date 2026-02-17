@@ -194,8 +194,8 @@ export function StoryDisplay({
         {showShare && shareUrl && (
           <SocialShareButtons
             url={shareUrl}
-            isStoryPaused={isShareOpened}
-            onShareToggle={onShareToggle}
+            isShareOpened={isShareOpened}
+            setIsShareOpened={setIsShareOpened}
           />
         )}
 

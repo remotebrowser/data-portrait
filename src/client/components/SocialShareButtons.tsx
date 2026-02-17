@@ -12,8 +12,8 @@ import {
 type SocialShareButtonsProps = {
   url: string;
   title?: string;
-  onShareToggle: (state: boolean) => void;
-  isStoryPaused: boolean;
+  setIsShareOpened: (state: boolean) => void;
+  isShareOpened: boolean;
 };
 
 interface SharePlatform {
@@ -66,11 +66,11 @@ const platforms: SharePlatform[] = [
 export function SocialShareButtons({
   url,
   title = 'Generated Data Portrait',
-  onShareToggle,
-  isStoryPaused,
+  setIsShareOpened,
+  isShareOpened,
 }: SocialShareButtonsProps) {
-  const isOpen = isStoryPaused;
-  const setIsOpen = onShareToggle;
+  const isOpen = isShareOpened;
+  const setIsOpen = setIsShareOpened;
 
   const handleShare = (platform: SharePlatform) => {
     try {

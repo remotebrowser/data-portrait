@@ -37,6 +37,8 @@ type GenerationJob = {
 
 const generationJobs = new Map<string, GenerationJob>();
 
+const STORY_LINK_OVERLAY_TEXT = 'dataportrait.app';
+
 function hasGCSConfig(): boolean {
   return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
 }
@@ -293,7 +295,10 @@ class StoriesService {
 
         const imageData = await imageService.generate(
           chapter.imagePrompt,
-          resizedImagePath
+          resizedImagePath,
+          {
+            beforeSave: addStoryLinkOverlay,
+          }
         );
 
         stories.push({
@@ -423,6 +428,56 @@ class StoriesService {
   cleanupJob(jobId: string): void {
     generationJobs.delete(jobId);
   }
+}
+
+/**
+ * Add dataportrait.app link text overlay to base64 image data.
+ * Renders text at bottom-right with white fill and black border, same manner as a watermark.
+ * Returns image as base64 string.
+ */
+export async function addStoryLinkOverlay(imageData: string): Promise<string> {
+  const imageBuffer = Buffer.from(imageData, 'base64');
+  const image = sharp(imageBuffer);
+  const metadata = await image.metadata();
+  const width = metadata.width || 1024;
+  const height = metadata.height || 1024;
+
+  const padding = 20;
+  const text = STORY_LINK_OVERLAY_TEXT;
+  const baseOverlayHeight = Math.round(Math.min(width, height) * 0.06);
+  const fontSize = Math.round(baseOverlayHeight * 0.7);
+  const rectHorizontalPadding = 6;
+  const estimatedTextWidth = Math.round(fontSize * text.length * 0.45);
+  const rectWidth = Math.min(
+    Math.round(width * 0.8),
+    estimatedTextWidth + rectHorizontalPadding * 2
+  );
+  const overlayWidth = rectWidth;
+  const overlayHeight = baseOverlayHeight;
+  const svg =
+    `<svg width="${overlayWidth}" height="${overlayHeight}" xmlns="http://www.w3.org/2000/svg">` +
+    `<rect x="0" y="0" width="${rectWidth}" height="${overlayHeight}" rx="8" ry="8" fill="white"/>` +
+    `<text x="${rectWidth - rectHorizontalPadding}" y="${overlayHeight - 10}" text-anchor="end"` +
+    ` font-family="Arial, sans-serif" font-size="${fontSize}" fill="black" dominant-baseline="baseline">` +
+    `${text}</text></svg>`;
+
+  const textOverlay = await sharp(Buffer.from(svg)).png().toBuffer();
+
+  const left = width - overlayWidth - padding;
+  const top = height - overlayHeight - padding;
+
+  const resultBuffer = await image
+    .composite([
+      {
+        input: textOverlay,
+        left,
+        top,
+      },
+    ])
+    .png()
+    .toBuffer();
+
+  return resultBuffer.toString('base64');
 }
 
 export const storiesService = new StoriesService();

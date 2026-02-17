@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { Button } from '@/components/ui/button.js';
+import { logger } from '@/utils/logger/index.js';
 import {
   Copy,
   Facebook,
@@ -7,12 +8,12 @@ import {
   Share2,
   X,
 } from 'lucide-react';
-import { logger } from '@/utils/logger/index.js';
-import { Button } from '@/components/ui/button.js';
 
 type SocialShareButtonsProps = {
   url: string;
   title?: string;
+  onShareToggle: (state: boolean) => void;
+  isStoryPaused: boolean;
 };
 
 interface SharePlatform {
@@ -65,8 +66,11 @@ const platforms: SharePlatform[] = [
 export function SocialShareButtons({
   url,
   title = 'Generated Data Portrait',
+  onShareToggle,
+  isStoryPaused,
 }: SocialShareButtonsProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const isOpen = isStoryPaused;
+  const setIsOpen = onShareToggle;
 
   const handleShare = (platform: SharePlatform) => {
     try {

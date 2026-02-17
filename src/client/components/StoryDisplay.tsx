@@ -1,14 +1,14 @@
-import { useState, useMemo, useRef, type RefObject } from 'react';
-import Stories from 'react-insta-stories';
-import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
-import { SocialShareButtons } from './SocialShareButtons.js';
 import { toPng } from 'html-to-image';
+import { Download } from 'lucide-react';
+import { useMemo, useRef, useState, type RefObject } from 'react';
+import Stories from 'react-insta-stories';
+import type { Story } from 'react-insta-stories/dist/interfaces.js';
 import type {
   GeneratedImage,
   ImageData,
 } from '../modules/PortraitGeneration.js';
-import type { Story } from 'react-insta-stories/dist/interfaces.js';
+import { SocialShareButtons } from './SocialShareButtons.js';
 
 const StoriesComponent = Stories as unknown as React.ComponentType<{
   stories: Story[];
@@ -20,6 +20,7 @@ const StoriesComponent = Stories as unknown as React.ComponentType<{
   onStoryStart?: (index: number) => void;
   storyContainerStyles?: React.CSSProperties;
   storyStyles?: React.CSSProperties;
+  isPaused?: boolean;
 }>;
 
 type StoryDisplayProps = {
@@ -113,6 +114,7 @@ export function StoryDisplay({
 }: StoryDisplayProps) {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const storiesRef = useRef<HTMLDivElement | null>(null);
+  const [isShareOpened, setIsShareOpened] = useState(false);
 
   const stories: Story[] = useMemo(
     () => transformToStories(story.images, storiesRef),
@@ -152,6 +154,15 @@ export function StoryDisplay({
     onDownload(dataUrl, filename);
   };
 
+  const onShareToggle = (state: boolean) => {
+    setIsShareOpened(state);
+  };
+
+  const onStoryStart = (index: number) => {
+    setCurrentStoryIndex(index);
+    onShareToggle(false);
+  };
+
   const shareUrl = story.id
     ? `${window.location.origin}/story/${story.id}`
     : null;
@@ -165,7 +176,7 @@ export function StoryDisplay({
         height="100%"
         keyboardNavigation
         onAllStoriesEnd={onAllStoriesEnd}
-        onStoryStart={setCurrentStoryIndex}
+        onStoryStart={onStoryStart}
         storyContainerStyles={{
           borderRadius: '12px',
           overflow: 'hidden',
@@ -175,11 +186,18 @@ export function StoryDisplay({
           maxWidth: '100%',
           margin: 0,
         }}
+        isPaused={isShareOpened}
       />
 
       {/* Action buttons */}
       <div className="absolute bottom-4 right-4 z-[999] flex gap-2 items-center">
-        {showShare && shareUrl && <SocialShareButtons url={shareUrl} />}
+        {showShare && shareUrl && (
+          <SocialShareButtons
+            url={shareUrl}
+            isStoryPaused={isShareOpened}
+            onShareToggle={onShareToggle}
+          />
+        )}
 
         {showDownload && (
           <Button

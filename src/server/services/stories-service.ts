@@ -5,9 +5,8 @@ import { imageService } from './image-service.js';
 import { gcsService, type StoryMetadata } from './gcs-service.js';
 import { promptService } from './prompt-service.js';
 import { nanoid } from 'nanoid';
-import { unlink } from 'fs/promises';
-import sharp from 'sharp';
-import { join } from 'path';
+import { processImageFromPath } from '../utils/image-processing.js';
+import { cleanupFiles } from '../utils/file-cleanup.js';
 
 const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,
@@ -254,27 +253,17 @@ class StoriesService {
     let resizedImagePath: string | undefined;
 
     if (imagePath) {
-      Logger.info('Processing uploaded image for stories', {
-        component: 'stories-service',
-        operation: 'upload-process',
-        filePath: imagePath,
-      });
-
-      const resizedPath = join(
-        'uploads',
-        `resized-${Date.now()}-${imagePath.split('/').pop()}`
+      const result = await processImageFromPath(
+        imagePath,
+        { width: 1024, height: 1024, quality: 85, fit: 'inside' },
+        {
+          component: 'stories-service',
+          operation: 'upload-process',
+        }
       );
 
-      await sharp(imagePath)
-        .resize(1024, 1024, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .jpeg({ quality: 85 })
-        .toFile(resizedPath);
-
-      cleanupPaths.push(imagePath, resizedPath);
-      resizedImagePath = resizedPath;
+      cleanupPaths.push(...result.cleanupPaths);
+      resizedImagePath = result.resizedPath;
     }
 
     try {
@@ -335,29 +324,11 @@ class StoriesService {
       throw error;
     } finally {
       if (cleanupPaths.length) {
-        const cleanupDelayMs = 90_000;
-        setTimeout(async () => {
-          for (const filePath of cleanupPaths) {
-            try {
-              await unlink(filePath);
-              Logger.debug('Cleaned up temporary file', {
-                component: 'stories-service',
-                operation: 'cleanup',
-                filePath,
-              });
-            } catch (cleanupError) {
-              Logger.warn('Failed to cleanup temporary file', {
-                component: 'stories-service',
-                operation: 'cleanup',
-                filePath,
-                error:
-                  cleanupError instanceof Error
-                    ? cleanupError.message
-                    : 'Unknown error',
-              });
-            }
-          }
-        }, cleanupDelayMs);
+        await cleanupFiles(cleanupPaths, {
+          delayMs: 90_000,
+          component: 'stories-service',
+          operation: 'cleanup',
+        });
       }
     }
   }

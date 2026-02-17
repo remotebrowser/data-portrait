@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 
-type LogContext = {
+export type LogContext = {
   component?: string;
   operation?: string;
   brandId?: string;

@@ -1,9 +1,17 @@
 import { Request, Response } from 'express';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { imageService } from '../services/image-service.js';
-import { unlink } from 'fs/promises';
-import sharp from 'sharp';
-import { join } from 'path';
+import {
+  processUploadedImage,
+  type ProcessedImageResult,
+} from '../utils/image-processing.js';
+import {
+  parseArrayField,
+  parsePurchaseData,
+  parseGender,
+} from '../utils/request-parsers.js';
+import { cleanupFiles } from '../utils/file-cleanup.js';
+import { sendErrorResponse } from '../utils/error-responses.js';
 
 export const handleGeneratePortrait = async (
   req: Request,
@@ -15,54 +23,28 @@ export const handleGeneratePortrait = async (
   try {
     const { imageStyle, gender, traits, purchaseData } = req.body;
 
-    const parsedImageStyle = Array.isArray(imageStyle)
-      ? imageStyle
-      : typeof imageStyle === 'string'
-        ? imageStyle.split(',').map((s) => s.trim())
-        : [];
-
-    const parsedTraits = Array.isArray(traits)
-      ? traits
-      : typeof traits === 'string'
-        ? traits.split(',').map((t) => t.trim())
-        : [];
-
-    const parsedPurchaseData = Array.isArray(purchaseData)
-      ? purchaseData
-      : typeof purchaseData === 'string'
-        ? JSON.parse(purchaseData)
-        : [];
+    const parsedImageStyle = parseArrayField(imageStyle);
+    const parsedTraits = parseArrayField(traits);
+    const parsedPurchaseData = parsePurchaseData(purchaseData);
 
     // Handle uploaded image file (from multer middleware)
     const uploadedFile = (req as Request & { file?: Express.Multer.File }).file;
     let imagePath: string | undefined;
 
     if (uploadedFile) {
-      filesToClean.push(uploadedFile.path);
-
-      Logger.info('Processing uploaded image', {
-        component: 'portrait-handler',
-        operation: 'upload-process',
-        originalName: uploadedFile.originalname,
-        size: uploadedFile.size,
-        mimetype: uploadedFile.mimetype,
-      });
-
-      // Resize image to reduce base64 size
-      const resizedPath = join(
-        'uploads',
-        `resized-${Date.now()}-${uploadedFile.originalname}`
+      const result: ProcessedImageResult = await processUploadedImage(
+        uploadedFile.path,
+        uploadedFile.originalname,
+        { width: 1024, height: 1024, quality: 85, fit: 'inside' },
+        {
+          component: 'portrait-handler',
+          operation: 'upload-process',
+          filePath: uploadedFile.path,
+        }
       );
-      await sharp(uploadedFile.path)
-        .resize(1024, 1024, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .jpeg({ quality: 85 })
-        .toFile(resizedPath);
 
-      filesToClean.push(resizedPath);
-      imagePath = resizedPath;
+      filesToClean.push(...result.cleanupPaths);
+      imagePath = result.resizedPath;
     }
 
     Logger.info('Starting generate-from-purchase', {
@@ -77,7 +59,7 @@ export const handleGeneratePortrait = async (
     const imageData = await imageService.generateFromPurchase(
       parsedPurchaseData,
       parsedImageStyle,
-      gender || '',
+      parseGender(gender),
       parsedTraits,
       imagePath
     );
@@ -116,35 +98,15 @@ export const handleGeneratePortrait = async (
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    Logger.error('Portrait generation failed', error as Error, {
+    sendErrorResponse(res, error, 500, {
       component: 'portrait-handler',
       operation: 'generate-portrait',
     });
-    res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Portrait generation failed. Please try again.',
-      timestamp: new Date().toISOString(),
-    });
   } finally {
     // Clean up files
-    for (const filePath of filesToClean) {
-      try {
-        await unlink(filePath);
-        Logger.debug('Cleaned up temporary file', {
-          component: 'portrait-handler',
-          operation: 'cleanup',
-          filePath,
-        });
-      } catch (error) {
-        Logger.warn('Failed to cleanup temporary file', {
-          component: 'portrait-handler',
-          operation: 'cleanup',
-          filePath,
-          error: (error as Error).message,
-        });
-      }
-    }
+    await cleanupFiles(filesToClean, {
+      component: 'portrait-handler',
+      operation: 'cleanup',
+    });
   }
 };

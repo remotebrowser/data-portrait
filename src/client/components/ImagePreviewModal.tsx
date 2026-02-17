@@ -1,37 +1,18 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { SocialShareButtons } from './SocialShareButtons.js';
+import { buildImageShareUrl } from '../utils/http.js';
 
 type ImagePreviewModalProps = {
   imageUrl: string | null;
   onClose: () => void;
 };
 
-function extractFilenameFromUrl(url: string): string | null {
-  try {
-    const urlObj = new URL(url);
-    const pathname = urlObj.pathname;
-    const filename = pathname.split('/').pop() ?? null;
-    return filename;
-  } catch {
-    return null;
-  }
-}
-
 export function ImagePreviewModal({
   imageUrl,
   onClose,
 }: ImagePreviewModalProps) {
-  const getShareUrl = (): string | null => {
-    if (!imageUrl) return null;
-
-    const filename = extractFilenameFromUrl(imageUrl);
-    if (!filename) return null;
-
-    return `${window.location.origin}/shared/${filename}`;
-  };
-
-  const shareUrl = getShareUrl();
+  const shareUrl = buildImageShareUrl(imageUrl);
 
   const handleDownload = () => {
     if (!imageUrl) return;

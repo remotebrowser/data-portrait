@@ -1,4 +1,5 @@
 import type { PurchaseHistory } from './DataTransformSchema.js';
+import { buildGenerationRequestBody } from '../utils/http.js';
 
 export type ImageFormat = 'single' | 'stories';
 
@@ -114,26 +115,17 @@ async function generateSingleImage(
 ): Promise<GeneratedImage> {
   const { imageStyle, gender, traits, purchaseData, uploadedImage } = params;
 
-  const body = uploadedImage
-    ? (() => {
-        const formData = new FormData();
-        formData.append('image', uploadedImage);
-        formData.append('imageStyle', imageStyle.join(','));
-        formData.append('gender', gender);
-        formData.append('traits', traits.join(','));
-        formData.append('purchaseData', JSON.stringify(purchaseData));
-        return formData;
-      })()
-    : JSON.stringify({
-        imageStyle,
-        gender,
-        traits,
-        purchaseData,
-      });
+  const { body, headers } = buildGenerationRequestBody({
+    imageStyle,
+    gender,
+    traits,
+    purchaseData,
+    uploadedImage,
+  });
 
   const response = await fetch('/getgather/generate-portrait', {
     method: 'POST',
-    headers: uploadedImage ? {} : { 'Content-Type': 'application/json' },
+    headers,
     body,
   });
 
@@ -164,26 +156,17 @@ async function generateStories(
 ): Promise<GeneratedImage> {
   const { imageStyle, gender, traits, purchaseData, uploadedImage } = params;
 
-  const body = uploadedImage
-    ? (() => {
-        const formData = new FormData();
-        formData.append('image', uploadedImage);
-        formData.append('imageStyle', imageStyle.join(','));
-        formData.append('gender', gender);
-        formData.append('traits', traits.join(','));
-        formData.append('purchaseData', JSON.stringify(purchaseData));
-        return formData;
-      })()
-    : JSON.stringify({
-        imageStyle,
-        gender,
-        traits,
-        purchaseData,
-      });
+  const { body, headers } = buildGenerationRequestBody({
+    imageStyle,
+    gender,
+    traits,
+    purchaseData,
+    uploadedImage,
+  });
 
   const initResponse = await fetch('/getgather/generate/stories', {
     method: 'POST',
-    headers: uploadedImage ? {} : { 'Content-Type': 'application/json' },
+    headers,
     body,
   });
 

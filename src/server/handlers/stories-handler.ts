@@ -1,6 +1,12 @@
 import type { Request, Response } from 'express';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { storiesService, type StoryItem } from '../services/stories-service.js';
+import {
+  parseArrayField,
+  parsePurchaseData,
+  parseGender,
+} from '../utils/request-parsers.js';
+import { sendErrorResponse } from '../utils/error-responses.js';
 
 export type StoryData = {
   id: string;
@@ -39,23 +45,9 @@ export const handleStoriesGeneration = async (
   try {
     const { purchaseData, imageStyle, gender, traits } = req.body;
 
-    const parsedImageStyle = Array.isArray(imageStyle)
-      ? imageStyle
-      : typeof imageStyle === 'string'
-        ? imageStyle.split(',').map((s) => s.trim())
-        : [];
-
-    const parsedTraits = Array.isArray(traits)
-      ? traits
-      : typeof traits === 'string'
-        ? traits.split(',').map((t) => t.trim())
-        : [];
-
-    const parsedPurchaseData = Array.isArray(purchaseData)
-      ? purchaseData
-      : typeof purchaseData === 'string'
-        ? JSON.parse(purchaseData)
-        : [];
+    const parsedImageStyle = parseArrayField(imageStyle);
+    const parsedTraits = parseArrayField(traits);
+    const parsedPurchaseData = parsePurchaseData(purchaseData);
 
     // Handle uploaded image file (from multer middleware)
     const uploadedFile = (req as Request & { file?: Express.Multer.File }).file;
@@ -64,7 +56,7 @@ export const handleStoriesGeneration = async (
     const jobId = await storiesService.createGenerationJob(
       parsedPurchaseData,
       parsedImageStyle,
-      gender || 'neutral',
+      parseGender(gender),
       parsedTraits,
       imagePath
     );
@@ -74,16 +66,9 @@ export const handleStoriesGeneration = async (
       id: jobId,
     });
   } catch (error) {
-    Logger.error('Stories generation initiation failed', error as Error, {
+    sendErrorResponse(res, error, 500, {
       component: 'stories-handler',
       operation: 'generate-stories',
-    });
-    res.status(500).json({
-      error:
-        error instanceof Error
-          ? error.message
-          : 'Stories generation failed. Please try again.',
-      timestamp: new Date().toISOString(),
     });
   }
 };

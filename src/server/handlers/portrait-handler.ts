@@ -17,7 +17,7 @@ export const handleGeneratePortrait = async (
 
     const parsedImageStyle = Array.isArray(imageStyle)
       ? imageStyle
-      : typeof imageStyle === 'string' && imageStyle.length > 0
+      : typeof imageStyle === 'string'
         ? imageStyle.split(',').map((s) => s.trim())
         : [];
 

@@ -3,6 +3,7 @@ import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { imageService } from '../services/image-service.js';
 import { unlink } from 'fs/promises';
 import { resizeImage } from '../utils/image.js';
+import { parseArray } from '../utils/parsers.js';
 
 export const handleGeneratePortrait = async (
   req: Request,
@@ -14,17 +15,8 @@ export const handleGeneratePortrait = async (
   try {
     const { imageStyle, gender, traits, purchaseData } = req.body;
 
-    const parsedImageStyle = Array.isArray(imageStyle)
-      ? imageStyle
-      : typeof imageStyle === 'string'
-        ? imageStyle.split(',').map((s) => s.trim())
-        : [];
-
-    const parsedTraits = Array.isArray(traits)
-      ? traits
-      : typeof traits === 'string'
-        ? traits.split(',').map((t) => t.trim())
-        : [];
+    const parsedImageStyle = parseArray(imageStyle);
+    const parsedTraits = parseArray(traits);
 
     const parsedPurchaseData = Array.isArray(purchaseData)
       ? purchaseData

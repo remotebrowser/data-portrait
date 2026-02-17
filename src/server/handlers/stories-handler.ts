@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { storiesService, type StoryItem } from '../services/stories-service.js';
+import { parseArray } from '../utils/parsers.js';
 
 export type StoryData = {
   id: string;
@@ -39,17 +40,8 @@ export const handleStoriesGeneration = async (
   try {
     const { purchaseData, imageStyle, gender, traits } = req.body;
 
-    const parsedImageStyle = Array.isArray(imageStyle)
-      ? imageStyle
-      : typeof imageStyle === 'string'
-        ? imageStyle.split(',').map((s) => s.trim())
-        : [];
-
-    const parsedTraits = Array.isArray(traits)
-      ? traits
-      : typeof traits === 'string'
-        ? traits.split(',').map((t) => t.trim())
-        : [];
+    const parsedImageStyle = parseArray(imageStyle);
+    const parsedTraits = parseArray(traits);
 
     const parsedPurchaseData = Array.isArray(purchaseData)
       ? purchaseData

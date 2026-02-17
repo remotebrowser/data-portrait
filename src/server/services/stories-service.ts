@@ -6,8 +6,7 @@ import { gcsService, type StoryMetadata } from './gcs-service.js';
 import { promptService } from './prompt-service.js';
 import { nanoid } from 'nanoid';
 import { unlink } from 'fs/promises';
-import sharp from 'sharp';
-import { join } from 'path';
+import { resizeImage } from '../utils/image.js';
 
 const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,
@@ -254,25 +253,8 @@ class StoriesService {
     let resizedImagePath: string | undefined;
 
     if (imagePath) {
-      Logger.info('Processing uploaded image for stories', {
-        component: 'stories-service',
-        operation: 'upload-process',
-        filePath: imagePath,
-      });
-
-      const resizedPath = join(
-        'uploads',
-        `resized-${Date.now()}-${imagePath.split('/').pop()}`
-      );
-
-      await sharp(imagePath)
-        .resize(1024, 1024, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .jpeg({ quality: 85 })
-        .toFile(resizedPath);
-
+      const filename = imagePath.split('/').pop() || 'image.jpg';
+      const resizedPath = await resizeImage(imagePath, filename);
       cleanupPaths.push(imagePath, resizedPath);
       resizedImagePath = resizedPath;
     }

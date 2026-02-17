@@ -2,8 +2,7 @@ import { Request, Response } from 'express';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { imageService } from '../services/image-service.js';
 import { unlink } from 'fs/promises';
-import sharp from 'sharp';
-import { join } from 'path';
+import { resizeImage } from '../utils/image.js';
 
 export const handleGeneratePortrait = async (
   req: Request,
@@ -38,30 +37,11 @@ export const handleGeneratePortrait = async (
     let imagePath: string | undefined;
 
     if (uploadedFile) {
-      filesToClean.push(uploadedFile.path);
-
-      Logger.info('Processing uploaded image', {
-        component: 'portrait-handler',
-        operation: 'upload-process',
-        originalName: uploadedFile.originalname,
-        size: uploadedFile.size,
-        mimetype: uploadedFile.mimetype,
-      });
-
-      // Resize image to reduce base64 size
-      const resizedPath = join(
-        'uploads',
-        `resized-${Date.now()}-${uploadedFile.originalname}`
+      const resizedPath = await resizeImage(
+        uploadedFile.path,
+        uploadedFile.originalname
       );
-      await sharp(uploadedFile.path)
-        .resize(1024, 1024, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .jpeg({ quality: 85 })
-        .toFile(resizedPath);
-
-      filesToClean.push(resizedPath);
+      filesToClean.push(uploadedFile.path, resizedPath);
       imagePath = resizedPath;
     }
 

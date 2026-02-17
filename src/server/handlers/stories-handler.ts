@@ -57,11 +57,16 @@ export const handleStoriesGeneration = async (
         ? JSON.parse(purchaseData)
         : [];
 
+    // Handle uploaded image file (from multer middleware)
+    const uploadedFile = (req as Request & { file?: Express.Multer.File }).file;
+    const imagePath = uploadedFile?.path;
+
     const jobId = await storiesService.createGenerationJob(
       parsedPurchaseData,
       parsedImageStyle,
       gender || 'neutral',
-      parsedTraits
+      parsedTraits,
+      imagePath
     );
 
     res.json({

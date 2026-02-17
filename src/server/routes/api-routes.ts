@@ -58,7 +58,11 @@ router.post(
 );
 
 // Stories generation endpoints
-router.post('/generate/stories', handleStoriesGeneration);
+router.post(
+  '/generate/stories',
+  upload.single('image'),
+  handleStoriesGeneration
+);
 router.get('/stories/poll/:id', handleStoriesPoll);
 router.get('/stories/:id', handleGetStories);
 

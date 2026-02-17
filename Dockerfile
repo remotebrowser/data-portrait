@@ -17,8 +17,17 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Install Tailscale dependencies
-RUN apk update && apk add --no-cache ca-certificates iptables ip6tables && rm -rf /var/cache/apk/*
+# Install fonts, fontconfig, and Tailscale dependencies
+RUN apk update && apk add --no-cache \
+  fontconfig \
+  ca-certificates \
+  iptables \
+  ip6tables \
+  && rm -rf /var/cache/apk/*
+
+# Register Inter font (used for story overlay)
+COPY --from=builder /app/src/server/assets/fonts /usr/share/fonts/truetype/inter
+RUN fc-cache -f -v
 
 # Copy Tailscale binaries from the tailscale image on Docker Hub
 COPY --from=docker.io/tailscale/tailscale:stable /usr/local/bin/tailscaled /app/tailscaled

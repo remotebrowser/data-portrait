@@ -444,22 +444,22 @@ export async function addStoryLinkOverlay(imageData: string): Promise<string> {
 
   const padding = 20;
   const text = STORY_LINK_OVERLAY_TEXT;
-  const baseOverlayHeight = Math.round(Math.min(width, height) * 0.06);
-  const fontSize = Math.round(baseOverlayHeight * 0.7);
-  const rectHorizontalPadding = 6;
-  const estimatedTextWidth = Math.round(fontSize * text.length * 0.45);
-  const rectWidth = Math.min(
-    Math.round(width * 0.8),
-    estimatedTextWidth + rectHorizontalPadding * 2
-  );
-  const overlayWidth = rectWidth;
-  const overlayHeight = baseOverlayHeight;
-  const svg =
-    `<svg width="${overlayWidth}" height="${overlayHeight}" xmlns="http://www.w3.org/2000/svg">` +
-    `<rect x="0" y="0" width="${rectWidth}" height="${overlayHeight}" rx="8" ry="8" fill="white"/>` +
-    `<text x="${rectWidth - rectHorizontalPadding}" y="${overlayHeight - 10}" text-anchor="end"` +
-    ` font-family="Arial, sans-serif" font-size="${fontSize}" fill="black" dominant-baseline="baseline">` +
-    `${text}</text></svg>`;
+  const overlayWidth = 200;
+  const overlayHeight = 40;
+  const fontSize = 26;
+  const svg = `
+    <svg width="${overlayWidth}" height="${overlayHeight}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${overlayWidth}" height="${overlayHeight}" rx="8" ry="8" fill="#fff"/>
+      <text 
+        x="50%" 
+        y="50%" 
+        text-anchor="middle"
+        dominant-baseline="middle"
+        font-family="Inter, Arial, sans-serif"
+        font-size="${fontSize}"
+        fill="black"
+      >${text}</text>
+    </svg>`;
 
   const textOverlay = await sharp(Buffer.from(svg)).png().toBuffer();
 

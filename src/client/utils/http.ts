@@ -8,30 +8,8 @@ export type GenerationRequestParams = {
   uploadedImage?: File | null;
 };
 
-/**
- * Build request body and headers for generation API calls.
- * Returns FormData when an image is uploaded, otherwise returns JSON.
- *
- * @param params - Generation request parameters
- * @returns Object containing body and headers for fetch request
- *
- * @example
- * ```typescript
- * const { body, headers } = buildGenerationRequestBody({
- *   imageStyle: ['realistic'],
- *   gender: 'Male',
- *   traits: ['glasses'],
- *   purchaseData: [],
- *   uploadedImage: file
- * });
- *
- * const response = await fetch('/api/generate', {
- *   method: 'POST',
- *   headers,
- *   body
- * });
- * ```
- */
+// Build request body and headers for generation API calls.
+// Returns FormData when an image is uploaded, otherwise returns JSON.
 export function buildGenerationRequestBody(params: GenerationRequestParams): {
   body: FormData | string;
   headers: Record<string, string>;
@@ -59,13 +37,7 @@ export function buildGenerationRequestBody(params: GenerationRequestParams): {
   };
 }
 
-/**
- * Extract filename from a URL.
- * Returns null if URL is invalid or has no pathname.
- *
- * @param url - The URL to extract filename from
- * @returns The filename or null
- */
+// Extract filename from a URL. Returns null if URL is invalid.
 export function extractFilenameFromUrl(url: string): string | null {
   try {
     const urlObj = new URL(url);
@@ -76,13 +48,7 @@ export function extractFilenameFromUrl(url: string): string | null {
   }
 }
 
-/**
- * Build a shareable URL for a generated image.
- *
- * @param imageUrl - The original image URL
- * @param origin - The window location origin (defaults to current window)
- * @returns The shareable URL or null if invalid
- */
+// Build a shareable URL for a generated image.
 export function buildImageShareUrl(
   imageUrl: string | null,
   origin: string = typeof window !== 'undefined' ? window.location.origin : ''

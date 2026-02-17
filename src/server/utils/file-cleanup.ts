@@ -13,22 +13,7 @@ const DEFAULT_CLEANUP_OPTIONS: Required<CleanupOptions> = {
   operation: 'cleanup',
 };
 
-/**
- * Clean up temporary files asynchronously.
- * Can optionally delay cleanup (useful for allowing file downloads to complete).
- *
- * @param filePaths - Array of file paths to clean up
- * @param options - Cleanup options (delay, logging context)
- *
- * @example
- * ```typescript
- * // Immediate cleanup
- * await cleanupFiles([path1, path2]);
- *
- * // Delayed cleanup (e.g., after 90 seconds for downloads)
- * await cleanupFiles([path1, path2], { delayMs: 90_000 });
- * ```
- */
+// Clean up temporary files. Optional delay for allowing downloads to complete.
 export async function cleanupFiles(
   filePaths: string[],
   options: CleanupOptions = {}
@@ -62,24 +47,7 @@ export async function cleanupFiles(
   }
 }
 
-/**
- * Add cleanup paths to an array for later cleanup.
- * Useful for accumulating paths throughout a request handler.
- *
- * @param cleanupPaths - Array to add paths to
- * @param newPaths - Paths to add
- *
- * @example
- * ```typescript
- * const cleanupPaths: string[] = [];
- *
- * // After processing
- * addCleanupPaths(cleanupPaths, [originalPath, resizedPath]);
- *
- * // Finally block
- * await cleanupFiles(cleanupPaths);
- * ```
- */
+// Add cleanup paths to an array for later cleanup.
 export function addCleanupPaths(
   cleanupPaths: string[],
   newPaths: string[]

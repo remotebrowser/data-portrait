@@ -7,27 +7,7 @@ export type ErrorContext = {
   [key: string]: unknown;
 };
 
-/**
- * Send standardized error response with logging.
- *
- * @param res - Express response object
- * @param error - The error that occurred
- * @param statusCode - HTTP status code (default: 500)
- * @param context - Context for logging
- * @param fallbackMessage - Fallback message if error is not an Error object
- *
- * @example
- * ```typescript
- * try {
- *   // ... operation
- * } catch (error) {
- *   sendErrorResponse(res, error, 500, {
- *     component: 'portrait-handler',
- *     operation: 'generate-portrait'
- *   });
- * }
- * ```
- */
+// Send standardized error response with logging.
 export function sendErrorResponse(
   res: Response,
   error: unknown,
@@ -46,14 +26,7 @@ export function sendErrorResponse(
   });
 }
 
-/**
- * Get error message from unknown error value.
- * Safely extracts message from Error objects, returns string representation otherwise.
- *
- * @param error - Unknown error value
- * @param fallbackMessage - Message to return if extraction fails
- * @returns Error message string
- */
+// Get error message from unknown error value.
 export function getErrorMessage(
   error: unknown,
   fallbackMessage: string = 'An unknown error occurred'

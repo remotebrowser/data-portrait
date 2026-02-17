@@ -21,28 +21,8 @@ export type ProcessedImageResult = {
   cleanupPaths: string[];
 };
 
-/**
- * Process and resize an uploaded image using Sharp.
- * Returns the path to the resized image and paths to cleanup.
- *
- * @param imagePath - Path to the original image
- * @param originalName - Original filename for the resized image naming
- * @param options - Resize options (defaults to 1024x1024, quality 85, fit inside)
- * @param loggerContext - Context for logging (component, operation)
- * @returns Object with resizedPath and cleanupPaths
- *
- * @example
- * ```typescript
- * const { resizedPath, cleanupPaths } = await processUploadedImage(
- *   uploadedFile.path,
- *   uploadedFile.originalname,
- *   { width: 1024, height: 1024, quality: 85 },
- *   { component: 'portrait-handler', operation: 'upload-process' }
- * );
- * // ... use resizedPath ...
- * // cleanupPaths includes both original and resized paths
- * ```
- */
+// Process and resize an uploaded image using Sharp.
+// Returns the path to the resized image and paths to cleanup.
 export async function processUploadedImage(
   imagePath: string,
   originalName: string,
@@ -79,14 +59,7 @@ export async function processUploadedImage(
   };
 }
 
-/**
- * Process an image file from a path (for cases where originalName is not available).
- *
- * @param imagePath - Path to the original image
- * @param options - Resize options
- * @param loggerContext - Context for logging
- * @returns Object with resizedPath and cleanupPaths
- */
+// Process an image file from a path (for cases where originalName is not available).
 export async function processImageFromPath(
   imagePath: string,
   options: ResizeOptions = {},

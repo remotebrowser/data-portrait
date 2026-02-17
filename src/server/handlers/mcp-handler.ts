@@ -236,7 +236,10 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
   const response: PurchaseHistoryResponse = {
     link_id: mcpResponse.signin_id || '',
     hosted_link_url,
-    content: [],
+    content: (result.content as unknown[])?.filter((item: unknown) => {
+      const resource = item as { type: string };
+      return resource?.type === 'resource';
+    }),
   };
   res.json(response);
 };

@@ -29,6 +29,7 @@ import { getRandomStyle } from '../modules/ImageStyle.js';
 import { log } from '../utils/log.js';
 import { useAnalytics } from '../hooks/useAnalytics.js';
 import { useAppConfig } from '../hooks/useAppConfig.js';
+import { SignInDialogResource } from '@/components/SignInDialogResource.js';
 
 const amazonConfig = amazon as BrandConfig;
 const wayfairConfig = wayfair as BrandConfig;
@@ -449,7 +450,7 @@ export function DataPortrait() {
 
       {/* Sign In Dialog */}
       {signInDialogBrand && (
-        <SignInDialog
+        <SignInDialogResource
           isOpen={true}
           onClose={() => setSignInDialogBrand(null)}
           onSuccessSignin={handleSignInSuccess}

@@ -1,26 +1,21 @@
-import { Portkey } from 'portkey-ai';
-import { GoogleGenAI, Modality } from '@google/genai';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 import { nanoid } from 'nanoid';
 import { gcsService } from './gcs-service.js';
 import { localStorageService } from './local-storage-service.js';
+import {
+  createAIClient,
+  MODELS,
+  getAvailableProvider,
+  type AIImageResponse,
+} from '../ai/index.js';
 import { readFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
-const portkey = new Portkey({
-  apiKey: settings.PORTKEY_API_KEY,
-});
-
-const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
-
-const IMAGE_GENERATION_TIMEOUT = 120000;
 const BLUR_BACKGROUND_TIMEOUT = 30000;
 
-type ImageProvider = 'portkey' | 'google-genai' | 'flux';
-
-type ImageData = {
+export type ImageData = {
   url?: string;
   filename?: string;
   fileSize?: number;
@@ -31,109 +26,14 @@ type ImageData = {
   provider?: string;
 };
 
-type GenerateOptions = {
+export type GenerateOptions = {
   beforeSave?: (base64: string) => Promise<string>;
 };
 
-function getImageProvider(): ImageProvider {
-  if (settings.PORTKEY_API_KEY) {
-    return 'portkey';
-  }
-  if (settings.GEMINI_API_KEY) {
-    return 'google-genai';
-  }
-  if (settings.FLUX_API_KEY) {
-    return 'flux';
-  }
-  throw new Error(
-    'No image generation provider configured. Please set PORTKEY_API_KEY, GEMINI_API_KEY, or FLUX_API_KEY in environment variables.'
-  );
-}
-
-class ImageService {
-  private useGCS(): boolean {
-    return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
-  }
-
-  async generate(
-    prompt: string,
-    imagePath?: string,
-    options?: GenerateOptions
-  ): Promise<ImageData> {
-    const provider = getImageProvider();
-    Logger.info('Starting image generation', {
-      component: 'image-service',
-      operation: 'generate',
-      prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
-      hasReferenceImage: Boolean(imagePath),
-      provider,
-    });
-
-    const imageData =
-      provider === 'portkey'
-        ? await this.generateWithPortkey(prompt, imagePath, options)
-        : provider === 'flux'
-          ? await this.generateWithFlux(prompt, imagePath, options)
-          : await this.generateWithGoogleGenAI(prompt, imagePath, options);
-
-    const modelName =
-      provider === 'flux' ? 'flux-pro-1.1' : 'gemini-3-pro-image-preview';
-    return {
-      ...imageData,
-      model: modelName,
-      provider,
-    };
-  }
-
-  /**
-   * Generate image from purchase data with LLM-powered dynamic prompt generation.
-   * Uses an LLM to analyze purchase data and create a creative, contextual image prompt.
-   */
-  async generateFromPurchase(
-    purchaseData: unknown[],
-    imageStyle: string[],
-    gender: string,
-    traits: string[],
-    imagePath?: string
-  ): Promise<ImageData> {
-    Logger.info('Starting image generation from purchase data', {
-      component: 'image-service',
-      operation: 'generateFromPurchase',
-      purchaseCount: purchaseData.length,
-      styles: imageStyle,
-      hasReferenceImage: Boolean(imagePath),
-    });
-
-    // Generate creative prompt using LLM
-    const prompt = await this.generatePromptWithLLM({
-      purchaseData,
-      imageStyle,
-      gender,
-      traits,
-    });
-
-    Logger.debug('LLM-generated prompt from purchase data', {
-      component: 'image-service',
-      operation: 'generateFromPurchase',
-      promptLength: prompt.length,
-    });
-
-    // Reuse existing generation logic
-    return this.generate(prompt, imagePath);
-  }
-
-  private async generatePromptWithLLM({
-    purchaseData,
-    imageStyle,
-    gender,
-    traits,
-  }: {
-    purchaseData: unknown[];
-    imageStyle: string[];
-    gender: string;
-    traits: string[];
-  }): Promise<string> {
-    const systemPrompt = `You are an expert Prompt Engineer specializing in creating compelling AI image generation prompts.
+/**
+ * System prompt for creative prompt generation from purchase data.
+ */
+const PROMPT_ENGINEERING_SYSTEM = `You are an expert Prompt Engineer specializing in creating compelling AI image generation prompts.
 
 TASK: Analyze the user's purchase history and create a detailed, creative image prompt for a personalized portrait.
 
@@ -160,6 +60,105 @@ PROMPT STRUCTURE:
 EXAMPLE:
 If user buys coffee and books, don't just say "person with coffee and books" - create a scene like "A person relaxing in a cozy literary café with steaming latte, surrounded by shelves of science fiction novels, warm ambient lighting, Hasselblad X2D, 80mm lens, Kodak film, 9:16 vertical portrait orientation"`;
 
+class ImageService {
+  private aiClient = createAIClient();
+  private provider = getAvailableProvider();
+
+  private useGCS(): boolean {
+    return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
+  }
+
+  async generate(
+    prompt: string,
+    imagePath?: string,
+    options?: GenerateOptions
+  ): Promise<ImageData> {
+    Logger.info('Starting image generation', {
+      component: 'image-service',
+      operation: 'generate',
+      prompt: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+      hasReferenceImage: Boolean(imagePath),
+      provider: this.provider,
+    });
+
+    const imageBase64 = imagePath
+      ? await this.readImageAsBase64(imagePath)
+      : undefined;
+
+    const modelConfig = MODELS[this.provider].image;
+
+    const aiResponse: AIImageResponse = await this.aiClient.generateImage({
+      prompt,
+      imageBase64,
+      model: modelConfig.id,
+      maxTokens: modelConfig.maxTokens,
+      width: 1024,
+      height: 1024,
+    });
+
+    let finalBase64 = aiResponse.base64;
+    if (options?.beforeSave) {
+      finalBase64 = await options.beforeSave(finalBase64);
+    }
+
+    const fileData = await this.saveImageFile(finalBase64, aiResponse.model);
+
+    return {
+      ...fileData,
+      b64_json: finalBase64,
+      width: aiResponse.width,
+      height: aiResponse.height,
+      model: aiResponse.model,
+      provider: aiResponse.provider,
+    };
+  }
+
+  /**
+   * Generate image from purchase data with LLM-powered dynamic prompt generation.
+   * Uses an LLM to analyze purchase data and create a creative, contextual image prompt.
+   */
+  async generateFromPurchase(
+    purchaseData: unknown[],
+    imageStyle: string[],
+    gender: string,
+    traits: string[],
+    imagePath?: string
+  ): Promise<ImageData> {
+    Logger.info('Starting image generation from purchase data', {
+      component: 'image-service',
+      operation: 'generateFromPurchase',
+      purchaseCount: purchaseData.length,
+      styles: imageStyle,
+      hasReferenceImage: Boolean(imagePath),
+    });
+
+    const prompt = await this.buildCreativePrompt({
+      purchaseData,
+      imageStyle,
+      gender,
+      traits,
+    });
+
+    Logger.debug('LLM-generated prompt from purchase data', {
+      component: 'image-service',
+      operation: 'generateFromPurchase',
+      promptLength: prompt.length,
+    });
+
+    return this.generate(prompt, imagePath);
+  }
+
+  private async buildCreativePrompt({
+    purchaseData,
+    imageStyle,
+    gender,
+    traits,
+  }: {
+    purchaseData: unknown[];
+    imageStyle: string[];
+    gender: string;
+    traits: string[];
+  }): Promise<string> {
     const userContent = `Create an image generation prompt based on this data:
 
 Purchase History: ${JSON.stringify(purchaseData)}
@@ -169,291 +168,20 @@ Traits: ${traits.join(', ')}
 
 Generate only the image prompt text, nothing else.`;
 
-    // Use Portkey if available
-    if (settings.PORTKEY_API_KEY) {
-      const response = await portkey.chat.completions.create({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userContent },
-        ],
-        model: '@OpenRouter/google/gemini-2.5-pro-preview',
-        max_tokens: 2048,
-      });
+    const textModel = MODELS[this.provider].text;
 
-      const content = response.choices?.[0]?.message?.content;
-      const prompt =
-        typeof content === 'string' ? content.trim() : JSON.stringify(content);
-
-      if (!prompt || prompt.length === 0) {
-        throw new Error('Failed to generate prompt from LLM');
-      }
-
-      return prompt;
-    }
-
-    // Use Gemini if available
-    if (settings.GEMINI_API_KEY) {
-      const response = await genAI.models.generateContent({
-        model: 'gemini-3-pro-preview',
-        contents: {
-          role: 'user',
-          parts: [{ text: systemPrompt }, { text: userContent }],
-        },
-      });
-
-      const content = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      const prompt = content?.trim();
-
-      if (!prompt || prompt.length === 0) {
-        throw new Error('Failed to generate prompt from Gemini');
-      }
-
-      return prompt;
-    }
-
-    throw new Error(
-      'No LLM provider configured. Please set PORTKEY_API_KEY or GEMINI_API_KEY.'
-    );
-  }
-
-  private async generateWithPortkey(
-    prompt: string,
-    imagePath?: string,
-    options?: GenerateOptions
-  ): Promise<ImageData> {
-    if (!settings.PORTKEY_API_KEY) {
-      throw new Error('PORTKEY_API_KEY not configured');
-    }
-
-    const content: Array<
-      | { type: string; text: string }
-      | { type: string; image_url: { url: string } }
-    > = [
-      {
-        type: 'text',
-        text: prompt,
-      },
-    ];
-
-    if (imagePath) {
-      const imageBase64 = await this.readImageAsBase64(imagePath);
-      content.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:image/jpeg;base64,${imageBase64}`,
-        },
-      });
-    }
-
-    const response = await Promise.race([
-      portkey.chat.completions.create({
-        model: '@google/gemini-3-pro-image-preview',
-        maxTokens: 32000,
-        stream: false,
-        modalities: ['text', 'image'],
-        messages: [
-          {
-            role: 'user',
-            content,
-          },
-        ],
-      }),
-      this.createTimeoutPromise(IMAGE_GENERATION_TIMEOUT),
-    ]);
-
-    const imageUrl =
-      response.choices[0]?.message?.content_blocks?.[0]?.image_url?.url;
-    if (!imageUrl) {
-      throw new Error('No image URL returned from Portkey API');
-    }
-
-    let base64Data = imageUrl.split(',')[1];
-    if (!base64Data) {
-      throw new Error('No image data returned from Portkey API');
-    }
-    if (options?.beforeSave) {
-      base64Data = await options.beforeSave(base64Data);
-    }
-    const fileData = await this.saveImageFile(base64Data, 'gemini');
-    return {
-      ...fileData,
-      b64_json: base64Data,
-      width: 1024,
-      height: 1024,
-    };
-  }
-
-  private async generateWithGoogleGenAI(
-    prompt: string,
-    imagePath?: string,
-    options?: GenerateOptions
-  ): Promise<ImageData> {
-    if (!settings.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured');
-    }
-
-    const model = 'gemini-3-pro-image-preview';
-    let contents: {
-      role: string;
-      parts: Array<
-        { text: string } | { inlineData: { mimeType: string; data: string } }
-      >;
-    } = { role: 'user', parts: [{ text: prompt }] };
-
-    if (imagePath) {
-      const imageBase64 = await this.readImageAsBase64(imagePath);
-      contents = {
-        role: 'user',
-        parts: [
-          {
-            inlineData: {
-              mimeType: 'image/jpeg',
-              data: imageBase64,
-            },
-          },
-          { text: prompt },
-        ],
-      };
-    }
-
-    const geminiGenerationPromise = genAI.models.generateContent({
-      model,
-      contents,
-      config: {
-        responseModalities: [Modality.TEXT, Modality.IMAGE],
-      },
+    const aiResponse = await this.aiClient.generateText({
+      systemPrompt: PROMPT_ENGINEERING_SYSTEM,
+      prompt: userContent,
+      model: textModel.id,
+      maxTokens: textModel.maxTokens,
     });
 
-    const response = (await Promise.race([
-      geminiGenerationPromise,
-      this.createTimeoutPromise(IMAGE_GENERATION_TIMEOUT),
-    ])) as Awaited<typeof geminiGenerationPromise>;
-
-    if (!response.candidates?.length) {
-      throw new Error('No candidates found in Gemini response');
+    if (!aiResponse.text || aiResponse.text.length === 0) {
+      throw new Error('Failed to generate prompt from LLM');
     }
 
-    const candidate = response.candidates[0];
-    if (!candidate.content?.parts) {
-      throw new Error('No content parts found in Gemini response');
-    }
-
-    for (const part of candidate.content.parts) {
-      if (part.inlineData?.data) {
-        let base64Data = part.inlineData.data;
-        if (options?.beforeSave) {
-          base64Data = await options.beforeSave(base64Data);
-        }
-        const fileData = await this.saveImageFile(base64Data, 'gemini');
-        return {
-          ...fileData,
-          b64_json: base64Data,
-          width: 1024,
-          height: 1024,
-        };
-      }
-    }
-
-    throw new Error('No image data found in Gemini response');
-  }
-
-  private async generateWithFlux(
-    prompt: string,
-    imagePath?: string,
-    options?: GenerateOptions
-  ): Promise<ImageData> {
-    if (!settings.FLUX_API_KEY) {
-      throw new Error('FLUX_API_KEY not configured');
-    }
-
-    const payload: Record<string, unknown> = {
-      prompt,
-      width: 1024,
-      height: 1024,
-      prompt_upsampling: false,
-      seed: 42,
-      safety_tolerance: 2,
-      output_format: 'jpeg',
-    };
-
-    if (imagePath) {
-      const imageBase64 = await this.readImageAsBase64(imagePath);
-      payload.image_prompt = imageBase64;
-    }
-
-    const response = await fetch('https://api.bfl.ai/v1/flux-pro-1.1', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-key': settings.FLUX_API_KEY,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = (await response.json()) as {
-      polling_url?: string;
-      error?: string;
-    };
-
-    if (!data.polling_url) {
-      throw new Error(
-        `Flux API error: ${response.statusText} ${data.error || ''}`
-      );
-    }
-
-    const imageUrl = await this.pollFluxResult(data.polling_url);
-
-    const imageResponse = await fetch(imageUrl);
-    const buffer = Buffer.from(await imageResponse.arrayBuffer());
-    let base64Data = buffer.toString('base64');
-    if (options?.beforeSave) {
-      base64Data = await options.beforeSave(base64Data);
-    }
-    const fileData = await this.saveImageFile(base64Data, 'flux-pro-1.1');
-
-    return {
-      ...fileData,
-      b64_json: base64Data,
-      width: 1024,
-      height: 1024,
-    };
-  }
-
-  private async pollFluxResult(pollingUrl: string): Promise<string> {
-    const startTime = Date.now();
-    const timeout = IMAGE_GENERATION_TIMEOUT;
-    const interval = 500;
-
-    while (Date.now() - startTime < timeout) {
-      const response = await fetch(pollingUrl, {
-        headers: { 'x-key': settings.FLUX_API_KEY },
-      });
-      const data = (await response.json()) as {
-        status: string;
-        result?: { sample: string };
-      };
-
-      if (data.status === 'Ready') {
-        if (!data.result?.sample) {
-          throw new Error('Flux API returned Ready status but no sample image');
-        }
-        return data.result.sample;
-      }
-
-      const errorStatuses = [
-        'Task not found',
-        'Request Moderated',
-        'Content Moderated',
-        'Error',
-      ];
-      if (errorStatuses.includes(data.status)) {
-        throw new Error(`Flux task failed: ${data.status}`);
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, interval));
-    }
-
-    throw new Error('Flux generation timeout');
+    return aiResponse.text;
   }
 
   async blurBackground(imageBase64: string): Promise<ImageData> {
@@ -499,12 +227,16 @@ Generate only the image prompt text, nothing else.`;
     const imageBuffer = await imageResponse.arrayBuffer();
     const blurredBase64 = Buffer.from(imageBuffer).toString('base64');
     const fileData = await this.saveImageFile(blurredBase64, 'bria-blur');
+
     console.log('✅ Background blur applied successfully');
+
     return {
       ...fileData,
       b64_json: blurredBase64,
       width: 1024,
       height: 1024,
+      model: 'bria-blur',
+      provider: 'deepinfra',
     };
   }
 

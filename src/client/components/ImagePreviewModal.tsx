@@ -1,6 +1,7 @@
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { SocialShareButtons } from './SocialShareButtons.js';
+import { useState } from 'react';
 
 type ImagePreviewModalProps = {
   imageUrl: string | null;
@@ -22,6 +23,8 @@ export function ImagePreviewModal({
   imageUrl,
   onClose,
 }: ImagePreviewModalProps) {
+  const [isShareOpened, setIsShareOpened] = useState(false);
+
   const getShareUrl = (): string | null => {
     if (!imageUrl) return null;
 
@@ -66,7 +69,13 @@ export function ImagePreviewModal({
 
         {/* Social share buttons and download button */}
         <div className="absolute bottom-4 right-4 flex gap-2 items-center">
-          {shareUrl && <SocialShareButtons url={shareUrl} />}
+          {shareUrl && (
+            <SocialShareButtons
+              url={shareUrl}
+              isShareOpened={isShareOpened}
+              setIsShareOpened={setIsShareOpened}
+            />
+          )}
 
           {/* Download button */}
           <Button

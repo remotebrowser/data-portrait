@@ -6,8 +6,7 @@ import { gcsService, type StoryMetadata } from './gcs-service.js';
 import { promptService } from './prompt-service.js';
 import { nanoid } from 'nanoid';
 import { unlink } from 'fs/promises';
-import sharp from 'sharp';
-import { join } from 'path';
+import { resizeImage } from '../utils/image.js';
 
 const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,
@@ -36,6 +35,8 @@ type GenerationJob = {
 };
 
 const generationJobs = new Map<string, GenerationJob>();
+
+const STORY_LINK_OVERLAY_TEXT = 'dataportrait.app';
 
 function hasGCSConfig(): boolean {
   return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
@@ -254,25 +255,8 @@ class StoriesService {
     let resizedImagePath: string | undefined;
 
     if (imagePath) {
-      Logger.info('Processing uploaded image for stories', {
-        component: 'stories-service',
-        operation: 'upload-process',
-        filePath: imagePath,
-      });
-
-      const resizedPath = join(
-        'uploads',
-        `resized-${Date.now()}-${imagePath.split('/').pop()}`
-      );
-
-      await sharp(imagePath)
-        .resize(1024, 1024, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .jpeg({ quality: 85 })
-        .toFile(resizedPath);
-
+      const filename = imagePath.split('/').pop() || 'image.jpg';
+      const resizedPath = await resizeImage(imagePath, filename);
       cleanupPaths.push(imagePath, resizedPath);
       resizedImagePath = resizedPath;
     }
@@ -293,7 +277,10 @@ class StoriesService {
 
         const imageData = await imageService.generate(
           chapter.imagePrompt,
-          resizedImagePath
+          resizedImagePath,
+          {
+            beforeSave: addStoryLinkOverlay,
+          }
         );
 
         stories.push({
@@ -423,6 +410,56 @@ class StoriesService {
   cleanupJob(jobId: string): void {
     generationJobs.delete(jobId);
   }
+}
+
+/**
+ * Add dataportrait.app link text overlay to base64 image data.
+ * Renders text at bottom-right with white fill and black border, same manner as a watermark.
+ * Returns image as base64 string.
+ */
+export async function addStoryLinkOverlay(imageData: string): Promise<string> {
+  const imageBuffer = Buffer.from(imageData, 'base64');
+  const image = sharp(imageBuffer);
+  const metadata = await image.metadata();
+  const width = metadata.width || 1024;
+  const height = metadata.height || 1024;
+
+  const padding = 20;
+  const text = STORY_LINK_OVERLAY_TEXT;
+  const overlayWidth = 200;
+  const overlayHeight = 40;
+  const fontSize = 26;
+  const svg = `
+    <svg width="${overlayWidth}" height="${overlayHeight}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${overlayWidth}" height="${overlayHeight}" rx="8" ry="8" fill="#fff"/>
+      <text 
+        x="50%" 
+        y="50%" 
+        text-anchor="middle"
+        dominant-baseline="middle"
+        font-family="Inter, Arial, sans-serif"
+        font-size="${fontSize}"
+        fill="black"
+      >${text}</text>
+    </svg>`;
+
+  const textOverlay = await sharp(Buffer.from(svg)).png().toBuffer();
+
+  const left = width - overlayWidth - padding;
+  const top = height - overlayHeight - padding;
+
+  const resultBuffer = await image
+    .composite([
+      {
+        input: textOverlay,
+        left,
+        top,
+      },
+    ])
+    .png()
+    .toBuffer();
+
+  return resultBuffer.toString('base64');
 }
 
 export const storiesService = new StoriesService();

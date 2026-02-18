@@ -1,5 +1,7 @@
 # Data Portrait
 
+![E2E Tests](https://github.com/mcp-getgather/data-portrait/actions/workflows/e2e-daily.yml/badge.svg)
+
 Data Portrait is a web app that transforms your shopping and reading history into stunning, personalized AI-generated portraits. Connect your accounts from major brands (like Amazon, Wayfair, Office Depot, and Goodreads), and Data Portrait will analyze your purchase data to create unique images that reflect your style, interests, and personality.
 
 **Live Demo:** https://dataportrait.app/

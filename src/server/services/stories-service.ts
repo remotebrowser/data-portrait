@@ -7,6 +7,7 @@ import { promptService } from './prompt-service.js';
 import { nanoid } from 'nanoid';
 import { unlink } from 'fs/promises';
 import { resizeImage } from '../utils/image.js';
+import sharp from 'sharp';
 
 const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,

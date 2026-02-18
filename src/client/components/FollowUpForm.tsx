@@ -2,10 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 
 type FollowUpFormProps = {
   signinUrl?: string;
-  onFinishSignin?: (signinId: string) => void;
 };
 
-export function FollowUpForm({ signinUrl, onFinishSignin: _onFinishSignin }: FollowUpFormProps) {
+export function FollowUpForm({ signinUrl }: FollowUpFormProps) {
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 

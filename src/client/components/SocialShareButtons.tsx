@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { Button } from '@/components/ui/button.js';
+import { logger } from '@/utils/logger/index.js';
 import {
   Copy,
   Facebook,
@@ -7,12 +8,12 @@ import {
   Share2,
   X,
 } from 'lucide-react';
-import { logger } from '@/utils/logger/index.js';
-import { Button } from '@/components/ui/button.js';
+import { useState } from 'react';
 
 type SocialShareButtonsProps = {
   url: string;
   title?: string;
+  onToggleShareButtons?: (isOpen: boolean) => void;
 };
 
 interface SharePlatform {
@@ -65,8 +66,14 @@ const platforms: SharePlatform[] = [
 export function SocialShareButtons({
   url,
   title = 'Generated Data Portrait',
+  onToggleShareButtons,
 }: SocialShareButtonsProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = (state: boolean) => {
+    setIsOpen(state);
+    onToggleShareButtons?.(state);
+  };
 
   const handleShare = (platform: SharePlatform) => {
     try {
@@ -87,7 +94,7 @@ export function SocialShareButtons({
         });
       }
     }
-    setIsOpen(false);
+    handleToggle(false);
   };
 
   const handleCopyToClipboard = async () => {
@@ -97,7 +104,7 @@ export function SocialShareButtons({
     } catch {
       prompt('Copy this link:', url);
     }
-    setIsOpen(false);
+    handleToggle(false);
   };
 
   return (
@@ -107,7 +114,7 @@ export function SocialShareButtons({
         size="sm"
         onClick={(e) => {
           e.stopPropagation();
-          setIsOpen(!isOpen);
+          handleToggle(!isOpen);
         }}
         className="text-white hover:bg-white/90 hover:text-black rounded-full p-2.5 transition-all duration-200 hover:ring-2 hover:ring-white/50 hover:scale-105 active:scale-95"
         title="Share on social media"

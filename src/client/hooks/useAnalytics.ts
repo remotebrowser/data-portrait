@@ -3,7 +3,7 @@ import { logger } from '@/utils/logger/index.js';
 
 export const useAnalytics = () => {
   const trackEvent = useCallback(
-    (event: string, properties: Record<string, any> = {}) => {
+    (event: string, properties: Record<string, unknown> = {}) => {
       fetch('/getgather/analytics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -22,7 +22,7 @@ export const useAnalytics = () => {
     []
   );
 
-  const identifyUser = useCallback((properties: Record<string, any> = {}) => {
+  const identifyUser = useCallback((properties: Record<string, unknown> = {}) => {
     fetch('/getgather/analytics', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

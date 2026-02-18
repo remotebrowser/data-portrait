@@ -24,7 +24,7 @@ class AnalyticsService {
 
   async identify(
     userId: string,
-    traits: Record<string, any> = {}
+    traits: Record<string, unknown> = {}
   ): Promise<void> {
     if (!userId || !this.analytics) return;
 
@@ -50,7 +50,7 @@ class AnalyticsService {
   async track(
     userId: string,
     event: string,
-    properties: Record<string, any> = {}
+    properties: Record<string, unknown> = {}
   ): Promise<void> {
     if (!userId || !event || !this.analytics) return;
 

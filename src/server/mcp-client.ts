@@ -7,6 +7,10 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { ServerLogger as Logger } from './utils/logger/index.js';
 import { settings } from './config.js';
 import { geolocationService } from './services/geolocation-service.js';
+import {
+  UI_EXTENSION_CAPABILITIES,
+  type ClientCapabilitiesWithExtensions,
+} from '@mcp-ui/client';
 
 // Currently just define the MCP url path for each brand here for simplicity
 const MCP_URL_PATHS: Record<string, string> = {
@@ -38,7 +42,15 @@ class MCPClient {
   }
 
   private createClient(): Client {
-    return new Client({ name: 'data-portrait', version: '1.0.0' });
+    const capabilities: ClientCapabilitiesWithExtensions = {
+      roots: { listChanged: true },
+      extensions: UI_EXTENSION_CAPABILITIES,
+    };
+
+    return new Client(
+      { name: 'data-portrait', version: '1.0.0' },
+      { capabilities }
+    );
   }
 
   private createTransport(): StreamableHTTPClientTransport {

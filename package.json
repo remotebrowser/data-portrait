@@ -23,6 +23,7 @@
     "@google-cloud/storage": "^7.18.0",
     "@google/genai": "^1.0.0",
     "@maxmind/geoip2-node": "^6.1.0",
+    "@mcp-ui/client": "^6.1.0",
     "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-slot": "^1.2.3",
     "@segment/analytics-node": "^2.3.0",

@@ -182,6 +182,7 @@ export function StoryDisplay({
         keyboardNavigation
         onAllStoriesEnd={onAllStoriesEnd}
         onStoryStart={onStoryStart}
+        isPaused={isShareOpened}
         storyContainerStyles={{
           borderRadius: '12px',
           overflow: 'hidden',
@@ -191,7 +192,6 @@ export function StoryDisplay({
           maxWidth: '100%',
           margin: 0,
         }}
-        isPaused={isShareOpened}
       />
 
       {/* Action buttons */}
@@ -199,8 +199,7 @@ export function StoryDisplay({
         {showShare && shareUrl && (
           <SocialShareButtons
             url={shareUrl}
-            isShareOpened={isShareOpened}
-            setIsShareOpened={setIsShareOpened}
+            onToggleShareButtons={onShareToggle}
           />
         )}
 

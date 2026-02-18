@@ -8,12 +8,12 @@ import {
   Share2,
   X,
 } from 'lucide-react';
+import { useState } from 'react';
 
 type SocialShareButtonsProps = {
   url: string;
   title?: string;
-  setIsShareOpened: (state: boolean) => void;
-  isShareOpened: boolean;
+  onToggleShareButtons?: (isOpen: boolean) => void;
 };
 
 interface SharePlatform {
@@ -66,9 +66,15 @@ const platforms: SharePlatform[] = [
 export function SocialShareButtons({
   url,
   title = 'Generated Data Portrait',
-  setIsShareOpened,
-  isShareOpened,
+  onToggleShareButtons,
 }: SocialShareButtonsProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleToggle = (state: boolean) => {
+    setIsOpen(state);
+    onToggleShareButtons?.(state);
+  };
+
   const handleShare = (platform: SharePlatform) => {
     try {
       if (navigator.share && platform.name !== 'instagram') {
@@ -88,7 +94,7 @@ export function SocialShareButtons({
         });
       }
     }
-    setIsShareOpened(false);
+    handleToggle(false);
   };
 
   const handleCopyToClipboard = async () => {
@@ -98,7 +104,7 @@ export function SocialShareButtons({
     } catch {
       prompt('Copy this link:', url);
     }
-    setIsShareOpened(false);
+    handleToggle(false);
   };
 
   return (
@@ -108,7 +114,7 @@ export function SocialShareButtons({
         size="sm"
         onClick={(e) => {
           e.stopPropagation();
-          setIsShareOpened(!isShareOpened);
+          handleToggle(!isOpen);
         }}
         className="text-white hover:bg-white/90 hover:text-black rounded-full p-2.5 transition-all duration-200 hover:ring-2 hover:ring-white/50 hover:scale-105 active:scale-95"
         title="Share on social media"
@@ -116,7 +122,7 @@ export function SocialShareButtons({
         <Share2 className="w-5 h-5" />
       </Button>
 
-      {isShareOpened && (
+      {isOpen && (
         <div className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-md rounded-lg p-2 flex gap-2 flex-col md:flex-row z-50 border border-white/20">
           <Button
             variant="ghost"

@@ -69,13 +69,7 @@ export function ImagePreviewModal({
 
         {/* Social share buttons and download button */}
         <div className="absolute bottom-4 right-4 flex gap-2 items-center">
-          {shareUrl && (
-            <SocialShareButtons
-              url={shareUrl}
-              isShareOpened={isShareOpened}
-              setIsShareOpened={setIsShareOpened}
-            />
-          )}
+          {shareUrl && <SocialShareButtons url={shareUrl} />}
 
           {/* Download button */}
           <Button

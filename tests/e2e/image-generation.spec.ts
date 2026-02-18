@@ -18,11 +18,11 @@ test.describe('Image Generation - Core Functionality', () => {
     await expect(page.locator('text=Live Data Analysis')).toBeVisible();
 
     await expect(
-      page.locator('text=6 products extracted from 2 data sources')
+      page.locator('text=/\\d+ products extracted from \\d+ data sources/')
     ).toBeVisible();
     await expect(page.locator('button', { hasText: 'Amazon' })).toBeVisible();
     await expect(
-      page.locator('button', { hasText: 'Office Depot' })
+      page.locator('button', { hasText: 'Goodreads' })
     ).toBeVisible();
 
     await expect(

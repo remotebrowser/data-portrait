@@ -1,0 +1,43 @@
+name: E2E Tests - Daily
+
+on:
+  schedule:
+    # Run daily at 9:00 AM UTC (adjust as needed)
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      FLUX_API_KEY: ${{ secrets.FLUX_API_KEY }}
+      DEEPINFRA_API_KEY: ${{ secrets.DEEPINFRA_API_KEY }}
+      PORTKEY_API_KEY: ${{ secrets.PORTKEY_API_KEY }}
+      MAXMIND_ACCOUNT_ID: ${{ secrets.MAXMIND_ACCOUNT_ID }}
+      MAXMIND_LICENSE_KEY: ${{ secrets.MAXMIND_LICENSE_KEY }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium
+
+      - name: Build application
+        run: npm run build
+
+      - name: Run E2E tests
+        run: npm run test:e2e

@@ -5,7 +5,7 @@ type FollowUpFormProps = {
   onFinishSignin?: (signinId: string) => void;
 };
 
-export function FollowUpForm({ signinUrl, onFinishSignin }: FollowUpFormProps) {
+export function FollowUpForm({ signinUrl, onFinishSignin: _onFinishSignin }: FollowUpFormProps) {
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 

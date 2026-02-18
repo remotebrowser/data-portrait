@@ -163,11 +163,6 @@ export function StoryDisplay({
     setIsShareOpened(state);
   };
 
-  const onStoryStart = (index: number) => {
-    setCurrentStoryIndex(index);
-    onShareToggle(false);
-  };
-
   const shareUrl = story.id
     ? `${window.location.origin}/story/${story.id}`
     : null;
@@ -181,7 +176,7 @@ export function StoryDisplay({
         height="100%"
         keyboardNavigation
         onAllStoriesEnd={onAllStoriesEnd}
-        onStoryStart={onStoryStart}
+        onStoryStart={setCurrentStoryIndex}
         isPaused={isShareOpened}
         storyContainerStyles={{
           borderRadius: '12px',

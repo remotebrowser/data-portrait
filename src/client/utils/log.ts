@@ -6,7 +6,7 @@ export function log({
   type = 'client',
 }: {
   message: string;
-  data: any;
+  data: Record<string, unknown>;
   type?: 'client' | 'server';
 }) {
   if (type === 'client') {

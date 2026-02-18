@@ -57,7 +57,7 @@ async function initializeApp() {
   await initializeSentry();
 }
 
-function App() {
+export function App() {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {

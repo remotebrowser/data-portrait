@@ -27,6 +27,8 @@ const STYLE_PROMPTS = {
     'An artistic painted portrait, brushstroke textures, creative lighting',
   'pixel-art':
     'An 8-bit pixel art character, retro gaming style, vibrant colors',
+  caricature:
+    'A humorous exaggerated caricature portrait, oversized facial features, playful and whimsical style',
 };
 
 const TRAIT_MAPPINGS = {
@@ -54,6 +56,7 @@ interface PromptParams {
   imageStyle: string | string[];
   gender: string;
   traits: string[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   purchaseData?: any[];
 }
 
@@ -65,11 +68,11 @@ class PromptService {
     purchaseData,
   }: PromptParams): Promise<string> {
     // Handle product categorization internally
-    let books: string[] = [];
-    let products: string[] = [];
+    const books: string[] = [];
+    const products: string[] = [];
 
     if (purchaseData && purchaseData.length > 0) {
-      for (let order of purchaseData) {
+      for (const order of purchaseData) {
         if (order.brand === 'Goodreads') {
           books.push(...order.product_names);
         } else {

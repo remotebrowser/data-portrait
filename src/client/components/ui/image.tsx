@@ -17,7 +17,7 @@ function Image({
     setError(false);
   };
 
-  const handleError = (_e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const handleError = () => {
     setLoading(false);
     setError(true);
   };

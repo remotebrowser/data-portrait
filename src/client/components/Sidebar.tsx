@@ -56,7 +56,7 @@ export function Sidebar({
       {/* Mobile Sidebar Overlay */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-60"
           onClick={onClose}
         />
       )}
@@ -64,8 +64,9 @@ export function Sidebar({
       {/* Right Sidebar - Responsive */}
       <aside
         className={`
-        fixed lg:static top-0 right-0 h-screen w-[400px] max-w-[90vw] 
-        bg-white border-l border-gray-200 flex flex-col z-50
+        fixed lg:static top-0 right-0 h-screen
+        w-screen sm:w-[400px] sm:max-w-[90vw]
+        bg-white border-l border-gray-200 flex flex-col z-70
         transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
       `}
@@ -116,7 +117,7 @@ export function Sidebar({
         </div>
 
         {/* Sidebar Footer - Simple */}
-        <div className="flex-shrink-0 p-6 border-t border-gray-100">
+        <div className="flex-shrink-0 p-6 border-t border-gray-100 space-y-3">
           <Button
             onClick={onGeneratePortrait}
             disabled={
@@ -141,12 +142,20 @@ export function Sidebar({
             )}
           </Button>
           {connectedBrands.length > 0 && !isGenerating && (
-            <p className="text-xs text-green-600 text-center mt-2">
+            <p className="text-xs text-green-600 text-center">
               Powered by live shopping data from {connectedBrands.length}{' '}
               connected{' '}
               {connectedBrands.length === 1 ? 'retailer' : 'retailers'}!
             </p>
           )}
+          <Button
+            variant="ghost"
+            size="lg"
+            onClick={onClose}
+            className="w-full lg:hidden"
+          >
+            Cancel
+          </Button>
         </div>
       </aside>
     </>

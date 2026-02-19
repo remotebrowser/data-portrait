@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay.js';
@@ -351,30 +351,16 @@ export function DataPortrait() {
   return (
     <div className="flex h-screen bg-gray-50 relative">
       {/* Mobile Header with Hamburger Menu - Only visible on small screens */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-70 bg-white border-b border-gray-200">
         {/* Top Header Bar */}
         <div className="p-4 flex items-center justify-between">
           <h1 className="text-xl font-bold">Data Portrait</h1>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2"
-            >
-              {isSidebarOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
-          </div>
         </div>
       </div>
 
       {/* Main Content Area (Left) - Independent scroll */}
       <div className="flex-1 flex flex-col h-screen">
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 pt-16 lg:pt-4">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 pt-20 sm:pt-20 lg:pt-4">
           {/* Empty State - Show when no data is connected */}
           {connectedBrands.length === 0 && (
             <EmptyState
@@ -409,7 +395,7 @@ export function DataPortrait() {
 
       {/* Floating Action Button - Bottom */}
       {connectedBrands.length > 0 && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30 lg:hidden">
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-60 lg:hidden">
           <Button
             onClick={generatePortrait}
             disabled={isGenerating || selectedItemsCount === 0}
@@ -421,6 +407,22 @@ export function DataPortrait() {
           </Button>
         </div>
       )}
+
+      {/* Floating Action Button - Sidebar Toggle (Bottom Right) */}
+      <div className="fixed bottom-6 right-3 z-60 lg:hidden">
+        <Button
+          variant="default"
+          size="icon"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
+        >
+          {isSidebarOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Wand2 className="h-6 w-6" />
+          )}
+        </Button>
+      </div>
 
       {/* Sidebar */}
       <Sidebar

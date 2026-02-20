@@ -49,7 +49,7 @@ export const gcsService = {
 
     await file.makePublic();
 
-    const publicUrl = `${settings.PUBLIC_URL}/shared/image/${filename}`;
+    const publicUrl = `/shared/image/${filename}`;
 
     return {
       url: publicUrl,

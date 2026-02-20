@@ -12,6 +12,10 @@ function injectMetaTags(
   baseUrl: string
 ): string {
   const firstImage = storyData.stories[0]?.imageUrl || '';
+  const imageUrlForMeta =
+    firstImage && firstImage.startsWith('/')
+      ? `${baseUrl}${firstImage}`
+      : firstImage;
   const storyTitle = storyData.stories[0]?.title || 'Data Portrait Story';
   const description = `View ${storyData.stories.length} story ${storyData.stories.length === 1 ? 'slide' : 'slides'} from Data Portrait by GetGather`;
   const url = `${baseUrl}/story/${storyData.id}`;
@@ -21,7 +25,7 @@ function injectMetaTags(
     .replace(/\{\{url\}\}/g, url)
     .replace(/\{\{title\}\}/g, storyTitle)
     .replace(/\{\{description\}\}/g, description)
-    .replace(/\{\{imageUrl\}\}/g, firstImage);
+    .replace(/\{\{imageUrl\}\}/g, imageUrlForMeta);
 }
 
 // Serve story pages with dynamic Open Graph tags

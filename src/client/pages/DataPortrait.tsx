@@ -409,7 +409,7 @@ export function DataPortrait() {
       )}
 
       {/* Floating Action Button - Sidebar Toggle (Bottom Right) */}
-      <div className="fixed bottom-6 right-3 z-60 lg:hidden">
+      <div className="fixed bottom-10 right-3 z-60 lg:hidden">
         <Button
           variant="default"
           size="icon"

@@ -118,6 +118,13 @@ export function Sidebar({
 
         {/* Sidebar Footer - Simple */}
         <div className="flex-shrink-0 p-6 border-t border-gray-100 space-y-3">
+          {connectedBrands.length > 0 && !isGenerating && (
+            <p className="text-xs text-green-600 text-center">
+              Powered by live shopping data from {connectedBrands.length}{' '}
+              connected{' '}
+              {connectedBrands.length === 1 ? 'retailer' : 'retailers'}!
+            </p>
+          )}
           <Button
             onClick={onGeneratePortrait}
             disabled={
@@ -141,13 +148,6 @@ export function Sidebar({
               </>
             )}
           </Button>
-          {connectedBrands.length > 0 && !isGenerating && (
-            <p className="text-xs text-green-600 text-center">
-              Powered by live shopping data from {connectedBrands.length}{' '}
-              connected{' '}
-              {connectedBrands.length === 1 ? 'retailer' : 'retailers'}!
-            </p>
-          )}
           <Button
             variant="ghost"
             size="lg"

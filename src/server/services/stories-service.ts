@@ -131,13 +131,27 @@ STORY FORMAT:
 - Use emojis and engaging voice
 - Max 4 lines, 2-3 lines ideal`;
 
-async function generateStoryChapters(
-  purchaseData: unknown[],
-  imageStyle: string[],
-  gender: string,
-  traits: string[]
-): Promise<StoryChapter[]> {
-  // Build character description for the story
+type GenerateChaptersOptions = {
+  purchaseData: unknown[];
+  imageStyle: string[];
+  gender: string;
+  traits: string[];
+  systemPrompt: string;
+  userInstruction: string;
+  schemaName: string;
+  schemaDescription: string;
+};
+
+async function generateChapters({
+  purchaseData,
+  imageStyle,
+  gender,
+  traits,
+  systemPrompt,
+  userInstruction,
+  schemaName,
+  schemaDescription,
+}: GenerateChaptersOptions): Promise<StoryChapter[]> {
   const characterPrompt = await promptService.buildPrompt({
     imageStyle,
     gender,
@@ -148,11 +162,11 @@ async function generateStoryChapters(
   const userContent = `User Purchase History: ${JSON.stringify(purchaseData)}
 Character Description: ${characterPrompt}
 
-Analyze this complete purchase data and create a 2-chapter visual story featuring this specific character as the protagonist. Focus on patterns across all brands and product categories to create a comprehensive narrative.`;
+${userInstruction}`;
 
   const response = await portkey.chat.completions.create({
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: userContent },
     ],
     model: '@OpenRouter/google/gemini-2.5-pro-preview',
@@ -160,8 +174,8 @@ Analyze this complete purchase data and create a 2-chapter visual story featurin
     response_format: {
       type: 'json_schema',
       json_schema: {
-        name: 'story_chapters',
-        description: 'Array of story chapters',
+        name: schemaName,
+        description: schemaDescription,
         strict: true,
         schema: {
           type: 'array',
@@ -198,6 +212,7 @@ Analyze this complete purchase data and create a 2-chapter visual story featurin
   }
 
   const chapters: StoryChapter[] = [];
+
   for (const item of parsedData) {
     if (
       typeof item === 'object' &&
@@ -224,96 +239,62 @@ Analyze this complete purchase data and create a 2-chapter visual story featurin
   return chapters;
 }
 
-async function generateOneStoryChapter(
+async function generateStoryChapters(
   purchaseData: unknown[],
   imageStyle: string[],
   gender: string,
-  traits: string[],
-  storyChapters: StoryChapter[] = []
+  traits: string[]
 ): Promise<StoryChapter[]> {
-  const characterPrompt = await promptService.buildPrompt({
+  if (purchaseData.length > 1) {
+    return generateOneStoryPerBrand(purchaseData, imageStyle, gender, traits);
+  }
+
+  return generateChapters({
+    purchaseData,
     imageStyle,
     gender,
     traits,
-    purchaseData,
+    systemPrompt: SYSTEM_PROMPT,
+    userInstruction:
+      'Analyze this complete purchase data and create a 2-chapter visual story featuring this specific character as the protagonist. Focus on patterns across all brands and product categories to create a comprehensive narrative.',
+    schemaName: 'story_chapters',
+    schemaDescription: 'Array of story chapters',
   });
+}
 
-  const userContent = `User Purchase History: ${JSON.stringify(purchaseData)}
-Character Description: ${characterPrompt}
+async function generateOneStoryPerBrand(
+  purchaseData: unknown[],
+  imageStyle: string[],
+  gender: string,
+  traits: string[]
+): Promise<StoryChapter[]> {
+  const chapters: StoryChapter[] = [];
 
-Analyze this purchase data and create a single, standalone visual story chapter featuring this specific character as the protagonist. Focus on dominant patterns across all brands and product categories to craft one vivid vignette.`;
+  const commonConfig = {
+    imageStyle,
+    gender,
+    traits,
+    systemPrompt: SINGLE_CHAPTER_SYSTEM_PROMPT,
+    userInstruction:
+      'Analyze this purchase data and create a single, standalone visual story chapter featuring this specific character as the protagonist. Focus on dominant patterns across all brands and product categories to craft one vivid vignette.',
+    schemaName: 'story_chapters',
+    schemaDescription: 'Array with one story chapter',
+  };
 
-  const response = await portkey.chat.completions.create({
-    messages: [
-      { role: 'system', content: SINGLE_CHAPTER_SYSTEM_PROMPT },
-      { role: 'user', content: userContent },
-    ],
-    model: '@OpenRouter/google/gemini-2.5-pro-preview',
-    max_tokens: 8192,
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
-        name: 'story_chapters',
-        description: 'Array with one story chapter',
-        strict: true,
-        schema: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              title: {
-                type: 'string',
-                description: 'Chapter title (3-5 words)',
-              },
-              imagePrompt: {
-                type: 'string',
-                description: 'Image prompt (80-100 words)',
-              },
-              storyText: {
-                type: 'string',
-                description: 'Story text (2-4 lines)',
-              },
-            },
-            required: ['title', 'imagePrompt', 'storyText'],
-          },
-        },
-      },
-    },
-  });
+  const chapterBatches = await Promise.all(
+    purchaseData.map((purchase) =>
+      generateChapters({
+        purchaseData: [purchase],
+        ...commonConfig,
+      })
+    )
+  );
 
-  const rawContent = response.choices?.[0]?.message?.content;
-  const content =
-    typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
-  const parsedData: unknown = JSON.parse(content);
-
-  if (!Array.isArray(parsedData) || parsedData.length === 0) {
-    throw new Error('Invalid chapters format received');
+  for (const batch of chapterBatches) {
+    chapters.push(...batch);
   }
 
-  for (const item of parsedData) {
-    if (
-      typeof item === 'object' &&
-      item !== null &&
-      'title' in item &&
-      'imagePrompt' in item &&
-      'storyText' in item &&
-      typeof (item as Record<string, unknown>).title === 'string' &&
-      typeof (item as Record<string, unknown>).imagePrompt === 'string' &&
-      typeof (item as Record<string, unknown>).storyText === 'string'
-    ) {
-      storyChapters.push({
-        title: String((item as Record<string, unknown>).title),
-        imagePrompt: String((item as Record<string, unknown>).imagePrompt),
-        storyText: String((item as Record<string, unknown>).storyText),
-      });
-    }
-  }
-
-  if (storyChapters.length === 0) {
-    throw new Error('No valid chapters found in response');
-  }
-
-  return storyChapters;
+  return chapters;
 }
 
 class StoriesService {

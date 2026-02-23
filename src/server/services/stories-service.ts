@@ -106,6 +106,31 @@ CONTINUITY RULES:
 - Maintain consistent character progression
 - Each image prompt should reflect the current story state and character appearance`;
 
+const SINGLE_CHAPTER_SYSTEM_PROMPT = `You are a Data Analyst creating a single visual story from user data.
+
+TASK: Create 1 chapter by analyzing the user history:
+1. Identify patterns across categories in the user's timeline.
+2. Generate one focused chapter that can stand alone.
+3. For this chapter, generate:
+   - A compelling title (3-5 words)
+   - An 80-100 word image prompt blending dominant brand(s) with user interests
+   - A 2-4 line story with stats
+
+IMAGE PROMPT RULES:
+- Order: Subject + Action + Style + Context
+- Blend brand elements into creative contexts (e.g., coffee shop in fantasy setting, bookstore in sci-fi world)
+- Aesthetics: Specify camera (Hasselblad/Sony), lens (35mm/85mm), and film stock (Kodak/Fujifilm)
+- Subject: The user themselves as the main character (not a generic traveler)
+- Aspect Ratio: Always end each prompt with '9:16 vertical portrait orientation'
+- Character: Use the provided character description to personalize the protagonist
+
+STORY FORMAT:
+- Short, punchy lines optimized for image overlay
+- Include specific stats/counts from the data (e.g., '3 purchases', '4 visits', '5 items')
+- Tell a brief snapshot from the year
+- Use emojis and engaging voice
+- Max 4 lines, 2-3 lines ideal`;
+
 async function generateStoryChapters(
   purchaseData: unknown[],
   imageStyle: string[],
@@ -197,6 +222,98 @@ Analyze this complete purchase data and create a 2-chapter visual story featurin
   }
 
   return chapters;
+}
+
+async function generateOneStoryChapter(
+  purchaseData: unknown[],
+  imageStyle: string[],
+  gender: string,
+  traits: string[],
+  storyChapters: StoryChapter[] = []
+): Promise<StoryChapter[]> {
+  const characterPrompt = await promptService.buildPrompt({
+    imageStyle,
+    gender,
+    traits,
+    purchaseData,
+  });
+
+  const userContent = `User Purchase History: ${JSON.stringify(purchaseData)}
+Character Description: ${characterPrompt}
+
+Analyze this purchase data and create a single, standalone visual story chapter featuring this specific character as the protagonist. Focus on dominant patterns across all brands and product categories to craft one vivid vignette.`;
+
+  const response = await portkey.chat.completions.create({
+    messages: [
+      { role: 'system', content: SINGLE_CHAPTER_SYSTEM_PROMPT },
+      { role: 'user', content: userContent },
+    ],
+    model: '@OpenRouter/google/gemini-2.5-pro-preview',
+    max_tokens: 8192,
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'story_chapters',
+        description: 'Array with one story chapter',
+        strict: true,
+        schema: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: {
+                type: 'string',
+                description: 'Chapter title (3-5 words)',
+              },
+              imagePrompt: {
+                type: 'string',
+                description: 'Image prompt (80-100 words)',
+              },
+              storyText: {
+                type: 'string',
+                description: 'Story text (2-4 lines)',
+              },
+            },
+            required: ['title', 'imagePrompt', 'storyText'],
+          },
+        },
+      },
+    },
+  });
+
+  const rawContent = response.choices?.[0]?.message?.content;
+  const content =
+    typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+  const parsedData: unknown = JSON.parse(content);
+
+  if (!Array.isArray(parsedData) || parsedData.length === 0) {
+    throw new Error('Invalid chapters format received');
+  }
+
+  for (const item of parsedData) {
+    if (
+      typeof item === 'object' &&
+      item !== null &&
+      'title' in item &&
+      'imagePrompt' in item &&
+      'storyText' in item &&
+      typeof (item as Record<string, unknown>).title === 'string' &&
+      typeof (item as Record<string, unknown>).imagePrompt === 'string' &&
+      typeof (item as Record<string, unknown>).storyText === 'string'
+    ) {
+      storyChapters.push({
+        title: String((item as Record<string, unknown>).title),
+        imagePrompt: String((item as Record<string, unknown>).imagePrompt),
+        storyText: String((item as Record<string, unknown>).storyText),
+      });
+    }
+  }
+
+  if (storyChapters.length === 0) {
+    throw new Error('No valid chapters found in response');
+  }
+
+  return storyChapters;
 }
 
 class StoriesService {

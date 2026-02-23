@@ -1,5 +1,30 @@
 import { Button } from '@/components/ui/button.js';
 
+type EmptyStateActionsProps = {
+  onLoadSampleData: () => void;
+  onOpenSidebar: () => void;
+};
+
+export function EmptyStateActions({
+  onLoadSampleData,
+  onOpenSidebar,
+}: EmptyStateActionsProps) {
+  return (
+    <div className="flex items-center gap-4">
+      <Button onClick={onOpenSidebar} className="lg:hidden" size="lg">
+        Connect Your Data
+      </Button>
+      <Button onClick={onLoadSampleData} variant="outline" size="lg">
+        Try Sample Data
+      </Button>
+      <div className="hidden lg:flex items-center gap-2 text-sm text-gray-500">
+        <span>👉</span>
+        <span>Use the sidebar to connect your accounts</span>
+      </div>
+    </div>
+  );
+}
+
 type EmptyStateProps = {
   onLoadSampleData: () => void;
   onOpenSidebar: () => void;
@@ -55,18 +80,10 @@ export function EmptyState({
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <Button onClick={onOpenSidebar} className="lg:hidden" size="lg">
-          Connect Your Data
-        </Button>
-        <Button onClick={onLoadSampleData} variant="outline" size="lg">
-          Try Sample Data
-        </Button>
-        <div className="hidden lg:flex items-center gap-2 text-sm text-gray-500">
-          <span>👉</span>
-          <span>Use the sidebar to connect your accounts</span>
-        </div>
-      </div>
+      <EmptyStateActions
+        onOpenSidebar={onOpenSidebar}
+        onLoadSampleData={onLoadSampleData}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
+import { EmptyStateNoData } from '../components/EmptyStateNoData.js';
 import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay.js';
 import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
@@ -382,6 +383,14 @@ export function DataPortrait() {
               onOpenSidebar={() => setIsSidebarOpen(true)}
             />
           )}
+
+          {/* Empty State - Show when brand(s) connected but no orders */}
+          <EmptyStateNoData
+            visible={connectedBrands.length > 0 && orders.length === 0}
+            connectedBrands={connectedBrands}
+            onLoadSampleData={loadSampleData}
+            onOpenSidebar={() => setIsSidebarOpen(true)}
+          />
 
           {/* Purchase Data Display */}
           <PurchaseDataDisplay

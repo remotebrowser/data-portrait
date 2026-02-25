@@ -1,18 +1,18 @@
 import { EmptyStateActions } from './EmptyState.js';
 
-type EmptyStateNoDataProps = {
+type EmptyDataProps = {
   visible?: boolean;
   connectedBrands: string[];
   onLoadSampleData: () => void;
   onOpenSidebar: () => void;
 };
 
-export function EmptyStateNoData({
+export function EmptyData({
   visible = false,
   connectedBrands,
   onLoadSampleData,
   onOpenSidebar,
-}: EmptyStateNoDataProps) {
+}: EmptyDataProps) {
   if (!visible) {
     return null;
   }

@@ -169,6 +169,10 @@ venv.bak/
 # Generated AI images (too large for git)
 public/gemini-portrait-*.png
 public/flux-portrait-*.png
+public/gemini-portrait-*.jpg
+public/flux-portrait-*.jpg
+public/bria-blur-portrait-*.jpg
+public/*-portrait-*-thumb.jpg
 
 # Spyder project settings
 .spyderproject

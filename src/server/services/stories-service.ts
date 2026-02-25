@@ -19,6 +19,8 @@ type StoryItem = {
   content: string;
   imageUrl?: string;
   filename?: string;
+  thumbnailUrl?: string;
+  thumbnailFilename?: string;
 };
 
 type StoryChapter = {
@@ -56,6 +58,8 @@ function storyItemsToMetadata(
       content: story.content,
       imageUrl: story.imageUrl,
       filename: story.filename,
+      thumbnailUrl: story.thumbnailUrl,
+      thumbnailFilename: story.thumbnailFilename,
     })),
   };
 }
@@ -67,6 +71,8 @@ function metadataToStoryItems(metadata: StoryMetadata): StoryItem[] {
     content: story.content,
     imageUrl: story.imageUrl,
     filename: story.filename,
+    thumbnailUrl: story.thumbnailUrl,
+    thumbnailFilename: story.thumbnailFilename,
   }));
 }
 
@@ -290,6 +296,8 @@ class StoriesService {
           content: chapter.imagePrompt,
           imageUrl: imageData.url || '',
           filename: imageData.filename,
+          thumbnailUrl: imageData.thumbnailUrl,
+          thumbnailFilename: imageData.thumbnailFilename,
         });
 
         stories.push({
@@ -457,7 +465,7 @@ export async function addStoryLinkOverlay(imageData: string): Promise<string> {
         top,
       },
     ])
-    .png()
+    .jpeg({ quality: 90, mozjpeg: true })
     .toBuffer();
 
   return resultBuffer.toString('base64');

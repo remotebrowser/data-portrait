@@ -45,7 +45,7 @@ router.get(
       }
 
       const [metadata] = await file.getMetadata();
-      const contentType = metadata.contentType || 'image/png';
+      const contentType = metadata.contentType || 'image/jpeg';
 
       res.setHeader('Content-Type', contentType);
       res.setHeader('Cache-Control', 'public, max-age=31536000');

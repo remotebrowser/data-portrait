@@ -9,6 +9,7 @@ export type StoryData = {
     title: string;
     imageUrl: string;
     storyText?: string;
+    thumbnailUrl?: string;
   }>;
 };
 
@@ -16,16 +17,18 @@ function convertStoriesToResponse(stories: StoryItem[]): StoryData['stories'] {
   const response: StoryData['stories'] = [];
 
   for (const story of stories) {
-    if (story.type === 'image' && story.imageUrl) {
+    if (story.type === 'image' && story.imageUrl && story.thumbnailUrl) {
       response.push({
         title: story.title,
         imageUrl: story.imageUrl,
+        thumbnailUrl: story.thumbnailUrl,
       });
     } else if (story.type === 'text') {
       response.push({
         title: story.title,
         imageUrl: '',
         storyText: story.content,
+        thumbnailUrl: '',
       });
     }
   }

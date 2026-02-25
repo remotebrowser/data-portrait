@@ -412,7 +412,7 @@ Generate only the image prompt text, nothing else.`;
     if (options?.beforeSave) {
       base64Data = await options.beforeSave(base64Data);
     }
-    const fileData = await this.saveImageFile(base64Data, 'flux');
+    const fileData = await this.saveImageFile(base64Data, 'flux-pro-1.1');
 
     return {
       ...fileData,

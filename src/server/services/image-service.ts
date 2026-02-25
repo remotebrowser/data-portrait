@@ -533,26 +533,8 @@ Generate only the image prompt text, nothing else.`;
     const optimizedBuffer = await sharp(originalBuffer)
       .jpeg({ quality: 90, mozjpeg: true })
       .toBuffer();
-    const optimizedImage = sharp(optimizedBuffer);
-    const metadata = await optimizedImage.metadata();
-    const originalWidth = metadata.width || 1024;
-    const originalHeight = metadata.height || 1024;
-
-    const cropTop = Math.floor(originalHeight * 0.25);
-    const cropHeight = Math.max(1, Math.floor(originalHeight * 0.5));
-
-    const thumbnailBuffer = await optimizedImage
-      .extract({
-        left: 0,
-        top: cropTop,
-        width: originalWidth,
-        height: Math.min(cropHeight, originalHeight - cropTop),
-      })
-      .resize(256, 256, {
-        fit: 'cover',
-        position: 'centre',
-      })
-      .jpeg({ quality: 85, mozjpeg: true })
+    const thumbnailBuffer = await sharp(optimizedBuffer)
+      .jpeg({ quality: 70, mozjpeg: true })
       .toBuffer();
 
     const optimizedBase64 = optimizedBuffer.toString('base64');

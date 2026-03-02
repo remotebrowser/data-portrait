@@ -17,6 +17,7 @@ import gofood from '../config/gofood.json' with { type: 'json' };
 import garmin from '../config/garmin.json' with { type: 'json' };
 import tokopedia from '../config/tokopedia.json' with { type: 'json' };
 import shopee from '../config/shopee.json' with { type: 'json' };
+import doordash from '../config/doordash.json' with { type: 'json' };
 import type { BrandConfig } from '../modules/Config.js';
 import { type PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type {
@@ -39,6 +40,7 @@ const gofoodConfig = gofood as BrandConfig;
 const garminConfig = garmin as BrandConfig;
 const tokopediaConfig = tokopedia as BrandConfig;
 const shopeeConfig = shopee as BrandConfig;
+const doordashConfig = doordash as BrandConfig;
 const BRANDS: Array<BrandConfig> = [
   amazonConfig,
   officedepotConfig,
@@ -48,6 +50,7 @@ const BRANDS: Array<BrandConfig> = [
   garminConfig,
   tokopediaConfig,
   shopeeConfig,
+  doordashConfig,
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [

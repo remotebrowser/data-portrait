@@ -18,6 +18,7 @@ const tools: Record<string, string[]> = {
   garmin: ['garmin_get_activities'],
   tokopedia: ['tokopedia_get_purchase_history'],
   shopee: ['shopee_get_purchase_history'],
+  doordash: ['doordash_get_orders'],
 };
 
 const McpResponse = z.object({
@@ -45,6 +46,7 @@ const McpResponse = z.object({
   // officedepot response
   purchase_history: z.array(z.record(z.unknown())).optional(),
   purchase_history_details: z.array(z.record(z.unknown())).optional(),
+  doordash_orders: z.array(z.record(z.unknown())).optional(),
 });
 
 type PurchaseHistoryResponse = {
@@ -96,7 +98,8 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     !mcpResponse.extract_result?.[0]?.content &&
     !mcpResponse.books?.length &&
     !mcpResponse.purchases?.length &&
-    !mcpResponse.purchase_history?.length
+    !mcpResponse.purchase_history?.length &&
+    !mcpResponse.doordash_orders?.length
   ) {
     res.json(response);
     return;
@@ -106,7 +109,8 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     mcpResponse.extract_result?.[0]?.content ||
     mcpResponse.books ||
     mcpResponse.purchases ||
-    mcpResponse.purchase_history;
+    mcpResponse.purchase_history ||
+    mcpResponse.doordash_orders;
 
   if (typeof rawContent === 'string') {
     response.content = JSON.parse(rawContent);

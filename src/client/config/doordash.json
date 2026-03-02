@@ -1,0 +1,62 @@
+{
+  "brand_id": "doordash",
+  "brand_name": "DoorDash",
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/DoorDash_Logo.svg/3840px-DoorDash_Logo.svg.png?_=20190413221151",
+  "is_mandatory": false,
+  "is_dpage": true,
+  "schema": [
+    {
+      "name": "email",
+      "type": "email",
+      "prompt": "Email"
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "prompt": "Password"
+    },
+    {
+      "name": "continue,sign_in",
+      "type": "click",
+      "prompt": "Sign In",
+      "dependsOnFields": "email"
+    }
+  ],
+  "dataTransform": {
+    "dataPath": "",
+    "fieldMappings": [
+      {
+        "outputKey": "brand",
+        "sourcePath": "brand",
+        "defaultValue": "DoorDash"
+      },
+      {
+        "outputKey": "order_date",
+        "sourcePath": "date",
+        "transform": "date"
+      },
+      {
+        "outputKey": "order_total",
+        "sourcePath": "order_total",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "order_id",
+        "sourcePath": "store",
+        "transform": "string",
+        "formatTemplate": "doordash_{value}"
+      },
+      {
+        "outputKey": "product_names",
+        "sourcePath": "summary",
+        "defaultValue": "N/A",
+        "convertToArray": true
+      },
+      {
+        "outputKey": "image_urls",
+        "sourcePath": "image_urls",
+        "defaultValue": "N/A"
+      }
+    ]
+  }
+}

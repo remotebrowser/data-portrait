@@ -137,6 +137,23 @@ export function DataPortrait() {
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
 
+  const filteredBrands = useMemo(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const doordashParam = searchParams.get('doordash');
+
+    let brandsToShow = BRANDS.filter(
+      (brand) => !EXCLUDED_BRANDS.includes(brand.brand_id)
+    );
+
+    if (doordashParam !== 'true') {
+      brandsToShow = brandsToShow.filter(
+        (brand) => brand.brand_id !== doordashConfig.brand_id
+      );
+    }
+
+    return brandsToShow;
+  }, []);
+
   // Track page view on component mount
   useEffect(() => {
     trackEvent('page_view', {
@@ -440,9 +457,7 @@ export function DataPortrait() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        brands={BRANDS.filter(
-          (brand) => !EXCLUDED_BRANDS.includes(brand.brand_id)
-        )}
+        brands={filteredBrands}
         connectedBrands={connectedBrands}
         selectedGender={selectedGender}
         selectedTraits={selectedTraits}

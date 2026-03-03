@@ -4,13 +4,13 @@ import { Router, type Request, type Response } from 'express';
 import { Storage } from '@google-cloud/storage';
 import { settings } from '../config.js';
 
-function renderShared(filename: string): string {
+function renderShared(baseUrl: string, filename: string): string {
   const template = readFileSync(
     path.join(process.cwd(), 'dist/client/templates/shared.html'),
     'utf-8'
   );
 
-  const imageUrl = `${settings.PUBLIC_URL}/shared/image/${filename}`;
+  const imageUrl = `${baseUrl}/shared/image/${filename}`;
 
   return template
     .replace(/{{imageUrl}}/g, imageUrl)
@@ -76,7 +76,8 @@ router.get(
       throw new Error('Invalid filename');
     }
 
-    const html = renderShared(filename);
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const html = renderShared(baseUrl, filename);
     res.send(html);
   }
 );

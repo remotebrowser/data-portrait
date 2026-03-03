@@ -30,7 +30,7 @@ import { getRandomGender } from '../modules/Gender.js';
 import { getRandomStyle } from '../modules/ImageStyle.js';
 import { log } from '../utils/log.js';
 import { useAnalytics } from '../hooks/useAnalytics.js';
-import { useAppConfig } from '../hooks/useAppConfig.js';
+import { useFeatureFlags } from '../hooks/useFeatureFlags.js';
 
 const amazonConfig = amazon as BrandConfig;
 const wayfairConfig = wayfair as BrandConfig;
@@ -114,7 +114,7 @@ const sampleOrders: PurchaseHistory[] = [
 
 export function DataPortrait() {
   const { trackEvent } = useAnalytics();
-  const { config: appConfig } = useAppConfig();
+  const { config: appConfig, isFeatureEnabled } = useFeatureFlags();
 
   const [orders, setOrders] = useState<PurchaseHistory[]>([]);
   const [connectedBrands, setConnectedBrands] = useState<string[]>([]);
@@ -137,22 +137,21 @@ export function DataPortrait() {
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
 
-  const filteredBrands = useMemo(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const doordashParam = searchParams.get('doordash');
+  const doordashEnabled = isFeatureEnabled('doordash');
 
+  const filteredBrands = useMemo(() => {
     let brandsToShow = BRANDS.filter(
       (brand) => !EXCLUDED_BRANDS.includes(brand.brand_id)
     );
 
-    if (doordashParam !== 'true') {
+    if (!doordashEnabled) {
       brandsToShow = brandsToShow.filter(
         (brand) => brand.brand_id !== doordashConfig.brand_id
       );
     }
 
     return brandsToShow;
-  }, []);
+  }, [doordashEnabled]);
 
   // Track page view on component mount
   useEffect(() => {

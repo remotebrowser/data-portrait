@@ -11,14 +11,9 @@
       "prompt": "Email"
     },
     {
-      "name": "password",
-      "type": "password",
-      "prompt": "Password"
-    },
-    {
       "name": "continue,sign_in",
       "type": "click",
-      "prompt": "Sign In",
+      "prompt": "Continue",
       "dependsOnFields": "email"
     }
   ],

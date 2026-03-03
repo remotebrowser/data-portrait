@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Menu, X, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
@@ -227,7 +227,7 @@ export function DataPortrait() {
     setSelectedItems(newSelected);
   };
 
-  const getFilteredOrdersForGeneration = (): PurchaseHistory[] => {
+  const getFilteredOrdersForGeneration = useCallback((): PurchaseHistory[] => {
     return orders
       .map((order) => {
         const selectedProductIndices = order.product_names
@@ -249,7 +249,7 @@ export function DataPortrait() {
         };
       })
       .filter((order): order is PurchaseHistory => order !== null);
-  };
+  }, [orders, selectedItems]);
 
   const selectedItemsCount = useMemo(() => {
     const filteredOrders = getFilteredOrdersForGeneration();
@@ -257,7 +257,7 @@ export function DataPortrait() {
       (total, order) => total + order.product_names.length,
       0
     );
-  }, [orders, selectedItems]);
+  }, [getFilteredOrdersForGeneration]);
 
   const loadSampleData = () => {
     setOrders(sampleOrders);

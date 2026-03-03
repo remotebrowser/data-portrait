@@ -31,7 +31,7 @@ function maskEmail(email: string): string {
 /**
  * Deep clone an object to avoid mutating the original
  */
-function deepClone(obj: any): any {
+function deepClone(obj: unknown): unknown {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -44,10 +44,10 @@ function deepClone(obj: any): any {
     return obj.map(deepClone);
   }
 
-  const cloned: any = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      cloned[key] = deepClone(obj[key]);
+  const cloned: Record<string, unknown> = {};
+  for (const key in obj as Record<string, unknown>) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      cloned[key] = deepClone((obj as Record<string, unknown>)[key]);
     }
   }
 
@@ -57,7 +57,10 @@ function deepClone(obj: any): any {
 /**
  * Recursively sanitize an object by redacting/masking sensitive fields
  */
-function sanitizeObject(obj: any, options: SanitizationOptions): any {
+function sanitizeObject(
+  obj: unknown,
+  options: SanitizationOptions
+): unknown {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -66,11 +69,12 @@ function sanitizeObject(obj: any, options: SanitizationOptions): any {
     return obj.map((item) => sanitizeObject(item, options));
   }
 
-  const sanitized: any = {};
+  const record = obj as Record<string, unknown>;
+  const sanitized: Record<string, unknown> = {};
 
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      const value = obj[key];
+  for (const key in record) {
+    if (Object.prototype.hasOwnProperty.call(record, key)) {
+      const value = record[key];
       const lowerKey = key.toLowerCase();
 
       // Redact sensitive fields
@@ -117,9 +121,9 @@ function sanitizeObject(obj: any, options: SanitizationOptions): any {
  * @returns Sanitized copy of the data
  */
 function sanitizeRequestData(
-  data: any,
+  data: unknown,
   options: SanitizationOptions = DEFAULT_OPTIONS
-): any {
+): unknown {
   const clonedData = deepClone(data);
   return sanitizeObject(clonedData, { ...DEFAULT_OPTIONS, ...options });
 }
@@ -133,7 +137,7 @@ function sanitizeRequestData(
  */
 export function createSanitizedLogMessage(
   prefix: string,
-  data: any,
+  data: unknown,
   options: SanitizationOptions = DEFAULT_OPTIONS
 ): string {
   const sanitizedData = sanitizeRequestData(data, options);

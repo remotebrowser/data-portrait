@@ -268,9 +268,6 @@ export function SignInDialog({
               </p>
               <FollowUpForm
                 signinUrl={signinData?.url}
-                onFinishSignin={(signinId) => {
-                  logger.info('Follow-up form completed', { signinId });
-                }}
               />
             </>
           ) : loadingState ? (

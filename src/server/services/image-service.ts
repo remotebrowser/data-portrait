@@ -8,6 +8,7 @@ import { localStorageService } from './local-storage-service.js';
 import { readFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import sharp from 'sharp';
 
 const portkey = new Portkey({
   apiKey: settings.PORTKEY_API_KEY,
@@ -23,6 +24,8 @@ type ImageProvider = 'portkey' | 'google-genai' | 'flux';
 type ImageData = {
   url?: string;
   filename?: string;
+  thumbnailUrl?: string;
+  thumbnailFilename?: string;
   fileSize?: number;
   b64_json?: string;
   width?: number;
@@ -473,7 +476,7 @@ Generate only the image prompt text, nothing else.`;
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            image: `data:image/png;base64,${imageBase64}`,
+            image: `data:image/jpeg;base64,${imageBase64}`,
             scale: 5,
           }),
         }
@@ -522,13 +525,35 @@ Generate only the image prompt text, nothing else.`;
 
   private async saveImageFile(base64Data: string, model: string) {
     const id = nanoid(8);
-    const filename = `${model}-portrait-${id}.png`;
+    const baseFilename = `${model}-portrait-${id}`;
+    const filename = `${baseFilename}.jpg`;
+    const thumbnailFilename = `${baseFilename}-thumb.jpg`;
 
-    const result = this.useGCS()
-      ? await gcsService.uploadImage(base64Data, filename)
-      : await localStorageService.uploadImage(base64Data, filename);
+    const originalBuffer = Buffer.from(base64Data, 'base64');
+    const optimizedBuffer = await sharp(originalBuffer)
+      .jpeg({ quality: 90, mozjpeg: true })
+      .toBuffer();
+    const thumbnailBuffer = await sharp(optimizedBuffer)
+      .jpeg({ quality: 70, mozjpeg: true })
+      .toBuffer();
 
-    return result;
+    const optimizedBase64 = optimizedBuffer.toString('base64');
+    const thumbnailBase64 = thumbnailBuffer.toString('base64');
+
+    const uploader = this.useGCS()
+      ? gcsService.uploadImage.bind(gcsService)
+      : localStorageService.uploadImage.bind(localStorageService);
+
+    const [result, thumbnailResult] = await Promise.all([
+      uploader(optimizedBase64, filename),
+      uploader(thumbnailBase64, thumbnailFilename),
+    ]);
+
+    return {
+      ...result,
+      thumbnailUrl: thumbnailResult.url,
+      thumbnailFilename: thumbnailResult.filename,
+    };
   }
 
   private async readImageAsBase64(imagePath: string): Promise<string> {

@@ -1,4 +1,5 @@
 import { Storage } from '@google-cloud/storage';
+import path from 'node:path';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { settings } from '../config.js';
 
@@ -17,8 +18,24 @@ type StoryMetadata = {
     content: string;
     imageUrl?: string;
     filename?: string;
+    thumbnailUrl?: string;
+    thumbnailFilename?: string;
   }>;
 };
+
+function getContentType(filename: string): string {
+  const extension = path.extname(filename).toLowerCase();
+  if (extension === '.jpg' || extension === '.jpeg') {
+    return 'image/jpeg';
+  }
+  if (extension === '.png') {
+    return 'image/png';
+  }
+  if (extension === '.webp') {
+    return 'image/webp';
+  }
+  return 'application/octet-stream';
+}
 
 const METADATA_FILENAME_PREFIX = 'story-';
 const METADATA_FILENAME_SUFFIX = '.json';
@@ -42,7 +59,7 @@ export const gcsService = {
 
     await file.save(buffer, {
       metadata: {
-        contentType: 'image/png',
+        contentType: getContentType(filename),
         cacheControl: 'public, max-age=31536000',
       },
     });

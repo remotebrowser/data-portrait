@@ -11,7 +11,7 @@ function injectMetaTags(
   storyData: StoryData,
   baseUrl: string
 ): string {
-  const firstImage = storyData.stories[0]?.imageUrl || '';
+  const firstImage = storyData.stories[0]?.thumbnailUrl || '';
   const imageUrlForMeta =
     firstImage && firstImage.startsWith('/')
       ? `${baseUrl}${firstImage}`

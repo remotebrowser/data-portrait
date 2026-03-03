@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { mcpClientManager } from '../mcp-client.js';
-import { settings } from '../config.js';
+import { settings, getGetGatherUrl } from '../config.js';
 import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
@@ -18,7 +18,7 @@ const tools: Record<string, string[]> = {
   garmin: ['garmin_get_activities'],
   tokopedia: ['tokopedia_get_purchase_history'],
   shopee: ['shopee_get_purchase_history'],
-  doordash: ['doordash_get_orders'],
+  doordash: ['doordash_remote_get_orders'],
 };
 
 const McpResponse = z.object({
@@ -81,10 +81,8 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
   // replace get gatgather hosted-link with our own
   let hosted_link_url = '';
   if (mcpResponse.url) {
-    hosted_link_url = mcpResponse.url.replace(
-      settings.GETGATHER_URL,
-      settings.APP_HOST
-    );
+    const getGatherUrl = getGetGatherUrl();
+    hosted_link_url = mcpResponse.url.replace(getGatherUrl, settings.APP_HOST);
   }
 
   const response: PurchaseHistoryResponse = {
@@ -232,8 +230,9 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
     signin_id: string;
   };
 
+  const getGatherUrl = getGetGatherUrl();
   const hosted_link_url = mcpResponse.url.replace(
-    settings.GETGATHER_URL,
+    getGatherUrl,
     settings.APP_HOST
   );
 

@@ -5,7 +5,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { ServerLogger as Logger } from './utils/logger/index.js';
-import { settings } from './config.js';
+import { settings, getGetGatherUrl } from './config.js';
 import { geolocationService } from './services/geolocation-service.js';
 
 // Currently just define the MCP url path for each brand here for simplicity
@@ -47,8 +47,9 @@ class MCPClient {
     );
 
     const mcpUrlPath = MCP_URL_PATHS[this.brandId] ?? 'mcp';
+    const baseUrl = getGetGatherUrl();
     return new StreamableHTTPClientTransport(
-      new URL(`${settings.GETGATHER_URL}/${mcpUrlPath}`),
+      new URL(`${baseUrl}/${mcpUrlPath}`),
       {
         requestInit: {
           headers: {
@@ -160,7 +161,11 @@ class MCPClientManager {
   }): Promise<MCPClient> {
     const key = `${sessionId}-${brandId}`;
     if (!this.clients.has(key)) {
-      const mcpClient = new MCPClient({ sessionId, clientIp, brandId });
+      const mcpClient = new MCPClient({
+        sessionId,
+        clientIp,
+        brandId,
+      });
       await mcpClient.connect();
       this.clients.set(key, mcpClient);
     }

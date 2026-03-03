@@ -6,6 +6,8 @@ dotenv.config();
 export const settings = {
   APP_HOST: process.env.APP_HOST || '',
   GETGATHER_URL: process.env.GETGATHER_URL || '',
+  GETGATHER_URL_INTERNAL: process.env.GETGATHER_URL_INTERNAL || '',
+  USE_INTERNAL_GETGATHER: process.env.USE_INTERNAL_GETGATHER === 'true',
   MAXMIND_ACCOUNT_ID: process.env.MAXMIND_ACCOUNT_ID || '',
   MAXMIND_LICENSE_KEY: process.env.MAXMIND_LICENSE_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
@@ -19,3 +21,9 @@ export const settings = {
   DEEPINFRA_API_KEY: process.env.DEEPINFRA_API_KEY || '',
   ALLOW_FACE_UPLOAD: process.env.ALLOW_FACE_UPLOAD === 'true',
 } as const;
+
+export function getGetGatherUrl(): string {
+  return settings.USE_INTERNAL_GETGATHER && settings.GETGATHER_URL_INTERNAL
+    ? settings.GETGATHER_URL_INTERNAL
+    : settings.GETGATHER_URL;
+}

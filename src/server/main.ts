@@ -9,7 +9,7 @@ import { storyRouter } from './routes/story-routes.js';
 import { ServerLogger as Logger } from './utils/logger/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { settings } from './config.js';
+import { settings, getGetGatherUrl } from './config.js';
 import { IPBlockerMiddleware } from './middleware/ip-blocker-middleware.js';
 import { geolocationService } from './services/geolocation-service.js';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
@@ -54,7 +54,7 @@ app.use((req, res, next) => {
 
 const createProxy = (path: string) =>
   createProxyMiddleware({
-    target: `${settings.GETGATHER_URL}${path}`,
+    target: `${getGetGatherUrl()}${path}`,
     changeOrigin: true,
     on: {
       proxyReq: fixRequestBody,

@@ -5,7 +5,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { ServerLogger as Logger } from './utils/logger/index.js';
-import { settings, getGetGatherUrl } from './config.js';
+import { getGetGatherUrl } from './config.js';
 import { geolocationService } from './services/geolocation-service.js';
 
 // Currently just define the MCP url path for each brand here for simplicity

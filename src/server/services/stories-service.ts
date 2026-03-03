@@ -112,13 +112,52 @@ CONTINUITY RULES:
 - Maintain consistent character progression
 - Each image prompt should reflect the current story state and character appearance`;
 
-async function generateStoryChapters(
-  purchaseData: unknown[],
-  imageStyle: string[],
-  gender: string,
-  traits: string[]
-): Promise<StoryChapter[]> {
-  // Build character description for the story
+const SINGLE_CHAPTER_SYSTEM_PROMPT = `You are a Data Analyst creating a single visual story from user data.
+
+TASK: Create 1 chapter by analyzing the user history:
+1. Identify patterns across categories in the user's timeline.
+2. Generate one focused chapter that can stand alone.
+3. For this chapter, generate:
+   - A compelling title (3-5 words)
+   - An 80-100 word image prompt blending dominant brand(s) with user interests
+   - A 2-4 line story with stats
+
+IMAGE PROMPT RULES:
+- Order: Subject + Action + Style + Context
+- Blend brand elements into creative contexts (e.g., coffee shop in fantasy setting, bookstore in sci-fi world)
+- Aesthetics: Specify camera (Hasselblad/Sony), lens (35mm/85mm), and film stock (Kodak/Fujifilm)
+- Subject: The user themselves as the main character (not a generic traveler)
+- Aspect Ratio: Always end each prompt with '9:16 vertical portrait orientation'
+- Character: Use the provided character description to personalize the protagonist
+
+STORY FORMAT:
+- Short, punchy lines optimized for image overlay
+- Include specific stats/counts from the data (e.g., '3 purchases', '4 visits', '5 items')
+- Tell a brief snapshot from the year
+- Use emojis and engaging voice
+- Max 4 lines, 2-3 lines ideal`;
+
+type GenerateChaptersOptions = {
+  purchaseData: unknown[];
+  imageStyle: string[];
+  gender: string;
+  traits: string[];
+  systemPrompt: string;
+  userInstruction: string;
+  schemaName: string;
+  schemaDescription: string;
+};
+
+async function generateChapters({
+  purchaseData,
+  imageStyle,
+  gender,
+  traits,
+  systemPrompt,
+  userInstruction,
+  schemaName,
+  schemaDescription,
+}: GenerateChaptersOptions): Promise<StoryChapter[]> {
   const characterPrompt = await promptService.buildPrompt({
     imageStyle,
     gender,
@@ -129,11 +168,11 @@ async function generateStoryChapters(
   const userContent = `User Purchase History: ${JSON.stringify(purchaseData)}
 Character Description: ${characterPrompt}
 
-Analyze this complete purchase data and create a 2-chapter visual story featuring this specific character as the protagonist. Focus on patterns across all brands and product categories to create a comprehensive narrative.`;
+${userInstruction}`;
 
   const response = await portkey.chat.completions.create({
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       { role: 'user', content: userContent },
     ],
     model: '@OpenRouter/google/gemini-2.5-pro-preview',
@@ -141,8 +180,8 @@ Analyze this complete purchase data and create a 2-chapter visual story featurin
     response_format: {
       type: 'json_schema',
       json_schema: {
-        name: 'story_chapters',
-        description: 'Array of story chapters',
+        name: schemaName,
+        description: schemaDescription,
         strict: true,
         schema: {
           type: 'array',
@@ -179,6 +218,7 @@ Analyze this complete purchase data and create a 2-chapter visual story featurin
   }
 
   const chapters: StoryChapter[] = [];
+
   for (const item of parsedData) {
     if (
       typeof item === 'object' &&
@@ -200,6 +240,64 @@ Analyze this complete purchase data and create a 2-chapter visual story featurin
 
   if (chapters.length === 0) {
     throw new Error('No valid chapters found in response');
+  }
+
+  return chapters;
+}
+
+async function generateStoryChapters(
+  purchaseData: unknown[],
+  imageStyle: string[],
+  gender: string,
+  traits: string[]
+): Promise<StoryChapter[]> {
+  if (purchaseData.length > 1) {
+    return generateOneStoryPerBrand(purchaseData, imageStyle, gender, traits);
+  }
+
+  return generateChapters({
+    purchaseData,
+    imageStyle,
+    gender,
+    traits,
+    systemPrompt: SYSTEM_PROMPT,
+    userInstruction:
+      'Analyze this complete purchase data and create a 2-chapter visual story featuring this specific character as the protagonist. Focus on patterns across all brands and product categories to create a comprehensive narrative.',
+    schemaName: 'story_chapters',
+    schemaDescription: 'Array of story chapters',
+  });
+}
+
+async function generateOneStoryPerBrand(
+  purchaseData: unknown[],
+  imageStyle: string[],
+  gender: string,
+  traits: string[]
+): Promise<StoryChapter[]> {
+  const chapters: StoryChapter[] = [];
+
+  const commonConfig = {
+    imageStyle,
+    gender,
+    traits,
+    systemPrompt: SINGLE_CHAPTER_SYSTEM_PROMPT,
+    userInstruction:
+      'Analyze this purchase data and create a single, standalone visual story chapter featuring this specific character as the protagonist. Focus on dominant patterns across all brands and product categories to craft one vivid vignette.',
+    schemaName: 'story_chapters',
+    schemaDescription: 'Array with one story chapter',
+  };
+
+  const chapterBatches = await Promise.all(
+    purchaseData.map((purchase) =>
+      generateChapters({
+        purchaseData: [purchase],
+        ...commonConfig,
+      })
+    )
+  );
+
+  for (const batch of chapterBatches) {
+    chapters.push(...batch);
   }
 
   return chapters;

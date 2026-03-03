@@ -18,7 +18,7 @@ const tools: Record<string, string[]> = {
   garmin: ['garmin_get_activities'],
   tokopedia: ['tokopedia_get_purchase_history'],
   shopee: ['shopee_get_purchase_history'],
-  doordash: ['doordash_remote_get_orders'],
+  doordash: ['doordash_get_orders'],
 };
 
 const McpResponse = z.object({

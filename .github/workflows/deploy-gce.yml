@@ -23,5 +23,6 @@ jobs:
           git_remote_url: ${{ secrets.GCE_GIT_REMOTE_URL }}
           ssh_host_key: ${{ secrets.GCE_SSH_HOST_KEY }}
           ssh_private_key: ${{ secrets.GCE_SSH_PRIVATE_KEY }}
+          branch: main
           deploy: main
           git_push_flags: --force

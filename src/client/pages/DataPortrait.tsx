@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Menu, X, Wand2 } from 'lucide-react';
+import { X, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { EmptyData } from '../components/EmptyData.js';
@@ -17,6 +17,7 @@ import gofood from '../config/gofood.json' with { type: 'json' };
 import garmin from '../config/garmin.json' with { type: 'json' };
 import tokopedia from '../config/tokopedia.json' with { type: 'json' };
 import shopee from '../config/shopee.json' with { type: 'json' };
+import doordash from '../config/doordash.json' with { type: 'json' };
 import type { BrandConfig } from '../modules/Config.js';
 import { type PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type {
@@ -39,6 +40,7 @@ const gofoodConfig = gofood as BrandConfig;
 const garminConfig = garmin as BrandConfig;
 const tokopediaConfig = tokopedia as BrandConfig;
 const shopeeConfig = shopee as BrandConfig;
+const doordashConfig = doordash as BrandConfig;
 const BRANDS: Array<BrandConfig> = [
   amazonConfig,
   officedepotConfig,
@@ -48,6 +50,7 @@ const BRANDS: Array<BrandConfig> = [
   garminConfig,
   tokopediaConfig,
   shopeeConfig,
+  doordashConfig,
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [
@@ -133,6 +136,23 @@ export function DataPortrait() {
   );
   const [signInDialogBrand, setSignInDialogBrand] =
     useState<BrandConfig | null>(null);
+
+  const filteredBrands = useMemo(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const doordashParam = searchParams.get('doordash');
+
+    let brandsToShow = BRANDS.filter(
+      (brand) => !EXCLUDED_BRANDS.includes(brand.brand_id)
+    );
+
+    if (doordashParam !== 'true') {
+      brandsToShow = brandsToShow.filter(
+        (brand) => brand.brand_id !== doordashConfig.brand_id
+      );
+    }
+
+    return brandsToShow;
+  }, []);
 
   // Track page view on component mount
   useEffect(() => {
@@ -437,9 +457,7 @@ export function DataPortrait() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        brands={BRANDS.filter(
-          (brand) => !EXCLUDED_BRANDS.includes(brand.brand_id)
-        )}
+        brands={filteredBrands}
         connectedBrands={connectedBrands}
         selectedGender={selectedGender}
         selectedTraits={selectedTraits}

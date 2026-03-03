@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Menu, X, Wand2 } from 'lucide-react';
+import { X, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { EmptyState } from '../components/EmptyState.js';
 import { EmptyData } from '../components/EmptyData.js';

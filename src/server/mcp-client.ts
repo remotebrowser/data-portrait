@@ -56,6 +56,11 @@ class MCPClient {
             'x-getgather-custom-app': 'data-portrait',
             'x-location': locationData ? JSON.stringify(locationData) : '',
             'x-incognito': '1',
+            ...(settings.GETGATHER_APP_KEY
+              ? {
+                  Authorization: `Bearer ${settings.GETGATHER_APP_KEY}_${this.sessionId}`,
+                }
+              : {}),
           },
         },
       }

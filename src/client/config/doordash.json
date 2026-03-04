@@ -28,7 +28,7 @@
       {
         "outputKey": "order_date",
         "sourcePath": "date",
-        "transform": "date"
+        "defaultValue": "N/A"
       },
       {
         "outputKey": "order_total",
@@ -37,20 +37,25 @@
       },
       {
         "outputKey": "order_id",
-        "sourcePath": "store",
+        "sourcePath": "summary",
         "transform": "string",
         "formatTemplate": "doordash_{value}"
       },
       {
         "outputKey": "product_names",
-        "sourcePath": "summary",
+        "sourcePath": "store",
         "defaultValue": "N/A",
         "convertToArray": true
       },
       {
+        "outputKey": "product_description",
+        "sourcePath": "items",
+        "defaultValue": "N/A"
+      },
+      {
         "outputKey": "image_urls",
         "sourcePath": "image_urls",
-        "defaultValue": "N/A"
+        "convertToArray": true
       }
     ]
   }

@@ -6,6 +6,7 @@ export type PurchaseHistory = {
   order_total: string;
   order_id: string;
   product_names: string[];
+  product_description?: string;
   image_urls: string[];
 };
 

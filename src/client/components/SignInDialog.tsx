@@ -132,6 +132,9 @@ export function SignInDialog({
               order_total: item.order_total as string,
               order_id: item.order_id as string,
               product_names: item.product_names as string[],
+              product_description: item.product_description as
+                | string
+                | undefined,
               image_urls: item.image_urls as string[],
             })
           );
@@ -266,9 +269,7 @@ export function SignInDialog({
               <p className="text-sm text-gray-600 mb-4 text-center">
                 Please complete the verification process below
               </p>
-              <FollowUpForm
-                signinUrl={signinData?.url}
-              />
+              <FollowUpForm signinUrl={signinData?.url} />
             </>
           ) : loadingState ? (
             <div className="text-center">

@@ -13,6 +13,7 @@ const MCP_URL_PATHS: Record<string, string> = {
   goodreads: 'mcp-books',
   amazon: 'mcp-shopping',
   wayfair: 'mcp-shopping',
+  youtube: 'mcp-youtube',
 };
 class MCPClient {
   private client: Client;

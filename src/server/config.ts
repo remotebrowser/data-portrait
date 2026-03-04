@@ -3,6 +3,11 @@ import dotenv from 'dotenv';
 // Load environment variables from .env file
 dotenv.config();
 
+const enabledFeatures = (process.env.ENABLE_FEATURES || '')
+  .split(',')
+  .map((feature) => feature.trim().toLowerCase())
+  .filter(Boolean);
+
 export const settings = {
   APP_HOST: process.env.APP_HOST || '',
   GETGATHER_URL: process.env.GETGATHER_URL || '',
@@ -18,5 +23,8 @@ export const settings = {
   GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || '',
   GCS_PROJECT_ID: process.env.GCS_PROJECT_ID || '',
   DEEPINFRA_API_KEY: process.env.DEEPINFRA_API_KEY || '',
-  ALLOW_FACE_UPLOAD: process.env.ALLOW_FACE_UPLOAD === 'true',
+  ENABLED_FEATURES: enabledFeatures,
+  ALLOW_FACE_UPLOAD:
+    process.env.ALLOW_FACE_UPLOAD === 'true' ||
+    enabledFeatures.includes('photo_upload'),
 } as const;

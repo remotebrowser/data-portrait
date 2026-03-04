@@ -66,7 +66,15 @@ GCS_BUCKET_NAME=data-portrait-imagegen
 GCS_PROJECT_ID=your_gcp_project_id
 
 # Feature Flags
-# Set to 'true' to enable face upload feature in the UI
+# Comma-separated list of feature keys used by the app.
+# Supported keys:
+# - doordash: enable DoorDash connector in the UI
+# - photo_upload: enable face upload feature in the UI
+# - camera: reserved for future camera-specific features
+ENABLE_FEATURES=doordash,photo_upload
+
+# Legacy flag (optional):
+# If set to 'true', also enables face upload in addition to ENABLE_FEATURES.
 ALLOW_FACE_UPLOAD=false
 ```
 

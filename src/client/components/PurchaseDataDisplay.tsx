@@ -221,6 +221,14 @@ export function PurchaseDataDisplay({
                                   <p className="text-xs font-medium text-gray-900 line-clamp-2 mb-1">
                                     {productName}
                                   </p>
+                                  {order.product_description && (
+                                    <p
+                                      className="text-xs text-gray-600 mb-1 line-clamp-2"
+                                      title={order.product_description}
+                                    >
+                                      {order.product_description}
+                                    </p>
+                                  )}
                                   <div className="flex items-center gap-3 text-xs text-gray-500">
                                     <span>🛍️ {order.brand}</span>
                                     {!!order.order_date && (

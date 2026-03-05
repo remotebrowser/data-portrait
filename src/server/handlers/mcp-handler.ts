@@ -59,6 +59,59 @@ type PurchaseHistoryDetailsResponse = {
   content: Array<unknown> | Record<string, unknown>;
 };
 
+/**
+ * Split DoorDash orders when store is an array (new format)
+ * If store is not an array, pass through unchanged for backward compatibility
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+function splitDoorDashOrders(orders: Array<any>): Array<any> {
+  const processedOrders: Array<any> = [];
+
+  for (const order of orders) {
+    // Only process if store is an array (new format)
+    if (!Array.isArray(order.store)) {
+      processedOrders.push(order); // Pass through unchanged
+      continue;
+    }
+
+    const store = order.store;
+    const summary = order.summary;
+    const items = order.items;
+    const storeUrl = order.store_url;
+
+    // Find max length for splitting
+    const maxLength = Math.max(
+      store.length,
+      summary.length,
+      items.length,
+      storeUrl.length
+    );
+
+    // Extract non-array fields once, reuse for each split order
+    const baseOrder: any = {};
+    const splitKeys = new Set(['store', 'summary', 'items', 'store_url']);
+    Object.keys(order).forEach((key) => {
+      if (!splitKeys.has(key)) {
+        baseOrder[key] = order[key];
+      }
+    });
+
+    // Split into individual orders
+    for (let i = 0; i < maxLength; i++) {
+      const splitOrder: any = { ...baseOrder };
+      // Set array fields at index i (return as strings, not arrays)
+      splitOrder.store = store[i] ?? store[0] ?? '';
+      splitOrder.summary = summary[i] ?? summary[0] ?? '';
+      splitOrder.items = items[i] ?? items[0] ?? '';
+      splitOrder.store_url = storeUrl[i] ?? storeUrl[0] ?? '';
+      processedOrders.push(splitOrder);
+    }
+  }
+
+  return processedOrders;
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
 export const handlePurchaseHistory = async (req: Request, res: Response) => {
   const { brandId } = req.params;
 
@@ -116,6 +169,11 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     response.content = JSON.parse(rawContent);
   } else {
     response.content = rawContent || [];
+  }
+
+  // Split DoorDash orders if store is an array (new format)
+  if (brandId === 'doordash' && Array.isArray(response.content)) {
+    response.content = splitDoorDashOrders(response.content);
   }
 
   // Track successful data retrieval
@@ -277,6 +335,11 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
     content = JSON.parse(response.result);
   } else {
     content = response.result || [];
+  }
+
+  // Split DoorDash orders if store is an array (new format)
+  if (brandId === 'doordash' && Array.isArray(content)) {
+    content = splitDoorDashOrders(content);
   }
 
   if (content && Array.isArray(content) && content.length > 0) {

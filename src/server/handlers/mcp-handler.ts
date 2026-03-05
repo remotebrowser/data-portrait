@@ -63,21 +63,27 @@ type PurchaseHistoryDetailsResponse = {
  * Split DoorDash orders when store is an array (new format)
  * If store is not an array, pass through unchanged for backward compatibility
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function splitDoorDashOrders(orders: Array<any>): Array<any> {
-  const processedOrders: Array<any> = [];
+function splitDoorDashOrders(orders: Array<unknown>): Array<unknown> {
+  const processedOrders: Array<unknown> = [];
 
   for (const order of orders) {
+    if (typeof order !== 'object' || order === null || !('store' in order)) {
+      processedOrders.push(order);
+      continue;
+    }
+
+    const orderObj = order as Record<string, unknown>;
+
     // Only process if store is an array (new format)
-    if (!Array.isArray(order.store)) {
+    if (!Array.isArray(orderObj.store)) {
       processedOrders.push(order); // Pass through unchanged
       continue;
     }
 
-    const store = order.store;
-    const summary = order.summary;
-    const items = order.items;
-    const storeUrl = order.store_url;
+    const store = orderObj.store as Array<unknown>;
+    const summary = (orderObj.summary as Array<unknown>) || [];
+    const items = (orderObj.items as Array<unknown>) || [];
+    const storeUrl = (orderObj.store_url as Array<unknown>) || [];
 
     // Find max length for splitting
     const maxLength = Math.max(
@@ -88,17 +94,17 @@ function splitDoorDashOrders(orders: Array<any>): Array<any> {
     );
 
     // Extract non-array fields once, reuse for each split order
-    const baseOrder: any = {};
+    const baseOrder: Record<string, unknown> = {};
     const splitKeys = new Set(['store', 'summary', 'items', 'store_url']);
-    Object.keys(order).forEach((key) => {
+    Object.keys(orderObj).forEach((key) => {
       if (!splitKeys.has(key)) {
-        baseOrder[key] = order[key];
+        baseOrder[key] = orderObj[key];
       }
     });
 
     // Split into individual orders
     for (let i = 0; i < maxLength; i++) {
-      const splitOrder: any = { ...baseOrder };
+      const splitOrder: Record<string, unknown> = { ...baseOrder };
       // Set array fields at index i (return as strings, not arrays)
       splitOrder.store = store[i] ?? store[0] ?? '';
       splitOrder.summary = summary[i] ?? summary[0] ?? '';

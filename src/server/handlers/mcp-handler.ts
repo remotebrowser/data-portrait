@@ -110,7 +110,6 @@ function splitDoorDashOrders(orders: Array<any>): Array<any> {
 
   return processedOrders;
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export const handlePurchaseHistory = async (req: Request, res: Response) => {
   const { brandId } = req.params;

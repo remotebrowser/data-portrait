@@ -37,9 +37,8 @@
       },
       {
         "outputKey": "order_id",
-        "sourcePath": "summary",
-        "transform": "string",
-        "formatTemplate": "doordash_{value}"
+        "sourcePath": "order_id",
+        "defaultValue": null
       },
       {
         "outputKey": "product_names",

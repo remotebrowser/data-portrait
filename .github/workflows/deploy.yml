@@ -2,8 +2,6 @@
 
 name: Fly Deploy
 on:
-  # TODO: remove
-  pull_request:
   push:
     branches:
       - main

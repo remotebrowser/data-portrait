@@ -2,10 +2,8 @@
 name: Deploy to GCE Dokku
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+
 jobs:
   deploy:
     name: Deploy to Dokku

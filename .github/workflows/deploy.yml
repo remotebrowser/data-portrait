@@ -2,6 +2,8 @@
 
 name: Fly Deploy
 on:
+  # TODO: remove
+  pull_requests:
   push:
     branches:
       - main
@@ -9,10 +11,16 @@ jobs:
   deploy:
     name: Deploy app
     runs-on: ubuntu-latest
-    concurrency: deploy-group # optional: ensure only one action runs at a time
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+
+      - name: Deploy to Production
+        run: flyctl deploy --app data-portraits --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Deploy to Staging
+        run: flyctl deploy --app data-portraits-staging --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

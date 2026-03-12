@@ -123,7 +123,7 @@ etc.`;
 
     try {
       const response = await genAI.models.generateContent({
-        model: 'gemini-1.5-flash-8b',
+        model: 'gemini-2.5-flash',
         contents: simplificationPrompt,
       });
 

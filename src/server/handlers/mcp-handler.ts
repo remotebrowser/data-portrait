@@ -5,6 +5,8 @@ import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
+import { settings } from '../config.js';
+import { getAppHost } from '../utils/index.js';
 
 const tools: Record<string, string[]> = {
   amazon: ['amazon_remote_get_purchase_history'],
@@ -141,8 +143,9 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
 
   // Use path-only URL so it works through the proxy chain
   let hosted_link_url = '';
+  const appHost = getAppHost(req);
   if (mcpResponse.url) {
-    hosted_link_url = new URL(mcpResponse.url).pathname;
+    hosted_link_url = mcpResponse.url.replace(settings.GETGATHER_URL, appHost);
   }
 
   const response: PurchaseHistoryResponse = {
@@ -310,9 +313,8 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
 
   // If url exists, user needs to sign in via dpage
   if (mcpResponse.url) {
-    // Use path-only URL so it works through the proxy chain in both
-    // dev (Vite → Express → mcp-getgather) and production (same origin)
-    const hosted_link_url = new URL(mcpResponse.url).pathname;
+    const appHost = getAppHost(req);
+    const hosted_link_url = mcpResponse.url.replace(settings.GETGATHER_URL, appHost);
 
     res.json({
       link_id: mcpResponse.signin_id || '',

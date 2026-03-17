@@ -51,6 +51,31 @@ export function SignInDialog({
 
       const data = await response.json();
 
+      // User already authenticated, data returned directly
+      if (!data.hosted_link_url && data.content?.length > 0) {
+        const transformedData = transformData(
+          data.content,
+          brandConfig.dataTransform
+        );
+        const purchaseHistory = transformedData.map(
+          (item: Record<string, unknown>) => ({
+            brand: brandConfig.brand_name,
+            order_date: (item.order_date as Date) || null,
+            order_total: item.order_total as string,
+            order_id: item.order_id as string,
+            product_names: item.product_names as string[],
+            product_description: item.product_description as
+              | string
+              | undefined,
+            image_urls: item.image_urls as string[],
+          })
+        );
+        setLoadingState('RETRIEVING_DATA');
+        onClose();
+        onSuccessSignin(purchaseHistory);
+        return;
+      }
+
       setSigninData({
         url: data.hosted_link_url,
         link_id: data.link_id,

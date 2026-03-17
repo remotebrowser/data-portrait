@@ -1,31 +1,32 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { mcpClientManager } from '../mcp-client.js';
-import { settings } from '../config.js';
 import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 
 const tools: Record<string, string[]> = {
-  amazon: ['amazon_get_purchase_history'],
+  amazon: ['amazon_remote_get_purchase_history'],
   officedepot: [
     'officedepot_get_order_history',
     'officedepot_get_order_history_details',
   ],
-  wayfair: ['wayfair_get_order_history'],
-  goodreads: ['goodreads_get_book_list'],
-  gofood: ['gofood_get_purchase_history'],
-  garmin: ['garmin_get_activities'],
-  tokopedia: ['tokopedia_get_purchase_history'],
-  shopee: ['shopee_get_purchase_history'],
-  doordash: ['doordash_get_orders'],
-  youtube: ['youtube_get_watch_history'],
+  wayfair: ['wayfair_remote_get_order_history'],
+  goodreads: ['goodreads_remote_get_book_list'],
+  gofood: ['gofood_remote_get_purchase_history'],
+  garmin: ['garmin_remote_get_activities'],
+  tokopedia: ['tokopedia_remote_get_purchase_history'],
+  shopee: ['shopee_remote_get_purchase_history'],
+  doordash: ['doordash_remote_get_orders'],
+  youtube: ['youtube_remote_get_watch_history'],
 };
 
 const McpResponse = z.object({
   // Auth fields
   url: z.string().optional(),
   link_id: z.string().optional(),
+  signin_id: z.string().optional(),
   message: z.string().optional(),
   system_message: z.string().optional(),
 
@@ -138,13 +139,10 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
 
   const mcpResponse = McpResponse.parse(result.structuredContent);
 
-  // replace get gatgather hosted-link with our own
+  // Use path-only URL so it works through the proxy chain
   let hosted_link_url = '';
   if (mcpResponse.url) {
-    hosted_link_url = mcpResponse.url.replace(
-      settings.GETGATHER_URL,
-      settings.APP_HOST
-    );
+    hosted_link_url = new URL(mcpResponse.url).pathname;
   }
 
   const response: PurchaseHistoryResponse = {
@@ -294,21 +292,56 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
   });
   const result = await mcpClient.callTool({ name: toolName });
 
-  const mcpResponse = result.structuredContent as {
-    url: string;
-    signin_id: string;
-  };
+  Logger.info('MCP tool result received', {
+    component: 'mcp-handler',
+    operation: 'dpage-url-result',
+    brandId,
+    hasStructuredContent: !!result.structuredContent,
+    hasContent: !!result.content,
+    structuredContentKeys: result.structuredContent
+      ? Object.keys(result.structuredContent as Record<string, unknown>)
+      : [],
+    contentPreview: result.content
+      ? JSON.stringify(result.content).slice(0, 200)
+      : null,
+  });
 
-  const hosted_link_url = mcpResponse.url.replace(
-    settings.GETGATHER_URL,
-    settings.APP_HOST
-  );
+  const mcpResponse = McpResponse.parse(result.structuredContent);
 
+  // If url exists, user needs to sign in via dpage
+  if (mcpResponse.url) {
+    // Use path-only URL so it works through the proxy chain in both
+    // dev (Vite → Express → mcp-getgather) and production (same origin)
+    const hosted_link_url = new URL(mcpResponse.url).pathname;
+
+    res.json({
+      link_id: mcpResponse.signin_id || '',
+      hosted_link_url,
+      content: [],
+    } as PurchaseHistoryResponse);
+    return;
+  }
+
+  // User is already authenticated, data returned directly
   const response: PurchaseHistoryResponse = {
-    link_id: mcpResponse.signin_id || '',
-    hosted_link_url,
+    link_id: '',
+    hosted_link_url: '',
     content: [],
   };
+
+  const rawContent =
+    mcpResponse.extract_result?.[0]?.content ||
+    mcpResponse.books ||
+    mcpResponse.purchases ||
+    mcpResponse.purchase_history ||
+    mcpResponse.doordash_orders ||
+    mcpResponse.youtube_watch_history;
+
+  if (rawContent) {
+    response.content =
+      typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+  }
+
   res.json(response);
 };
 

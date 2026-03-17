@@ -89,10 +89,20 @@ class MCPClient {
           sessionId: this.sessionId,
           brandId: this.brandId,
         });
-        return await this.client.callTool(params, undefined, {
+        const result = await this.client.callTool(params, undefined, {
           timeout: 6000000,
           maxTotalTimeout: 6000000,
         });
+        Logger.info('MCP tool call completed', {
+          component: 'mcp-client',
+          operation: 'call-tool-complete',
+          toolName: params.name,
+          sessionId: this.sessionId,
+          brandId: this.brandId,
+          hasStructuredContent: !!result.structuredContent,
+          contentLength: Array.isArray(result.content) ? result.content.length : 0,
+        });
+        return result;
       } catch (err) {
         if (attempt === maxRetries) {
           throw err;

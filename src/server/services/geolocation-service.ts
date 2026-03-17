@@ -17,6 +17,11 @@ class GeolocationService {
   }
 
   getClientIp(request: Request): string {
+    // Hardcoded IP for local testing
+    // return '182.3.43.105';
+    return '180.252.173.25';
+    // return '173.239.218.132';
+
     const xff = request.headers['x-forwarded-for'];
     if (xff && typeof xff === 'string') {
       return xff.split(',')[0].trim();

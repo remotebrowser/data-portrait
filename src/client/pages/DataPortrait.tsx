@@ -18,6 +18,7 @@ import garmin from '../config/garmin.json' with { type: 'json' };
 import tokopedia from '../config/tokopedia.json' with { type: 'json' };
 import shopee from '../config/shopee.json' with { type: 'json' };
 import doordash from '../config/doordash.json' with { type: 'json' };
+import youtube from '../config/youtube.json' with { type: 'json' };
 import type { BrandConfig } from '../modules/Config.js';
 import { type PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type {
@@ -41,6 +42,7 @@ const garminConfig = garmin as BrandConfig;
 const tokopediaConfig = tokopedia as BrandConfig;
 const shopeeConfig = shopee as BrandConfig;
 const doordashConfig = doordash as BrandConfig;
+const youtubeConfig = youtube as BrandConfig;
 const BRANDS: Array<BrandConfig> = [
   amazonConfig,
   officedepotConfig,
@@ -51,6 +53,7 @@ const BRANDS: Array<BrandConfig> = [
   tokopediaConfig,
   shopeeConfig,
   doordashConfig,
+  youtubeConfig,
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [
@@ -60,6 +63,7 @@ const EXCLUDED_BRANDS: Array<string> = [
 
 const EXCLUDED_BRAND_FROM_UNIQUE_FILTER: Array<string> = [
   garminConfig.brand_name,
+  youtubeConfig.brand_name,
 ];
 
 // Sample data for demo purposes

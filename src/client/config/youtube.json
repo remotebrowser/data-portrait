@@ -1,0 +1,63 @@
+{
+  "brand_id": "youtube",
+  "brand_name": "YouTube",
+  "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg",
+  "is_mandatory": false,
+  "is_dpage": true,
+  "schema": [
+    {
+      "name": "email",
+      "type": "email",
+      "prompt": "Email"
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "prompt": "Password"
+    },
+    {
+      "name": "continue,sign_in",
+      "type": "click",
+      "prompt": "Sign In",
+      "dependsOnFields": "email"
+    }
+  ],
+  "dataTransform": {
+    "dataPath": "youtube_watch_history",
+    "fieldMappings": [
+      {
+        "outputKey": "brand",
+        "sourcePath": "brand",
+        "defaultValue": "YouTube"
+      },
+      {
+        "outputKey": "order_date",
+        "sourcePath": "views",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "order_total",
+        "sourcePath": "duration",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "order_id",
+        "sourcePath": "url",
+        "defaultValue": "N/A"
+      },
+      {
+        "outputKey": "product_names",
+        "sourcePath": "title",
+        "defaultValue": "N/A",
+        "convertToArray": true
+      },
+      {
+        "outputKey": "image_urls",
+        "sourcePath": "thumbnail",
+        "defaultValue": "N/A",
+        "transform": "image",
+        "convertToArray": true
+      }
+    ]
+  }
+}

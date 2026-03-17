@@ -243,7 +243,14 @@ export function transformData(
       } = {};
       schema.fieldMappings.forEach((mapping) => {
         const rawValue = getNestedValue(item, mapping.sourcePath);
-        transformedItem[mapping.outputKey] = applyTransform(rawValue, mapping);
+        let transformedValue = applyTransform(rawValue, mapping);
+
+        // Handle fallback for order_id when falsy
+        if (mapping.outputKey === 'order_id' && !transformedValue) {
+          transformedValue = `doordash_${crypto.randomUUID()}`;
+        }
+
+        transformedItem[mapping.outputKey] = transformedValue;
       });
       return transformedItem;
     });

@@ -51,6 +51,8 @@ export function ImageStack({ images, onClick }: ImageStackProps) {
       {images.map((image, index) => {
         const isLoaded = loadedImages.has(index);
         const hasError = errorImages.has(index);
+        const loadedImageCount = loadedImages.size;
+        const isLoading = !isLoaded && !hasError && loadedImageCount < 1;
 
         // First image (index 0) is on top with highest zIndex
         // Subsequent images are stacked below with lower zIndex
@@ -76,7 +78,7 @@ export function ImageStack({ images, onClick }: ImageStackProps) {
               zIndex,
             }}
           >
-            {!isLoaded && !hasError && (
+            {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-gray-200 rounded-lg">
                 <div className="spinner"></div>
               </div>

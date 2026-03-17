@@ -263,12 +263,16 @@ export function DataPortrait() {
           return null;
         }
 
+        const imageUrls = Array.isArray(order.image_urls)
+          ? order.image_urls
+          : [];
+
         return {
           ...order,
           product_names: selectedProductIndices.map(
             (i) => order.product_names[i]
           ),
-          image_urls: selectedProductIndices.map((i) => order.image_urls[i]),
+          image_urls: selectedProductIndices.map((i) => imageUrls[i] ?? ''),
         };
       })
       .filter((order): order is PurchaseHistory => order !== null);

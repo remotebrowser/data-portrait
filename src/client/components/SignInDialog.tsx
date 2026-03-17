@@ -135,7 +135,7 @@ export function SignInDialog({
               product_description: item.product_description as
                 | string
                 | undefined,
-              image_urls: item.image_urls as string[],
+              image_urls: Array.isArray(item.image_urls) ? item.image_urls : [],
             })
           );
 

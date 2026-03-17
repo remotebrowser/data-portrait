@@ -1,13 +1,13 @@
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
-name: Fly Deploy
+name: Fly Deploy (Production)
+
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+
 jobs:
   deploy:
-    name: Deploy app
+    name: Deploy production app
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -15,10 +15,5 @@ jobs:
 
       - name: Deploy to Production
         run: flyctl deploy --app data-portraits --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-
-      - name: Deploy to Staging
-        run: flyctl deploy --app data-portraits-staging --remote-only
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

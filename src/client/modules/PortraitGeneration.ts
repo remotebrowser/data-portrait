@@ -48,6 +48,7 @@ type StoriesPollResponse = {
   id: string;
   status: string;
   progress?: number;
+  error?: string;
 };
 
 type StoryItem = {
@@ -102,6 +103,9 @@ async function pollUntilCompleted(storyId: string): Promise<void> {
       throw new Error(`HTTP error! status: ${pollResponse.status}`);
     }
     const pollData: StoriesPollResponse = await pollResponse.json();
+    if (pollData.status === 'failed') {
+      throw new Error('Error: ' + pollData.error);
+    }
     if (pollData.status === 'completed') {
       break;
     }

@@ -5,7 +5,7 @@ export function getAppHost(req: Request): string {
   const protocol = req.protocol;
 
   // Get host (includes hostname and port if present)
-  const host = req.get('host') || 'localhost:5173';
+  const host = req.get('host') || 'localhost:3000';
 
   return `${protocol}://${host}`;
 }

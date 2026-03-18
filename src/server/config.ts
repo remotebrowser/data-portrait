@@ -29,35 +29,3 @@ export const settings = {
     process.env.ALLOW_FACE_UPLOAD === 'true' ||
     enabledFeatures.includes('photo_upload'),
 } as const;
-
-export function validateConfiguration(): void {
-  if (settings.STORAGE_MODE !== 'gcs' && settings.STORAGE_MODE !== 'local') {
-    throw new Error(
-      `Invalid STORAGE_MODE "${settings.STORAGE_MODE}". Expected "gcs" or "local".`
-    );
-  }
-
-  if (settings.STORAGE_MODE !== 'gcs') {
-    return;
-  }
-
-  const missingVariables: string[] = [];
-  const hasGcsStorageConfig = Boolean(
-    settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID
-  );
-
-  if (!hasGcsStorageConfig) {
-    if (!settings.GCS_BUCKET_NAME) {
-      missingVariables.push('GCS_BUCKET_NAME');
-    }
-    if (!settings.GCS_PROJECT_ID) {
-      missingVariables.push('GCS_PROJECT_ID');
-    }
-  }
-
-  if (missingVariables.length > 0) {
-    throw new Error(
-      `STORAGE_MODE is "gcs" but required storage configuration is missing: ${missingVariables.join(', ')}`
-    );
-  }
-}

@@ -9,7 +9,10 @@ import { storyRouter } from './routes/story-routes.js';
 import { ServerLogger as Logger } from './utils/logger/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { settings } from './config.js';
+import {
+  settings,
+  validateConfiguration,
+} from './config.js';
 import { IPBlockerMiddleware } from './middleware/ip-blocker-middleware.js';
 import { geolocationService } from './services/geolocation-service.js';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
@@ -24,6 +27,9 @@ Sentry.init({
   dsn: settings.SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
 });
+
+validateConfiguration();
+
 const app = express();
 
 // Security configuration
@@ -156,6 +162,12 @@ app.listen(3000, () => {
   if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
   }
+  Logger.info('Storage configured', {
+    component: 'server',
+    operation: 'storage-config',
+    storageMode: settings.STORAGE_MODE,
+    durablePersistence: settings.IS_GCS_STORAGE,
+  });
   Logger.info('Server started successfully', {
     port: 3000,
     component: 'server',

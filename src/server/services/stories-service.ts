@@ -245,14 +245,37 @@ ${userInstruction}`;
   return chapters;
 }
 
+function groupPurchaseDataByBrand(purchaseData: unknown[]): unknown[][] {
+  const brandMap = new Map<string, unknown[]>();
+
+  for (const purchase of purchaseData) {
+    const brand =
+      purchase !== null &&
+      typeof purchase === 'object' &&
+      'brand' in purchase &&
+      typeof (purchase as Record<string, unknown>).brand === 'string'
+        ? ((purchase as Record<string, unknown>).brand as string)
+        : 'unknown';
+
+    if (!brandMap.has(brand)) {
+      brandMap.set(brand, []);
+    }
+    brandMap.get(brand)!.push(purchase);
+  }
+
+  return Array.from(brandMap.values());
+}
+
 async function generateStoryChapters(
   purchaseData: unknown[],
   imageStyle: string[],
   gender: string,
   traits: string[]
 ): Promise<StoryChapter[]> {
-  if (purchaseData.length > 1) {
-    return generateOneStoryPerBrand(purchaseData, imageStyle, gender, traits);
+  const brandGroups = groupPurchaseDataByBrand(purchaseData);
+
+  if (brandGroups.length > 1) {
+    return generateOneStoryPerBrand(brandGroups, imageStyle, gender, traits);
   }
 
   return generateChapters({
@@ -269,7 +292,7 @@ async function generateStoryChapters(
 }
 
 async function generateOneStoryPerBrand(
-  purchaseData: unknown[],
+  brandGroups: unknown[][],
   imageStyle: string[],
   gender: string,
   traits: string[]
@@ -288,9 +311,9 @@ async function generateOneStoryPerBrand(
   };
 
   const chapterBatches = await Promise.all(
-    purchaseData.map((purchase) =>
+    brandGroups.map((brandPurchases) =>
       generateChapters({
-        purchaseData: [purchase],
+        purchaseData: brandPurchases,
         ...commonConfig,
       })
     )

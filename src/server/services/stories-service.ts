@@ -339,6 +339,10 @@ class StoriesService {
     return jobId;
   }
 
+  private useGCS(): boolean {
+    return settings.STORAGE_MODE == 'gcs';
+  }
+
   private async processGenerationJob(
     jobId: string,
     purchaseData: unknown[],
@@ -407,7 +411,7 @@ class StoriesService {
       job.status = 'completed';
       job.progress = 100;
 
-      if (settings.IS_GCS_STORAGE) {
+      if (this.useGCS()) {
         try {
           const metadata = storyItemsToMetadata(jobId, stories);
           await gcsService.uploadMetadata(metadata);
@@ -469,7 +473,7 @@ class StoriesService {
       return inMemoryJob;
     }
 
-    if (settings.IS_GCS_STORAGE) {
+    if (this.useGCS()) {
       const metadata = await gcsService.downloadMetadata(jobId);
       if (metadata) {
         return {
@@ -500,7 +504,7 @@ class StoriesService {
       return inMemoryResult;
     }
 
-    if (settings.IS_GCS_STORAGE) {
+    if (this.useGCS()) {
       const metadata = await gcsService.downloadMetadata(jobId);
       if (metadata) {
         return metadataToStoryItems(metadata);

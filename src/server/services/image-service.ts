@@ -55,7 +55,7 @@ function getImageProvider(): ImageProvider {
 
 class ImageService {
   private useGCS(): boolean {
-    return settings.IS_GCS_STORAGE;
+    return settings.STORAGE_MODE == 'gcs';
   }
 
   async generate(

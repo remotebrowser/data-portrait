@@ -28,7 +28,6 @@ export const settings = {
   ALLOW_FACE_UPLOAD:
     process.env.ALLOW_FACE_UPLOAD === 'true' ||
     enabledFeatures.includes('photo_upload'),
-  IS_GCS_STORAGE: (process.env.STORAGE_MODE || 'local') === 'gcs',
 } as const;
 
 export function validateConfiguration(): void {
@@ -38,7 +37,7 @@ export function validateConfiguration(): void {
     );
   }
 
-  if (!settings.IS_GCS_STORAGE) {
+  if (settings.STORAGE_MODE !== 'gcs') {
     return;
   }
 

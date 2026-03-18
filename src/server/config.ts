@@ -46,9 +46,6 @@ export function validateConfiguration(): void {
   const hasGcsStorageConfig = Boolean(
     settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID
   );
-  const hasGoogleCredentials =
-    Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) ||
-    Boolean(process.env.GOOGLE_APPLICATION_CREDENTIALS);
 
   if (!hasGcsStorageConfig) {
     if (!settings.GCS_BUCKET_NAME) {
@@ -57,12 +54,6 @@ export function validateConfiguration(): void {
     if (!settings.GCS_PROJECT_ID) {
       missingVariables.push('GCS_PROJECT_ID');
     }
-  }
-
-  if (!hasGoogleCredentials) {
-    missingVariables.push(
-      'GOOGLE_APPLICATION_CREDENTIALS_JSON or GOOGLE_APPLICATION_CREDENTIALS'
-    );
   }
 
   if (missingVariables.length > 0) {

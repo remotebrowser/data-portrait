@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { mcpClientManager } from '../mcp-client.js';
-import { settings } from '../config.js';
 import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
+import { settings } from '../config.js';
+import { getAppHost } from '../utils/index.js';
 
 const tools: Record<string, string[]> = {
   amazon: ['amazon_get_purchase_history'],
@@ -140,11 +141,9 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
 
   // replace get gatgather hosted-link with our own
   let hosted_link_url = '';
+  const appHost = getAppHost(req);
   if (mcpResponse.url) {
-    hosted_link_url = mcpResponse.url.replace(
-      settings.GETGATHER_URL,
-      settings.APP_HOST
-    );
+    hosted_link_url = mcpResponse.url.replace(settings.GETGATHER_URL, appHost);
   }
 
   const response: PurchaseHistoryResponse = {
@@ -299,9 +298,10 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
     signin_id: string;
   };
 
+  const appHost = getAppHost(req);
   const hosted_link_url = mcpResponse.url.replace(
     settings.GETGATHER_URL,
-    settings.APP_HOST
+    appHost
   );
 
   const response: PurchaseHistoryResponse = {

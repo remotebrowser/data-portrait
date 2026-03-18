@@ -19,6 +19,7 @@ export const settings = {
   SENTRY_DSN: process.env.SENTRY_DSN || '',
   SESSION_SECRET: process.env.SESSION_SECRET || 'pleasereplacemeonprod',
   SEGMENT_WRITE_KEY: process.env.SEGMENT_WRITE_KEY || '',
+  STORAGE_MODE: process.env.STORAGE_MODE || 'local',
   GCS_BUCKET_NAME: process.env.GCS_BUCKET_NAME || '',
   GCS_PROJECT_ID: process.env.GCS_PROJECT_ID || '',
   DEEPINFRA_API_KEY: process.env.DEEPINFRA_API_KEY || '',

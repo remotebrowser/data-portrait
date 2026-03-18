@@ -41,10 +41,6 @@ const generationJobs = new Map<string, GenerationJob>();
 
 const STORY_LINK_OVERLAY_TEXT = 'dataportrait.app';
 
-function hasGCSConfig(): boolean {
-  return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
-}
-
 function storyItemsToMetadata(
   jobId: string,
   stories: StoryItem[]
@@ -366,6 +362,10 @@ class StoriesService {
     return jobId;
   }
 
+  private useGCS(): boolean {
+    return settings.STORAGE_MODE == 'gcs';
+  }
+
   private async processGenerationJob(
     jobId: string,
     purchaseData: unknown[],
@@ -434,7 +434,7 @@ class StoriesService {
       job.status = 'completed';
       job.progress = 100;
 
-      if (hasGCSConfig()) {
+      if (this.useGCS()) {
         try {
           const metadata = storyItemsToMetadata(jobId, stories);
           await gcsService.uploadMetadata(metadata);
@@ -496,7 +496,7 @@ class StoriesService {
       return inMemoryJob;
     }
 
-    if (hasGCSConfig()) {
+    if (this.useGCS()) {
       const metadata = await gcsService.downloadMetadata(jobId);
       if (metadata) {
         return {
@@ -527,7 +527,7 @@ class StoriesService {
       return inMemoryResult;
     }
 
-    if (hasGCSConfig()) {
+    if (this.useGCS()) {
       const metadata = await gcsService.downloadMetadata(jobId);
       if (metadata) {
         return metadataToStoryItems(metadata);

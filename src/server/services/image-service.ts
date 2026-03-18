@@ -537,7 +537,7 @@ Generate only the image prompt text, nothing else.`;
       .toBuffer();
     const thumbnailBuffer = await sharp(optimizedBuffer)
       .resize(STORY_THUMBNAIL_WIDTH, STORY_THUMBNAIL_HEIGHT, {
-        fit: 'cover',
+        fit: 'contain',
         position: 'center',
       })
       .jpeg({ quality: 70, mozjpeg: true })

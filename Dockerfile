@@ -23,6 +23,7 @@ RUN apk update && apk add --no-cache \
   ca-certificates \
   iptables \
   ip6tables \
+  wireguard-tools \
   && rm -rf /var/cache/apk/*
 
 # Register Inter font (used for story overlay)

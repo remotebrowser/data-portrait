@@ -8,19 +8,19 @@ import { settings } from '../config.js';
 import { getAppHost } from '../utils/index.js';
 
 const tools: Record<string, string[]> = {
-  amazon: ['amazon_get_purchase_history'],
+  amazon: ['amazon_remote_get_purchase_history'],
   officedepot: [
     'officedepot_get_order_history',
     'officedepot_get_order_history_details',
   ],
-  wayfair: ['wayfair_get_order_history'],
-  goodreads: ['goodreads_get_book_list'],
-  gofood: ['gofood_get_purchase_history'],
-  garmin: ['garmin_get_activities'],
-  tokopedia: ['tokopedia_get_purchase_history'],
-  shopee: ['shopee_get_purchase_history'],
-  doordash: ['doordash_get_orders'],
-  youtube: ['youtube_get_watch_history'],
+  wayfair: ['wayfair_remote_get_order_history'],
+  goodreads: ['goodreads_remote_get_book_list'],
+  gofood: ['gofood_remote_get_purchase_history'],
+  garmin: ['garmin_remote_get_activities'],
+  tokopedia: ['tokopedia_remote_get_purchase_history'],
+  shopee: ['shopee_remote_get_purchase_history'],
+  doordash: ['doordash_remote_get_orders'],
+  youtube: ['youtube_remote_get_watch_history'],
 };
 
 const McpResponse = z.object({

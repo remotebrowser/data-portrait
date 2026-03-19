@@ -7,6 +7,7 @@ primary_region = 'sjc'
 [env]
   NODE_ENV = 'production'
   PORT = '3000'
+  STORAGE_MODE = 'gcs'
 
 [http_service]
   internal_port = 3000

@@ -18,6 +18,8 @@ const genAI = new GoogleGenAI({ apiKey: settings.GEMINI_API_KEY });
 
 const IMAGE_GENERATION_TIMEOUT = 120000;
 const BLUR_BACKGROUND_TIMEOUT = 30000;
+const STORY_THUMBNAIL_WIDTH = 1200;
+const STORY_THUMBNAIL_HEIGHT = 630;
 
 type ImageProvider = 'portkey' | 'google-genai' | 'flux';
 
@@ -55,7 +57,7 @@ function getImageProvider(): ImageProvider {
 
 class ImageService {
   private useGCS(): boolean {
-    return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
+    return settings.STORAGE_MODE == 'gcs';
   }
 
   async generate(
@@ -534,6 +536,10 @@ Generate only the image prompt text, nothing else.`;
       .jpeg({ quality: 90, mozjpeg: true })
       .toBuffer();
     const thumbnailBuffer = await sharp(optimizedBuffer)
+      .resize(STORY_THUMBNAIL_WIDTH, STORY_THUMBNAIL_HEIGHT, {
+        fit: 'contain',
+        position: 'center',
+      })
       .jpeg({ quality: 70, mozjpeg: true })
       .toBuffer();
 

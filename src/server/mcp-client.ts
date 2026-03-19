@@ -6,7 +6,6 @@ import {
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { ServerLogger as Logger } from './utils/logger/index.js';
 import { settings } from './config.js';
-import { geolocationService } from './services/geolocation-service.js';
 
 // Currently just define the MCP url path for each brand here for simplicity
 const MCP_URL_PATHS: Record<string, string> = {
@@ -43,10 +42,6 @@ class MCPClient {
   }
 
   private createTransport(): StreamableHTTPClientTransport {
-    const locationData = geolocationService.getClientLocationFromCache(
-      this.clientIp
-    );
-
     const mcpUrlPath = MCP_URL_PATHS[this.brandId] ?? 'mcp';
     return new StreamableHTTPClientTransport(
       new URL(`${settings.GETGATHER_URL}/${mcpUrlPath}`),
@@ -54,7 +49,7 @@ class MCPClient {
         requestInit: {
           headers: {
             'x-getgather-custom-app': 'data-portrait',
-            'x-location': locationData ? JSON.stringify(locationData) : '',
+            'x-origin-ip': this.clientIp,
             'x-incognito': '1',
             ...(settings.GETGATHER_APP_KEY
               ? {

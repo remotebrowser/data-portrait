@@ -10,8 +10,6 @@ import { ServerLogger as Logger } from './utils/logger/index.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { settings } from './config.js';
-import { IPBlockerMiddleware } from './middleware/ip-blocker-middleware.js';
-import { geolocationService } from './services/geolocation-service.js';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import session from 'express-session';
 import bodyParser from 'body-parser';
@@ -90,16 +88,6 @@ app.use('/api', async (req, res, next) => {
   bodyParser.json()(req, res, (err) => {
     if (err) return next(err);
 
-    if (req.method === 'POST') {
-      if (!req.body) {
-        req.body = {};
-      }
-      const clientIp = geolocationService.getClientIp(req);
-      const requestLocationData =
-        geolocationService.getClientLocationFromCache(clientIp);
-      req.body.location = requestLocationData;
-    }
-
     createProxy('/api')(req, res, next);
   });
 });
@@ -129,8 +117,6 @@ app.use((req, res, next) => {
   }
   next();
 });
-
-app.use(new IPBlockerMiddleware(geolocationService).middleware);
 
 app.use('/', storyRouter);
 

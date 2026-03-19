@@ -11,8 +11,6 @@ const enabledFeatures = (process.env.ENABLE_FEATURES || '')
 export const settings = {
   GETGATHER_URL: process.env.GETGATHER_URL || '',
   GETGATHER_APP_KEY: process.env.GETGATHER_APP_KEY || '',
-  MAXMIND_ACCOUNT_ID: process.env.MAXMIND_ACCOUNT_ID || '',
-  MAXMIND_LICENSE_KEY: process.env.MAXMIND_LICENSE_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   PORTKEY_API_KEY: process.env.PORTKEY_API_KEY || '',
   FLUX_API_KEY: process.env.FLUX_API_KEY || '',

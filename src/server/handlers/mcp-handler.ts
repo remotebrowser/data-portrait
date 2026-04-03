@@ -293,23 +293,57 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
   });
   const result = await mcpClient.callTool({ name: toolName });
 
-  const mcpResponse = result.structuredContent as {
-    url: string;
-    signin_id: string;
-  };
+  const mcpResponse = result.structuredContent as
+    | Record<string, unknown>
+    | undefined;
 
-  const appHost = getAppHost(req);
-  const hosted_link_url = mcpResponse.url.replace(
-    settings.GETGATHER_URL,
-    appHost
-  );
+  // Tool returned an error or no structured content
+  if (result.isError || !mcpResponse) {
+    res.status(502).json({ error: 'Failed to connect to service' });
+    return;
+  }
 
-  const response: PurchaseHistoryResponse = {
-    link_id: mcpResponse.signin_id || '',
-    hosted_link_url,
-    content: [],
-  };
-  res.json(response);
+  // Tool returned a sign-in URL
+  if (mcpResponse.url && (mcpResponse.url as string).includes('dpage')) {
+    const signinId = (mcpResponse.signin_id as string) || '';
+
+    // Store signin ID so subsequent calls reuse the same browser
+    if (signinId) {
+      mcpClient.setSigninId(signinId);
+      await mcpClient.reconnect();
+    }
+
+    const mcpUrl = new URL(mcpResponse.url as string);
+    const hosted_link_url = mcpUrl.pathname;
+    const response: PurchaseHistoryResponse = {
+      link_id: signinId,
+      hosted_link_url,
+      content: [],
+    };
+    res.json(response);
+    return;
+  }
+
+  // Tool returned data directly (user already signed in)
+  const parsed = McpResponse.parse(mcpResponse);
+  const rawContent =
+    parsed.extract_result?.[0]?.content ||
+    parsed.books ||
+    parsed.purchases ||
+    parsed.purchase_history ||
+    parsed.doordash_orders ||
+    parsed.youtube_watch_history;
+
+  let content: unknown[] = [];
+  if (rawContent) {
+    content =
+      typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+  }
+  if (brandId === 'doordash' && Array.isArray(content)) {
+    content = splitDoorDashOrders(content);
+  }
+
+  res.json({ link_id: '', hosted_link_url: '', content });
 };
 
 export const handleDpageSigninCheck = async (req: Request, res: Response) => {

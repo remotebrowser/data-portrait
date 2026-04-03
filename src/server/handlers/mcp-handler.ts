@@ -6,21 +6,25 @@ import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
 import { settings } from '../config.js';
 import { getAppHost } from '../utils/index.js';
+import { ServerLogger as Logger } from '../utils/logger/index.js';
 
-const tools: Record<string, string[]> = {
-  amazon: ['amazon_get_purchase_history'],
-  officedepot: [
-    'officedepot_get_order_history',
-    'officedepot_get_order_history_details',
-  ],
-  wayfair: ['wayfair_get_order_history'],
-  goodreads: ['goodreads_get_book_list'],
-  gofood: ['gofood_get_purchase_history'],
-  garmin: ['garmin_get_activities'],
-  tokopedia: ['tokopedia_get_purchase_history'],
-  shopee: ['shopee_get_purchase_history'],
-  doordash: ['doordash_get_orders'],
-  youtube: ['youtube_get_watch_history'],
+interface BrandTool {
+  toolName: string;
+  resultKey: string;
+  detailsToolName?: string;
+}
+
+const brandTools: Record<string, BrandTool> = {
+  amazon: { toolName: 'amazon_get_purchase_history', resultKey: 'amazon_purchase_history' },
+  officedepot: { toolName: 'officedepot_get_order_history', resultKey: 'officedepot_order_history', detailsToolName: 'officedepot_get_order_history_details' },
+  wayfair: { toolName: 'wayfair_get_order_history', resultKey: 'wayfair_order_history' },
+  goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list' },
+  gofood: { toolName: 'gofood_get_purchase_history', resultKey: 'gofood_purchase_history' },
+  garmin: { toolName: 'garmin_get_activities', resultKey: 'garmin_activity_history' },
+  tokopedia: { toolName: 'tokopedia_get_purchase_history', resultKey: 'purchase_history' },
+  shopee: { toolName: 'shopee_get_purchase_history', resultKey: 'shopee_purchase_history' },
+  doordash: { toolName: 'doordash_get_orders', resultKey: 'doordash_orders' },
+  youtube: { toolName: 'youtube_get_watch_history', resultKey: 'youtube_watch_history' },
 };
 
 const McpResponse = z.object({
@@ -123,8 +127,8 @@ function splitDoorDashOrders(orders: Array<unknown>): Array<unknown> {
 export const handlePurchaseHistory = async (req: Request, res: Response) => {
   const { brandId } = req.params;
 
-  const toolName = tools[brandId][0];
-  if (!toolName) {
+  const brand = brandTools[brandId];
+  if (!brand) {
     res.status(400).json({ error: 'Invalid brand name' });
     return;
   }
@@ -135,71 +139,44 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     clientIp,
     brandId,
   });
-  const result = await mcpClient.callTool({ name: toolName });
+  const result = await mcpClient.callTool({ name: brand.toolName });
 
-  const mcpResponse = McpResponse.parse(result.structuredContent);
+  const sc = result.structuredContent as Record<string, unknown> | undefined;
 
-  // replace get gatgather hosted-link with our own
-  let hosted_link_url = '';
-  const appHost = getAppHost(req);
-  if (mcpResponse.url) {
-    hosted_link_url = mcpResponse.url.replace(settings.GETGATHER_URL, appHost);
-  }
-
-  const response: PurchaseHistoryResponse = {
-    link_id: mcpResponse.link_id || '',
-    hosted_link_url: hosted_link_url,
-    content: [],
-  };
-
-  // didn't have any content
-  if (
-    !mcpResponse.extract_result?.[0]?.content &&
-    !mcpResponse.books?.length &&
-    !mcpResponse.purchases?.length &&
-    !mcpResponse.purchase_history?.length &&
-    !mcpResponse.doordash_orders?.length &&
-    !mcpResponse.youtube_watch_history?.length
-  ) {
-    res.json(response);
+  // Check for sign-in redirect
+  const url = sc?.url as string | undefined;
+  if (url) {
+    const appHost = getAppHost(req);
+    const hosted_link_url = url.replace(settings.GETGATHER_URL, appHost);
+    res.json({
+      link_id: (sc?.link_id as string) || '',
+      hosted_link_url,
+      content: [],
+    });
     return;
   }
 
-  const rawContent =
-    mcpResponse.extract_result?.[0]?.content ||
-    mcpResponse.books ||
-    mcpResponse.purchases ||
-    mcpResponse.purchase_history ||
-    mcpResponse.doordash_orders ||
-    mcpResponse.youtube_watch_history;
-
-  if (typeof rawContent === 'string') {
-    response.content = JSON.parse(rawContent);
-  } else {
-    response.content = rawContent || [];
+  const rawContent = sc?.[brand.resultKey];
+  let content: unknown[] = [];
+  if (rawContent) {
+    content =
+      typeof rawContent === 'string' ? JSON.parse(rawContent) : (rawContent as unknown[]);
   }
 
-  // Split DoorDash orders if store is an array (new format)
-  if (brandId === 'doordash' && Array.isArray(response.content)) {
-    response.content = splitDoorDashOrders(response.content);
+  if (brandId === 'doordash' && Array.isArray(content)) {
+    content = splitDoorDashOrders(content);
   }
 
-  // Track successful data retrieval
-  if (
-    response.content &&
-    Array.isArray(response.content) &&
-    response.content.length > 0
-  ) {
-    const clientIp = geolocationService.getClientIp(req);
+  if (content.length > 0) {
     analytics.track(req.sessionID, 'data_retrieved_successful', {
       brand_name: brandId,
-      data_count: response.content.length,
-      purchase_history: response.content,
+      data_count: content.length,
+      purchase_history: content,
       client_ip: clientIp,
     });
   }
 
-  res.json(response);
+  res.json({ link_id: '', hosted_link_url: '', content });
 };
 
 export const handlePurchaseHistoryDetails = async (
@@ -207,8 +184,8 @@ export const handlePurchaseHistoryDetails = async (
   res: Response
 ) => {
   const { brandId, orderId } = req.params;
-  const toolName = tools[brandId][1];
-  if (!toolName) {
+  const brand = brandTools[brandId];
+  if (!brand?.detailsToolName) {
     res.status(400).json({ error: 'Invalid brand name' });
     return;
   }
@@ -220,7 +197,7 @@ export const handlePurchaseHistoryDetails = async (
     brandId,
   });
   const result = await mcpClient.callTool({
-    name: tools[brandId][1],
+    name: brand.detailsToolName,
     arguments: { order_id: orderId },
   });
 
@@ -279,11 +256,12 @@ export const handleMcpPoll = async (req: Request, res: Response) => {
 export const handleDpageUrl = async (req: Request, res: Response) => {
   const { brandId } = req.params;
 
-  const toolName = tools[brandId][0];
-  if (!toolName) {
+  const brand = brandTools[brandId];
+  if (!brand) {
     res.status(400).json({ error: 'Invalid brand name' });
     return;
   }
+  const toolName = brand.toolName;
 
   const clientIp = geolocationService.getClientIp(req);
   const mcpClient = await mcpClientManager.get({
@@ -325,19 +303,12 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
   }
 
   // Tool returned data directly (user already signed in)
-  const parsed = McpResponse.parse(mcpResponse);
-  const rawContent =
-    parsed.extract_result?.[0]?.content ||
-    parsed.books ||
-    parsed.purchases ||
-    parsed.purchase_history ||
-    parsed.doordash_orders ||
-    parsed.youtube_watch_history;
+  const rawContent = mcpResponse[brand.resultKey];
 
   let content: unknown[] = [];
   if (rawContent) {
     content =
-      typeof rawContent === 'string' ? JSON.parse(rawContent) : rawContent;
+      typeof rawContent === 'string' ? JSON.parse(rawContent as string) : (rawContent as unknown[]);
   }
   if (brandId === 'doordash' && Array.isArray(content)) {
     content = splitDoorDashOrders(content);
@@ -354,39 +325,77 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
     clientIp,
     brandId,
   });
-  const result = await mcpClient.callTool({
+  const checkResult = await mcpClient.callTool({
     name: 'check_signin',
     arguments: { signin_id: linkId },
   });
 
-  const response = result.structuredContent as {
+  const checkResponse = checkResult.structuredContent as {
     status?: string;
-    result?: unknown;
+    completed?: boolean;
   };
-  const isAuthCompleted = response?.status === 'SUCCESS';
+  const isAuthCompleted = checkResponse?.status === 'SUCCESS';
 
-  if (isAuthCompleted) {
-    analytics.track(req.sessionID, 'connection_successful', {
+  if (!isAuthCompleted) {
+    res.json({
+      auth_completed: false,
       link_id: linkId,
-      client_ip: clientIp,
+      content: null,
     });
+    return;
   }
 
-  let content = null;
+  // Sign-in complete — call the brand tool again to fetch data
+  const brand = brandTools[brandId];
+  let content: unknown[] | null = null;
+  let dataFetchOk = false;
 
-  if (typeof response.result === 'string') {
-    content = JSON.parse(response.result);
-  } else {
-    content = response.result || [];
+  if (brand) {
+    try {
+      const dataResult = await mcpClient.callTool({ name: brand.toolName }, 0);
+      Logger.debug('Brand tool response', {
+        component: 'mcp-handler',
+        operation: 'dpage-signin-check',
+        brandId,
+        isError: dataResult.isError,
+        resultKey: brand.resultKey,
+        structuredContentKeys: dataResult.structuredContent
+          ? Object.keys(dataResult.structuredContent as Record<string, unknown>)
+          : null,
+      });
+
+      if (!dataResult.isError && dataResult.structuredContent) {
+        const sc = dataResult.structuredContent as Record<string, unknown>;
+        const rawContent = sc[brand.resultKey];
+
+        if (rawContent) {
+          content =
+            typeof rawContent === 'string'
+              ? JSON.parse(rawContent)
+              : (rawContent as unknown[]);
+          dataFetchOk = true;
+        }
+
+        if (brandId === 'doordash' && Array.isArray(content)) {
+          content = splitDoorDashOrders(content);
+        }
+      }
+    } catch (err) {
+      Logger.warn('Brand tool call failed after signin', {
+        component: 'mcp-handler',
+        operation: 'dpage-signin-check',
+        brandId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 
-  // Split DoorDash orders if store is an array (new format)
-  if (brandId === 'doordash' && Array.isArray(content)) {
-    content = splitDoorDashOrders(content);
-  }
+  analytics.track(req.sessionID, 'connection_successful', {
+    link_id: linkId,
+    client_ip: clientIp,
+  });
 
   if (content && Array.isArray(content) && content.length > 0) {
-    const clientIp = geolocationService.getClientIp(req);
     analytics.track(req.sessionID, 'data_retrieved_successful', {
       data_count: content.length,
       purchase_history: content,
@@ -394,7 +403,8 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
     });
   }
 
-  if (isAuthCompleted) {
+  // Only finalize if data was fetched (browser still alive)
+  if (dataFetchOk) {
     finalizeSignin({
       sessionId: req.sessionID,
       clientIp,
@@ -404,7 +414,7 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
   }
 
   res.json({
-    auth_completed: isAuthCompleted,
+    auth_completed: true,
     link_id: linkId,
     content,
   });

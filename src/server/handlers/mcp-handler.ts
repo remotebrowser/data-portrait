@@ -15,7 +15,7 @@ interface BrandTool {
 }
 
 const brandTools: Record<string, BrandTool> = {
-  amazon: { toolName: 'amazon_get_purchase_history', resultKey: 'amazon_purchase_history' },
+  amazon: { toolName: 'amazon_remote_get_purchase_history', resultKey: 'amazon_purchase_history' },
   officedepot: { toolName: 'officedepot_get_order_history', resultKey: 'officedepot_order_history', detailsToolName: 'officedepot_get_order_history_details' },
   wayfair: { toolName: 'wayfair_get_order_history', resultKey: 'wayfair_order_history' },
   goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list' },

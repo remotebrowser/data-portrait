@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button.js';
 import { DataConnectors } from './DataConnectors.js';
 import { PersonaSelector } from './PersonaSelector.js';
-import { ImageUpload } from './ImageUpload.js';
+import { CameraImageCapture } from './CameraImageCapture.js';
 import { ImageFormatSelector } from './ImageFormatSelector.js';
 import type { ImageFormat } from '../modules/PortraitGeneration.js';
 import type { BrandConfig } from '../modules/Config.js';
@@ -88,7 +88,7 @@ export function Sidebar({
         {/* Sidebar Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {onImageChange && enableImageUpload && (
-            <ImageUpload
+            <CameraImageCapture
               onImageChange={onImageChange}
               disabled={isGenerating}
             />

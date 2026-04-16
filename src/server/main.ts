@@ -11,6 +11,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { settings } from './config.js';
 import { IPBlockerMiddleware } from './middleware/ip-blocker-middleware.js';
+import { validateConfiguration } from './services/gcs-service.js';
 import { geolocationService } from './services/geolocation-service.js';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import session from 'express-session';
@@ -24,6 +25,9 @@ Sentry.init({
   dsn: settings.SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
 });
+
+validateConfiguration();
+
 const app = express();
 
 // Security configuration
@@ -156,6 +160,11 @@ app.listen(3000, () => {
   if (process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
   }
+  Logger.info('Storage configured', {
+    component: 'server',
+    operation: 'storage-config',
+    storageMode: settings.STORAGE_MODE,
+  });
   Logger.info('Server started successfully', {
     port: 3000,
     component: 'server',

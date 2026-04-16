@@ -44,6 +44,32 @@ function getMetadataFilename(jobId: string): string {
   return `${METADATA_FILENAME_PREFIX}${jobId}${METADATA_FILENAME_SUFFIX}`;
 }
 
+export function validateConfiguration(): void {
+  if (settings.STORAGE_MODE !== 'gcs') {
+    return;
+  }
+
+  const missingVariables: string[] = [];
+  const hasGcsStorageConfig = Boolean(
+    settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID
+  );
+
+  if (!hasGcsStorageConfig) {
+    if (!settings.GCS_BUCKET_NAME) {
+      missingVariables.push('GCS_BUCKET_NAME');
+    }
+    if (!settings.GCS_PROJECT_ID) {
+      missingVariables.push('GCS_PROJECT_ID');
+    }
+  }
+
+  if (missingVariables.length > 0) {
+    throw new Error(
+      `STORAGE_MODE is "gcs" but required storage configuration is missing: ${missingVariables.join(', ')}`
+    );
+  }
+}
+
 export const gcsService = {
   async uploadImage(
     base64Data: string,

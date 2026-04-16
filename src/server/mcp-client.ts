@@ -21,6 +21,7 @@ class MCPClient {
   private sessionId: string;
   private clientIp: string;
   private brandId: string;
+  private signinId: string | null = null;
 
   constructor({
     sessionId,
@@ -47,24 +48,35 @@ class MCPClient {
       this.clientIp
     );
 
+    const headers: Record<string, string> = {
+      'x-getgather-custom-app': 'data-portrait',
+      'x-location': locationData ? JSON.stringify(locationData) : '',
+      'x-origin-ip': this.clientIp,
+      'x-incognito': '1',
+    };
+
+    if (this.signinId) {
+      headers['x-signin-id'] = this.signinId;
+    }
+
+    if (settings.GETGATHER_APP_KEY) {
+      headers['Authorization'] =
+        `Bearer ${settings.GETGATHER_APP_KEY}_${this.sessionId}`;
+    }
+
     const mcpUrlPath = MCP_URL_PATHS[this.brandId] ?? 'mcp';
     return new StreamableHTTPClientTransport(
       new URL(`${settings.GETGATHER_URL}/${mcpUrlPath}`),
-      {
-        requestInit: {
-          headers: {
-            'x-getgather-custom-app': 'data-portrait',
-            'x-location': locationData ? JSON.stringify(locationData) : '',
-            'x-incognito': '1',
-            ...(settings.GETGATHER_APP_KEY
-              ? {
-                  Authorization: `Bearer ${settings.GETGATHER_APP_KEY}_${this.sessionId}`,
-                }
-              : {}),
-          },
-        },
-      }
+      { requestInit: { headers } }
     );
+  }
+
+  setSigninId(signinId: string): void {
+    this.signinId = signinId;
+  }
+
+  getSigninId(): string | null {
+    return this.signinId;
   }
 
   async connect(): Promise<void> {

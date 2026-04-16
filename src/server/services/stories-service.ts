@@ -41,10 +41,6 @@ const generationJobs = new Map<string, GenerationJob>();
 
 const STORY_LINK_OVERLAY_TEXT = 'dataportrait.app';
 
-function hasGCSConfig(): boolean {
-  return Boolean(settings.GCS_BUCKET_NAME && settings.GCS_PROJECT_ID);
-}
-
 function storyItemsToMetadata(
   jobId: string,
   stories: StoryItem[]
@@ -245,14 +241,37 @@ ${userInstruction}`;
   return chapters;
 }
 
+function groupPurchaseDataByBrand(purchaseData: unknown[]): unknown[][] {
+  const brandMap = new Map<string, unknown[]>();
+
+  for (const purchase of purchaseData) {
+    const brand =
+      purchase !== null &&
+      typeof purchase === 'object' &&
+      'brand' in purchase &&
+      typeof (purchase as Record<string, unknown>).brand === 'string'
+        ? ((purchase as Record<string, unknown>).brand as string)
+        : 'unknown';
+
+    if (!brandMap.has(brand)) {
+      brandMap.set(brand, []);
+    }
+    brandMap.get(brand)!.push(purchase);
+  }
+
+  return Array.from(brandMap.values());
+}
+
 async function generateStoryChapters(
   purchaseData: unknown[],
   imageStyle: string[],
   gender: string,
   traits: string[]
 ): Promise<StoryChapter[]> {
-  if (purchaseData.length > 1) {
-    return generateOneStoryPerBrand(purchaseData, imageStyle, gender, traits);
+  const brandGroups = groupPurchaseDataByBrand(purchaseData);
+
+  if (brandGroups.length > 1) {
+    return generateOneStoryPerBrand(brandGroups, imageStyle, gender, traits);
   }
 
   return generateChapters({
@@ -269,7 +288,7 @@ async function generateStoryChapters(
 }
 
 async function generateOneStoryPerBrand(
-  purchaseData: unknown[],
+  brandGroups: unknown[][],
   imageStyle: string[],
   gender: string,
   traits: string[]
@@ -288,9 +307,9 @@ async function generateOneStoryPerBrand(
   };
 
   const chapterBatches = await Promise.all(
-    purchaseData.map((purchase) =>
+    brandGroups.map((brandPurchases) =>
       generateChapters({
-        purchaseData: [purchase],
+        purchaseData: brandPurchases,
         ...commonConfig,
       })
     )
@@ -341,6 +360,10 @@ class StoriesService {
     });
 
     return jobId;
+  }
+
+  private useGCS(): boolean {
+    return settings.STORAGE_MODE == 'gcs';
   }
 
   private async processGenerationJob(
@@ -411,7 +434,7 @@ class StoriesService {
       job.status = 'completed';
       job.progress = 100;
 
-      if (hasGCSConfig()) {
+      if (this.useGCS()) {
         try {
           const metadata = storyItemsToMetadata(jobId, stories);
           await gcsService.uploadMetadata(metadata);
@@ -473,7 +496,7 @@ class StoriesService {
       return inMemoryJob;
     }
 
-    if (hasGCSConfig()) {
+    if (this.useGCS()) {
       const metadata = await gcsService.downloadMetadata(jobId);
       if (metadata) {
         return {
@@ -504,7 +527,7 @@ class StoriesService {
       return inMemoryResult;
     }
 
-    if (hasGCSConfig()) {
+    if (this.useGCS()) {
       const metadata = await gcsService.downloadMetadata(jobId);
       if (metadata) {
         return metadataToStoryItems(metadata);

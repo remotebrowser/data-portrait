@@ -4,6 +4,7 @@ import { mcpClientManager } from '../mcp-client.js';
 import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
+import { extractGoodreadsViaCDP } from '../services/cdp-service.js';
 import { settings } from '../config.js';
 import { getAppHost } from '../utils/index.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
@@ -345,12 +346,24 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
     return;
   }
 
-  // Sign-in complete — call the brand tool again to fetch data
+  // Sign-in complete — fetch data.
   const brand = brandTools[brandId];
   let content: unknown[] | null = null;
   let dataFetchOk = false;
 
-  if (brand) {
+  if (brandId === 'goodreads') {
+    // Sign-in stays on mcp-getgather, but we extract the data ourselves by
+    // attaching to the authenticated remote browser over CDP. No fallback —
+    // any failure propagates to a 500.
+    const books = await extractGoodreadsViaCDP({
+      cdpUrl: settings.GETGATHER_CDP_URL,
+      signinId: linkId,
+      sessionId: req.sessionID,
+      clientIp,
+    });
+    content = books;
+    dataFetchOk = true;
+  } else if (brand) {
     try {
       const dataResult = await mcpClient.callTool({ name: brand.toolName }, 0);
       Logger.debug('Brand tool response', {
@@ -416,6 +429,9 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
   res.json({
     auth_completed: true,
     link_id: linkId,
+    // Echo the fleet browser id (prefix of the signin_id) for easy debugging:
+    // it names the browser on the fleet and is the CDP path segment.
+    browser_id: linkId.split('--')[0],
     content,
   });
 };

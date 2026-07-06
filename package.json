@@ -43,6 +43,7 @@
     "lucide-react": "^0.522.0",
     "multer": "^2.0.2",
     "nanoid": "^5.1.5",
+    "playwright-core": "^1.61.1",
     "portkey-ai": "^3.0.1",
     "prettier": "^3.5.3",
     "react": "^19.1.0",

@@ -10,6 +10,10 @@ const enabledFeatures = (process.env.ENABLE_FEATURES || '')
 
 export const settings = {
   GETGATHER_URL: process.env.GETGATHER_URL || '',
+  // Chrome Fleet base URL used for direct CDP access after sign-in.
+  // Defaults to GETGATHER_URL (CDP relayed through mcp-getgather) when unset.
+  GETGATHER_CDP_URL:
+    process.env.GETGATHER_CDP_URL || process.env.GETGATHER_URL || '',
   GETGATHER_APP_KEY: process.env.GETGATHER_APP_KEY || '',
   MAXMIND_ACCOUNT_ID: process.env.MAXMIND_ACCOUNT_ID || '',
   MAXMIND_LICENSE_KEY: process.env.MAXMIND_LICENSE_KEY || '',

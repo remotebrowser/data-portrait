@@ -42,11 +42,14 @@ export function GoodreadsConnectionModal({
   // Create the remote browser + open the review list once per open.
   useEffect(() => {
     if (!isOpen) return;
-    // StrictMode invokes effects twice on mount; without this guard we'd POST
-    // /connect twice and leak a second (orphaned) remote browser.
+    // StrictMode invokes effects twice on mount; the ref guard ensures we POST
+    // /connect exactly once (no orphaned second browser). We deliberately do NOT
+    // gate the result on a per-run "cancelled" flag — StrictMode's cleanup would
+    // set it and then swallow the sole fetch's result, leaving the modal stuck
+    // on "Establishing connection...". setState setters are stable across the
+    // remount, so the result reaches the live instance.
     if (connectStartedRef.current) return;
     connectStartedRef.current = true;
-    let cancelled = false;
     setError(null);
     setTarget(null);
 
@@ -58,9 +61,8 @@ export function GoodreadsConnectionModal({
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as BrowserTarget;
-        if (!cancelled) setTarget(data);
+        setTarget(data);
       } catch (err) {
-        if (cancelled) return;
         logger.error('Failed to start Goodreads connection', err as Error, {
           component: 'goodreads-connection-modal',
           brandId: brandConfig.brand_id,
@@ -68,10 +70,6 @@ export function GoodreadsConnectionModal({
         setError('Failed to start connection. Please try again.');
       }
     })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [isOpen, brandConfig.brand_id]);
 
   // Poll for the distilled book list until sign-in completes.

@@ -1,4 +1,5 @@
 import { logger } from '@/utils/logger/index.js';
+import type { BrandConfig } from './Config.js';
 
 export type PurchaseHistory = {
   brand: string;
@@ -260,4 +261,27 @@ export function transformData(
     });
     return [];
   }
+}
+
+/**
+ * Transform raw connector content into the app's PurchaseHistory[] shape used
+ * downstream (orders, portrait). Shared by the credential-form and iframe-dpage
+ * sign-in flows so they produce identical data.
+ */
+export function toPurchaseHistory(
+  content: Array<object> | object,
+  brandConfig: BrandConfig
+): PurchaseHistory[] {
+  const transformed = transformData(content, brandConfig.dataTransform);
+  return transformed.map((item) => ({
+    brand: brandConfig.brand_name,
+    order_date: (item.order_date as Date) || null,
+    order_total: item.order_total as string,
+    order_id: item.order_id as string,
+    product_names: item.product_names as string[],
+    product_description: item.product_description as string | undefined,
+    image_urls: Array.isArray(item.image_urls)
+      ? (item.image_urls as unknown[]).map(String)
+      : [],
+  }));
 }

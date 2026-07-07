@@ -27,6 +27,18 @@ export interface GoodreadsBook {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
+ * A sign-in id is "{browser_id}--{target_id}--{mcp_session_id}"
+ * (mcp-getgather/getgather/mcp/dpage.py); we only need the browser_id.
+ */
+export function browserIdFromSigninId(signinId: string): string {
+  const browserId = signinId.split('--')[0];
+  if (!browserId) {
+    throw new Error(`Cannot derive browser_id from signin_id: ${signinId}`);
+  }
+  return browserId;
+}
+
+/**
  * Build request headers, mirroring the MCP client (src/server/mcp-client.ts).
  * The page API routes are not behind MCP auth, but an upstream proxy may still
  * require these, so we always send them.
@@ -43,12 +55,10 @@ function buildHeaders(sessionId: string, clientIp: string): Record<string, strin
 }
 
 const text = (el: HTMLElement | null): string | null =>
-  el ? el.text.trim() || null : null;
+  el?.text.trim() || null;
 
-const attr = (el: HTMLElement | null, name: string): string | null => {
-  const value = el?.getAttribute(name);
-  return value ? value.trim() : null;
-};
+const attr = (el: HTMLElement | null, name: string): string | null =>
+  el?.getAttribute(name)?.trim() || null;
 
 /**
  * Parse the Goodreads review-list HTML into book records, replicating the
@@ -58,12 +68,12 @@ function parseBookList(html: string): GoodreadsBook[] {
   const root = parse(html);
   return root.querySelectorAll('tr.review').map((row): GoodreadsBook => {
     const rawUrl = attr(row.querySelector('td.cover a'), 'href');
-    let url: string | null = rawUrl;
+    let url = rawUrl;
     if (rawUrl) {
       try {
         url = new URL(rawUrl, GOODREADS_ORIGIN).href;
       } catch {
-        url = rawUrl;
+        // Keep the raw (relative) href if it can't be resolved.
       }
     }
     return {
@@ -107,13 +117,7 @@ export async function extractGoodreads({
   sessionId: string;
   clientIp: string;
 }): Promise<GoodreadsBook[]> {
-  // SignInId = "{browser_id}--{target_id}--{mcp_session_id}"
-  // (mcp-getgather/getgather/mcp/dpage.py). We only need browser_id here.
-  const browserId = signinId.split('--')[0];
-  if (!browserId) {
-    throw new Error(`Cannot derive browser_id from signin_id: ${signinId}`);
-  }
-
+  const browserId = browserIdFromSigninId(signinId);
   const base = baseUrl.replace(/\/+$/, '');
   const headers = buildHeaders(sessionId, clientIp);
   const browsersBase = `${base}/api/v1/browsers/${encodeURIComponent(browserId)}`;
@@ -146,9 +150,13 @@ export async function extractGoodreads({
   let books: GoodreadsBook[] = [];
   for (let attempt = 1; attempt <= HTML_POLL_ATTEMPTS; attempt++) {
     const html = await fetchText(`${pageBase}/html`, headers);
-    books = parseBookList(html);
-    if (books.length > 0) {
-      break;
+    // Cheap substring check before building a DOM over the full ~268KB page;
+    // early poll attempts usually have no rows yet.
+    if (html.includes('class="review"')) {
+      books = parseBookList(html);
+      if (books.length > 0) {
+        break;
+      }
     }
     if (attempt < HTML_POLL_ATTEMPTS) {
       await sleep(HTML_POLL_DELAY_MS);

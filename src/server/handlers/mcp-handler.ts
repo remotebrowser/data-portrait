@@ -4,7 +4,10 @@ import { mcpClientManager } from '../mcp-client.js';
 import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
-import { extractGoodreads } from '../services/goodreads-service.js';
+import {
+  extractGoodreads,
+  browserIdFromSigninId,
+} from '../services/goodreads-service.js';
 import { settings } from '../config.js';
 import { getAppHost } from '../utils/index.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
@@ -13,13 +16,23 @@ interface BrandTool {
   toolName: string;
   resultKey: string;
   detailsToolName?: string;
+  /**
+   * Optional per-brand override that fetches the data ourselves (driving the
+   * authenticated remote browser) instead of calling the MCP data tool.
+   */
+  extract?: (args: {
+    baseUrl: string;
+    signinId: string;
+    sessionId: string;
+    clientIp: string;
+  }) => Promise<unknown[]>;
 }
 
 const brandTools: Record<string, BrandTool> = {
   amazon: { toolName: 'amazon_get_purchase_history', resultKey: 'amazon_purchase_history' },
   officedepot: { toolName: 'officedepot_get_order_history', resultKey: 'officedepot_order_history', detailsToolName: 'officedepot_get_order_history_details' },
   wayfair: { toolName: 'wayfair_get_order_history', resultKey: 'wayfair_order_history' },
-  goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list' },
+  goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list', extract: extractGoodreads },
   gofood: { toolName: 'gofood_get_purchase_history', resultKey: 'gofood_purchase_history' },
   garmin: { toolName: 'garmin_get_activities', resultKey: 'garmin_activity_history' },
   tokopedia: { toolName: 'tokopedia_get_purchase_history', resultKey: 'purchase_history' },
@@ -351,17 +364,15 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
   let content: unknown[] | null = null;
   let dataFetchOk = false;
 
-  if (brandId === 'goodreads') {
-    // Sign-in stays on mcp-getgather, but we extract the data ourselves by
-    // driving the authenticated remote browser through mcp-getgather's page
-    // API. No fallback — any failure propagates to a 500.
-    const books = await extractGoodreads({
+  if (brand?.extract) {
+    // Sign-in stays on mcp-getgather, but this brand extracts the data itself by
+    // driving the authenticated remote browser. No fallback — failure 500s.
+    content = await brand.extract({
       baseUrl: settings.GETGATHER_URL,
       signinId: linkId,
       sessionId: req.sessionID,
       clientIp,
     });
-    content = books;
     dataFetchOk = true;
   } else if (brand) {
     try {
@@ -430,7 +441,7 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
     auth_completed: true,
     link_id: linkId,
     // Echo the fleet browser id (prefix of the signin_id) for easy debugging.
-    browser_id: linkId.split('--')[0],
+    browser_id: browserIdFromSigninId(linkId),
     content,
   });
 };

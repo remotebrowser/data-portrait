@@ -37,7 +37,9 @@ app.disable('x-powered-by');
 // Basic security headers
 app.use((req, res, next) => {
   // Allow framing for dpage content since it's designed to be embedded
-  const isDpageRequest = req.path.startsWith('/dpage');
+  // (both the proxied mcp-getgather /dpage and our own Goodreads dpage route).
+  const isDpageRequest =
+    req.path.startsWith('/dpage') || req.path.startsWith('/getgather/dpage');
   if (!isDpageRequest) {
     res.setHeader('X-Frame-Options', 'DENY');
   }

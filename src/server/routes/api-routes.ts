@@ -9,6 +9,13 @@ import {
   handleDpageUrl,
   handleDpageSigninCheck,
 } from '../handlers/mcp-handler.js';
+import {
+  handleGoodreadsConnect,
+  handleGoodreadsDpageGet,
+  handleGoodreadsDpagePost,
+  handleGoodreadsPoll,
+  handleGoodreadsFinalize,
+} from '../handlers/goodreads-handler.js';
 import { handleAnalytics } from '../handlers/analytics-handler.js';
 import {
   handleStoriesGeneration,
@@ -32,6 +39,13 @@ const upload = multer({
     }
   },
 });
+
+// Goodreads dpage flow (distill REST API — no MCP)
+router.post('/goodreads/connect', handleGoodreadsConnect);
+router.get('/dpage/:browserId/:pageId', handleGoodreadsDpageGet);
+router.post('/dpage/:browserId/:pageId', handleGoodreadsDpagePost);
+router.post('/goodreads/poll', handleGoodreadsPoll);
+router.post('/goodreads/finalize', handleGoodreadsFinalize);
 
 // Get dpage url
 router.get('/dpage-url/:brandId', handleDpageUrl);

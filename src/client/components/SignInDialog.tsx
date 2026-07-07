@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { BrandConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
-import { transformData } from '../modules/DataTransformSchema.js';
+import { toPurchaseHistory } from '../modules/DataTransformSchema.js';
 import { logger } from '@/utils/logger/index.js';
 import { Button } from '@/components/ui/button.js';
 import { FollowUpForm } from './FollowUpForm.js';
@@ -121,23 +121,7 @@ export function SignInDialog({
         const data = await pollResult.json();
 
         if (data.auth_completed) {
-          const transformedData = transformData(
-            data.content,
-            brandConfig.dataTransform
-          );
-          const purchaseHistory = transformedData.map(
-            (item: Record<string, unknown>) => ({
-              brand: brandConfig.brand_name,
-              order_date: (item.order_date as Date) || null,
-              order_total: item.order_total as string,
-              order_id: item.order_id as string,
-              product_names: item.product_names as string[],
-              product_description: item.product_description as
-                | string
-                | undefined,
-              image_urls: Array.isArray(item.image_urls) ? item.image_urls : [],
-            })
-          );
+          const purchaseHistory = toPurchaseHistory(data.content, brandConfig);
 
           setLoadingState('RETRIEVING_DATA');
           onClose();

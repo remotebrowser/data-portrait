@@ -8,6 +8,7 @@ import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
 import { StoryPreviewModal } from '../components/StoryPreviewModal.js';
 import { SignInDialog } from '../components/SignInDialog.js';
+import { GoodreadsConnectionModal } from '../components/GoodreadsConnectionModal.js';
 import { Sidebar } from '../components/Sidebar.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
@@ -483,15 +484,25 @@ export function DataPortrait() {
         enableImageUpload={appConfig.allowFaceUpload}
       />
 
-      {/* Sign In Dialog */}
-      {signInDialogBrand && (
-        <SignInDialog
-          isOpen={true}
-          onClose={() => setSignInDialogBrand(null)}
-          onSuccessSignin={handleSignInSuccess}
-          brandConfig={signInDialogBrand}
-        />
-      )}
+      {/* Sign In Dialog — brands opting into the iframe dpage flow (config
+          `use_dpage_iframe`) use GoodreadsConnectionModal; others use the
+          credential-form + MCP flow. */}
+      {signInDialogBrand &&
+        (signInDialogBrand.use_dpage_iframe ? (
+          <GoodreadsConnectionModal
+            isOpen={true}
+            onClose={() => setSignInDialogBrand(null)}
+            onSuccessConnect={handleSignInSuccess}
+            brandConfig={signInDialogBrand}
+          />
+        ) : (
+          <SignInDialog
+            isOpen={true}
+            onClose={() => setSignInDialogBrand(null)}
+            onSuccessSignin={handleSignInSuccess}
+            brandConfig={signInDialogBrand}
+          />
+        ))}
 
       {selectedPreview?.format === 'stories' ? (
         <StoryPreviewModal

@@ -28,9 +28,9 @@ export function GoodreadsConnectionModal({
   // Guard against React StrictMode's double-invoked effect creating two browsers.
   const connectStartedRef = useRef(false);
 
-  // Keep latest callbacks without retriggering the connect effect.
-  const callbacks = useRef({ onClose, onSuccessConnect, brandConfig });
-  callbacks.current = { onClose, onSuccessConnect, brandConfig };
+  // Keep latest callbacks without retriggering the poll effect.
+  const callbacks = useRef({ onClose, onSuccessConnect });
+  callbacks.current = { onClose, onSuccessConnect };
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -50,8 +50,6 @@ export function GoodreadsConnectionModal({
     // remount, so the result reaches the live instance.
     if (connectStartedRef.current) return;
     connectStartedRef.current = true;
-    setError(null);
-    setTarget(null);
 
     (async () => {
       try {
@@ -94,7 +92,7 @@ export function GoodreadsConnectionModal({
             if (data.status === 'SUCCESS') {
               const purchaseHistory = toPurchaseHistory(
                 (data.content ?? []) as object[],
-                callbacks.current.brandConfig
+                brandConfig
               );
               stopped = true;
               callbacks.current.onSuccessConnect(purchaseHistory);
@@ -120,7 +118,8 @@ export function GoodreadsConnectionModal({
     return () => {
       stopped = true;
     };
-  }, [target, brandConfig.brand_id]);
+    // brandConfig comes from parent state and is stable for the modal's lifetime.
+  }, [target, brandConfig]);
 
   return (
     <dialog

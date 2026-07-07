@@ -484,10 +484,11 @@ export function DataPortrait() {
         enableImageUpload={appConfig.allowFaceUpload}
       />
 
-      {/* Sign In Dialog — Goodreads uses the iframe dpage flow; others use the
+      {/* Sign In Dialog — brands opting into the iframe dpage flow (config
+          `use_dpage_iframe`) use GoodreadsConnectionModal; others use the
           credential-form + MCP flow. */}
       {signInDialogBrand &&
-        (signInDialogBrand.brand_id === 'goodreads' ? (
+        (signInDialogBrand.use_dpage_iframe ? (
           <GoodreadsConnectionModal
             isOpen={true}
             onClose={() => setSignInDialogBrand(null)}

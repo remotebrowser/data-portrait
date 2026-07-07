@@ -6,10 +6,10 @@ import { ServerLogger as Logger } from '../utils/logger/index.js';
 import {
   deleteBrowser,
   distillPage,
-  getDistilledHtml,
-  getDistilledJson,
+  getDistilled,
   navigatePage,
   prepareNewBrowser,
+  readDistilledOnce,
 } from '../services/remotebrowser.js';
 
 const GOODREADS_REVIEW_LIST_URL =
@@ -20,24 +20,9 @@ const GOODREADS_REVIEW_LIST_URL =
 const DPAGE_CSS = '/dpage.css';
 const DPAGE_JS = '/dpage-signin.js';
 
-const SPINNER_HTML = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Loading</title>
-    <link rel="stylesheet" href="${DPAGE_CSS}" />
-  </head>
-  <body>
-    <div class="content-wrapper">
-      <span class="spinner" aria-label="Loading" style="border-top-color: #333"></span>
-      <span>Loading...</span>
-    </div>
-  </body>
-</html>`;
-
-// Browsers can't redirect from a GET to a POST, so serve an auto-submitting form.
-function redirect(action: string): string {
+// A minimal styled loading page for the iframe; `extraBody` injects page-specific
+// markup (e.g. the auto-submitting redirect form) above the spinner.
+function loadingPage(extraBody = ''): string {
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -46,14 +31,21 @@ function redirect(action: string): string {
     <link rel="stylesheet" href="${DPAGE_CSS}" />
   </head>
   <body>
-    <form id="redirect" action="${action}" method="post"></form>
+    ${extraBody}
     <div class="content-wrapper">
       <span class="spinner" aria-label="Loading" style="border-top-color: #333"></span>
       <span>Loading...</span>
     </div>
-    <script>setTimeout(() => document.getElementById('redirect').submit(), 3000);</script>
   </body>
 </html>`;
+}
+
+// Browsers can't redirect from a GET to a POST, so serve an auto-submitting form.
+function redirect(action: string): string {
+  return loadingPage(
+    `<form id="redirect" action="${action}" method="post"></form>
+    <script>setTimeout(() => document.getElementById('redirect').submit(), 3000);</script>`
+  );
 }
 
 /**
@@ -100,32 +92,17 @@ function formatDistilledPage(
 }
 
 /**
- * Advance the distillation loop, then return the book-list JSON if it's ready,
- * otherwise the distilled HTML of the next sign-in step.
+ * Advance the distillation loop, then read the distilled page once: the
+ * book-list JSON if it's ready, otherwise the sign-in form HTML.
  */
 async function initiateDistill(
   browserId: string,
   pageId: string,
   fields: Record<string, string> = {}
-): Promise<{ json?: unknown[]; html?: string }> {
+): Promise<{ json?: unknown[]; html: string }> {
   await distillPage(browserId, pageId, fields);
-
-  try {
-    const distilled = await getDistilledJson<unknown[]>(browserId, pageId);
-    if (Array.isArray(distilled) && distilled.length > 0) {
-      return { json: distilled };
-    }
-  } catch (jsonError) {
-    Logger.info('No distilled JSON yet, falling back to distilled HTML', {
-      component: 'goodreads-handler',
-      operation: 'initiate-distill',
-      browserSessionId: browserId,
-      error: jsonError instanceof Error ? jsonError.message : String(jsonError),
-    });
-  }
-
-  const html = await getDistilledHtml(browserId, pageId);
-  return { html };
+  const { json, html } = await getDistilled(browserId, pageId);
+  return json && json.length > 0 ? { json, html } : { html };
 }
 
 function browserCreateHeaders(req: Request): Record<string, string | undefined> {
@@ -195,16 +172,12 @@ export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
 
   try {
     const { json, html } = await initiateDistill(browserId, pageId, fields);
-    if (html) {
-      res.type('text/html').send(formatDistilledPage(html, browserId, pageId));
-      return;
-    }
     if (json) {
       // Data is ready; show a spinner until the client's poll grabs it.
-      res.type('text/html').send(SPINNER_HTML);
-      return;
+      res.type('text/html').send(loadingPage());
+    } else {
+      res.type('text/html').send(formatDistilledPage(html, browserId, pageId));
     }
-    res.status(500).send();
   } catch (error) {
     Logger.error('Goodreads dpage step failed', error as Error, {
       component: 'goodreads-handler',
@@ -227,23 +200,12 @@ export const handleGoodreadsPoll = async (req: Request, res: Response) => {
     return;
   }
 
-  let content: unknown[] = [];
-  let status = 'PENDING';
-  try {
-    const distilled = await getDistilledJson<unknown[]>(browserId, pageId);
-    if (Array.isArray(distilled) && distilled.length > 0) {
-      content = distilled;
-      status = 'SUCCESS';
-    }
-  } catch {
-    // The distilled page isn't the book-list JSON yet (still on the sign-in /
-    // verification form). Expected until sign-in completes — stay PENDING.
-    Logger.debug('Goodreads book list not ready yet (still signing in)', {
-      component: 'goodreads-handler',
-      operation: 'poll',
-      browserSessionId: browserId,
-    });
-  }
+  // Single, fast read: if the distilled page isn't the book-list JSON yet
+  // (still on the sign-in / verification form, or not ready), stay PENDING and
+  // let the client's poll interval drive the retry — don't hold the request open.
+  const distilled = await readDistilledOnce(browserId, pageId);
+  const content = distilled?.json ?? [];
+  const status = content.length > 0 ? 'SUCCESS' : 'PENDING';
 
   res.json({ status, content });
 };

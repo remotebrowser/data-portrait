@@ -26,6 +26,36 @@ function toFetchHeaders(
   );
 }
 
+/** Poll a request until it returns 200 (or the retry window elapses). */
+async function fetchUntil200(
+  url: string,
+  init: RequestInit,
+  label: string
+): Promise<Response> {
+  const deadline = Date.now() + RETRY_TIMEOUT_MS;
+  let lastStatus: number | undefined;
+  while (Date.now() < deadline) {
+    const res = await fetch(url, init);
+    if (res.status === 200) return res;
+    lastStatus = res.status;
+    await sleep(RETRY_INTERVAL_MS);
+  }
+  throw new Error(`${label} never returned 200 (last status: ${lastStatus ?? 'unknown'})`);
+}
+
+/** A distilled page is either the book-list JSON array or the sign-in form HTML. */
+export type DistilledPage = { json?: unknown[]; html: string };
+
+function parseDistilled(text: string): DistilledPage {
+  try {
+    const parsed = JSON.parse(text);
+    if (Array.isArray(parsed)) return { json: parsed, html: text };
+  } catch {
+    // Not JSON — it's the distilled sign-in/verification form HTML.
+  }
+  return { html: text };
+}
+
 export async function prepareNewBrowser(
   headers: Record<string, string | undefined> = {}
 ): Promise<{ browserId: string; pageId: string }> {
@@ -79,21 +109,10 @@ export async function navigatePage(
   pageId: string,
   url: string
 ): Promise<void> {
-  const endpoint = `/api/v1/browsers/${browserId}/pages/${pageId}/navigate`;
-  const deadline = Date.now() + RETRY_TIMEOUT_MS;
-  let lastStatus: number | undefined;
-
-  while (Date.now() < deadline) {
-    const res = await fetch(`${buildUrl(endpoint)}?url=${encodeURIComponent(url)}`, {
-      method: 'POST',
-    });
-    if (res.status === 200) return;
-    lastStatus = res.status;
-    await sleep(RETRY_INTERVAL_MS);
-  }
-
-  throw new Error(
-    `Navigate to ${url} never returned 200 (last status: ${lastStatus ?? 'unknown'})`
+  await fetchUntil200(
+    `${buildUrl(`/api/v1/browsers/${browserId}/pages/${pageId}/navigate`)}?url=${encodeURIComponent(url)}`,
+    { method: 'POST' },
+    `Navigate to ${url}`
   );
 }
 
@@ -102,69 +121,47 @@ export async function distillPage(
   pageId: string,
   fields?: Record<string, string>
 ): Promise<void> {
-  const endpoint = `/api/v1/browsers/${browserId}/pages/${pageId}/distill`;
-  const body = new URLSearchParams(fields ?? {}).toString();
-  const deadline = Date.now() + RETRY_TIMEOUT_MS;
-  let lastStatus: number | undefined;
-
-  while (Date.now() < deadline) {
-    const res = await fetch(buildUrl(endpoint), {
+  await fetchUntil200(
+    buildUrl(`/api/v1/browsers/${browserId}/pages/${pageId}/distill`),
+    {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body,
-    });
-    if (res.status === 200) return;
-    lastStatus = res.status;
-    await sleep(RETRY_INTERVAL_MS);
-  }
-
-  throw new Error(
-    `Distill never returned 200 for ${browserId}/${pageId} (last status: ${lastStatus ?? 'unknown'})`
+      body: new URLSearchParams(fields ?? {}).toString(),
+    },
+    `Distill ${browserId}/${pageId}`
   );
 }
 
-export async function getDistilledJson<T = unknown>(
+/**
+ * Wait for the distilled page to be available, then return it (book-list JSON or
+ * sign-in form HTML). One fetch, one body read.
+ */
+export async function getDistilled(
   browserId: string,
   pageId: string
-): Promise<T> {
-  const endpoint = `/api/v1/browsers/${browserId}/pages/${pageId}/distilled`;
-  const deadline = Date.now() + RETRY_TIMEOUT_MS;
-  let lastStatus: number | undefined;
-
-  while (Date.now() < deadline) {
-    const res = await fetch(buildUrl(endpoint));
-    if (res.status === 200) {
-      return (await res.json()) as T;
-    }
-    lastStatus = res.status;
-    await sleep(RETRY_INTERVAL_MS);
-  }
-
-  throw new Error(
-    `Distilled endpoint never returned 200 for ${browserId}/${pageId} (last status: ${lastStatus ?? 'unknown'})`
+): Promise<DistilledPage> {
+  const res = await fetchUntil200(
+    buildUrl(`/api/v1/browsers/${browserId}/pages/${pageId}/distilled`),
+    {},
+    `Distilled ${browserId}/${pageId}`
   );
+  return parseDistilled(await res.text());
 }
 
-export async function getDistilledHtml(
+/**
+ * Single, non-blocking read of the distilled page for polling. Returns undefined
+ * when it isn't ready yet (non-200) so the caller can report PENDING immediately
+ * rather than holding the request open for the full retry window.
+ */
+export async function readDistilledOnce(
   browserId: string,
   pageId: string
-): Promise<string> {
-  const endpoint = `/api/v1/browsers/${browserId}/pages/${pageId}/distilled`;
-  const deadline = Date.now() + RETRY_TIMEOUT_MS;
-  let lastStatus: number | undefined;
-
-  while (Date.now() < deadline) {
-    const res = await fetch(buildUrl(endpoint));
-    if (res.status === 200) {
-      return await res.text();
-    }
-    lastStatus = res.status;
-    await sleep(RETRY_INTERVAL_MS);
-  }
-
-  throw new Error(
-    `Distilled endpoint never returned 200 for ${browserId}/${pageId} (last status: ${lastStatus ?? 'unknown'})`
+): Promise<DistilledPage | undefined> {
+  const res = await fetch(
+    buildUrl(`/api/v1/browsers/${browserId}/pages/${pageId}/distilled`)
   );
+  if (res.status !== 200) return undefined;
+  return parseDistilled(await res.text());
 }
 
 export async function deleteBrowser(browserId: string): Promise<void> {

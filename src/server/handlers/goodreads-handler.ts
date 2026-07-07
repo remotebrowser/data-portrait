@@ -235,12 +235,13 @@ export const handleGoodreadsPoll = async (req: Request, res: Response) => {
       content = distilled;
       status = 'SUCCESS';
     }
-  } catch (pollError) {
-    Logger.debug('Goodreads poll not ready', {
+  } catch {
+    // The distilled page isn't the book-list JSON yet (still on the sign-in /
+    // verification form). Expected until sign-in completes — stay PENDING.
+    Logger.debug('Goodreads book list not ready yet (still signing in)', {
       component: 'goodreads-handler',
       operation: 'poll',
       browserSessionId: browserId,
-      error: pollError instanceof Error ? pollError.message : String(pollError),
     });
   }
 

@@ -25,6 +25,8 @@ export function GoodreadsConnectionModal({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [target, setTarget] = useState<BrowserTarget | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Guard against React StrictMode's double-invoked effect creating two browsers.
+  const connectStartedRef = useRef(false);
 
   // Keep latest callbacks without retriggering the connect effect.
   const callbacks = useRef({ onClose, onSuccessConnect, brandConfig });
@@ -40,6 +42,10 @@ export function GoodreadsConnectionModal({
   // Create the remote browser + open the review list once per open.
   useEffect(() => {
     if (!isOpen) return;
+    // StrictMode invokes effects twice on mount; without this guard we'd POST
+    // /connect twice and leak a second (orphaned) remote browser.
+    if (connectStartedRef.current) return;
+    connectStartedRef.current = true;
     let cancelled = false;
     setError(null);
     setTarget(null);

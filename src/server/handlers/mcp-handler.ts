@@ -33,7 +33,7 @@ const brandTools: Record<string, BrandTool> = {
   amazon: { toolName: 'amazon_get_purchase_history', resultKey: 'amazon_purchase_history' },
   officedepot: { toolName: 'officedepot_get_order_history', resultKey: 'officedepot_order_history', detailsToolName: 'officedepot_get_order_history_details' },
   wayfair: { toolName: 'wayfair_get_order_history', resultKey: 'wayfair_order_history' },
-  goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list', extract: (ctx) => extractRetailer(ctx, EXTRACTORS.goodreads) },
+  goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list' },
   gofood: { toolName: 'gofood_get_purchase_history', resultKey: 'gofood_purchase_history' },
   garmin: { toolName: 'garmin_get_activities', resultKey: 'garmin_activity_history' },
   tokopedia: { toolName: 'tokopedia_get_purchase_history', resultKey: 'purchase_history' },
@@ -41,6 +41,16 @@ const brandTools: Record<string, BrandTool> = {
   doordash: { toolName: 'doordash_get_orders', resultKey: 'doordash_orders' },
   youtube: { toolName: 'youtube_get_watch_history', resultKey: 'youtube_watch_history' },
 };
+
+// Any brand with a registered retailer extractor self-extracts (drives the
+// remote browser) instead of calling its MCP data tool. Adding a retailer is
+// just its extractor file + a registry entry — no change needed here.
+for (const [brandId, extractor] of Object.entries(EXTRACTORS)) {
+  const tool = brandTools[brandId];
+  if (tool) {
+    tool.extract = (ctx) => extractRetailer(ctx, extractor);
+  }
+}
 
 const McpResponse = z.object({
   // Auth fields

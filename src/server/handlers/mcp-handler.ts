@@ -5,9 +5,10 @@ import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
 import { finalizeSignin } from '../services/mcp-service.js';
 import {
-  extractGoodreads,
+  EXTRACTORS,
+  extractRetailer,
   browserIdFromSigninId,
-} from '../services/goodreads-service.js';
+} from '../services/retailers/index.js';
 import { settings } from '../config.js';
 import { getAppHost } from '../utils/index.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
@@ -32,7 +33,7 @@ const brandTools: Record<string, BrandTool> = {
   amazon: { toolName: 'amazon_get_purchase_history', resultKey: 'amazon_purchase_history' },
   officedepot: { toolName: 'officedepot_get_order_history', resultKey: 'officedepot_order_history', detailsToolName: 'officedepot_get_order_history_details' },
   wayfair: { toolName: 'wayfair_get_order_history', resultKey: 'wayfair_order_history' },
-  goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list', extract: extractGoodreads },
+  goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list', extract: (ctx) => extractRetailer(ctx, EXTRACTORS.goodreads) },
   gofood: { toolName: 'gofood_get_purchase_history', resultKey: 'gofood_purchase_history' },
   garmin: { toolName: 'garmin_get_activities', resultKey: 'garmin_activity_history' },
   tokopedia: { toolName: 'tokopedia_get_purchase_history', resultKey: 'purchase_history' },

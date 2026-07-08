@@ -1,6 +1,7 @@
 import { RemoteBrowser } from '../remote-browser.js';
 import { ServerLogger as Logger } from '../../utils/logger/index.js';
 import { goodreads } from './goodreads.js';
+import { amazon } from './amazon.js';
 
 // navigate() doesn't await load, so poll the page until its data renders.
 const POLL_ATTEMPTS = 4;
@@ -26,6 +27,7 @@ export interface RetailerExtractor<T = Record<string, unknown>> {
 /** Registry of retailers that extract their own data via the remote browser. */
 export const EXTRACTORS: Record<string, RetailerExtractor> = {
   goodreads,
+  amazon,
 };
 
 /** A sign-in id is "{browser_id}--{target_id}--{mcp_session_id}"; we need browser_id. */

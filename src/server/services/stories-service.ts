@@ -241,25 +241,25 @@ ${userInstruction}`;
   return chapters;
 }
 
-function groupPurchaseDataByBrand(purchaseData: unknown[]): unknown[][] {
-  const brandMap = new Map<string, unknown[]>();
+function groupPurchaseDataByRetailer(purchaseData: unknown[]): unknown[][] {
+  const retailerMap = new Map<string, unknown[]>();
 
   for (const purchase of purchaseData) {
-    const brand =
+    const retailer =
       purchase !== null &&
       typeof purchase === 'object' &&
-      'brand' in purchase &&
-      typeof (purchase as Record<string, unknown>).brand === 'string'
-        ? ((purchase as Record<string, unknown>).brand as string)
+      'retailer' in purchase &&
+      typeof (purchase as Record<string, unknown>).retailer === 'string'
+        ? ((purchase as Record<string, unknown>).retailer as string)
         : 'unknown';
 
-    if (!brandMap.has(brand)) {
-      brandMap.set(brand, []);
+    if (!retailerMap.has(retailer)) {
+      retailerMap.set(retailer, []);
     }
-    brandMap.get(brand)!.push(purchase);
+    retailerMap.get(retailer)!.push(purchase);
   }
 
-  return Array.from(brandMap.values());
+  return Array.from(retailerMap.values());
 }
 
 async function generateStoryChapters(
@@ -268,10 +268,10 @@ async function generateStoryChapters(
   gender: string,
   traits: string[]
 ): Promise<StoryChapter[]> {
-  const brandGroups = groupPurchaseDataByBrand(purchaseData);
+  const retailerGroups = groupPurchaseDataByRetailer(purchaseData);
 
-  if (brandGroups.length > 1) {
-    return generateOneStoryPerBrand(brandGroups, imageStyle, gender, traits);
+  if (retailerGroups.length > 1) {
+    return generateOneStoryPerRetailer(retailerGroups, imageStyle, gender, traits);
   }
 
   return generateChapters({
@@ -287,8 +287,8 @@ async function generateStoryChapters(
   });
 }
 
-async function generateOneStoryPerBrand(
-  brandGroups: unknown[][],
+async function generateOneStoryPerRetailer(
+  retailerGroups: unknown[][],
   imageStyle: string[],
   gender: string,
   traits: string[]
@@ -307,9 +307,9 @@ async function generateOneStoryPerBrand(
   };
 
   const chapterBatches = await Promise.all(
-    brandGroups.map((brandPurchases) =>
+    retailerGroups.map((retailerPurchases) =>
       generateChapters({
-        purchaseData: brandPurchases,
+        purchaseData: retailerPurchases,
         ...commonConfig,
       })
     )

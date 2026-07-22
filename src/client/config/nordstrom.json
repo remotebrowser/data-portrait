@@ -1,6 +1,6 @@
 {
-  "brand_id": "nordstrom",
-  "brand_name": "Nordstrom",
+  "retailer_id": "nordstrom",
+  "retailer_name": "Nordstrom",
   "logo_url": "https://logos-world.net/wp-content/uploads/2022/01/Nordstrom-Symbol.png",
   "dataTransform": {
     "dataPath": "bundles.0.content.orders",

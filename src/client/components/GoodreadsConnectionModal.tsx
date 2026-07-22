@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { BrandConfig } from '../modules/Config.js';
+import type { RetailerConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import { toPurchaseHistory } from '../modules/DataTransformSchema.js';
 import { logger } from '@/utils/logger/index.js';
@@ -9,7 +9,7 @@ type GoodreadsConnectionModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccessConnect: (data: PurchaseHistory[]) => void;
-  brandConfig: BrandConfig;
+  retailerConfig: RetailerConfig;
 };
 
 type BrowserTarget = { browserId: string; pageId: string };
@@ -20,7 +20,7 @@ export function GoodreadsConnectionModal({
   isOpen,
   onClose,
   onSuccessConnect,
-  brandConfig,
+  retailerConfig,
 }: GoodreadsConnectionModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [target, setTarget] = useState<BrowserTarget | null>(null);
@@ -63,12 +63,12 @@ export function GoodreadsConnectionModal({
       } catch (err) {
         logger.error('Failed to start Goodreads connection', err as Error, {
           component: 'goodreads-connection-modal',
-          brandId: brandConfig.brand_id,
+          retailerId: retailerConfig.retailer_id,
         });
         setError('Failed to start connection. Please try again.');
       }
     })();
-  }, [isOpen, brandConfig.brand_id]);
+  }, [isOpen, retailerConfig.retailer_id]);
 
   // Poll for the distilled book list until sign-in completes.
   useEffect(() => {
@@ -92,7 +92,7 @@ export function GoodreadsConnectionModal({
             if (data.status === 'SUCCESS') {
               const purchaseHistory = toPurchaseHistory(
                 (data.content ?? []) as object[],
-                brandConfig
+                retailerConfig
               );
               stopped = true;
               callbacks.current.onSuccessConnect(purchaseHistory);
@@ -108,7 +108,7 @@ export function GoodreadsConnectionModal({
         } catch (err) {
           logger.error('Goodreads poll error', err as Error, {
             component: 'goodreads-connection-modal',
-            brandId: brandConfig.brand_id,
+            retailerId: retailerConfig.retailer_id,
           });
         }
         await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
@@ -118,8 +118,8 @@ export function GoodreadsConnectionModal({
     return () => {
       stopped = true;
     };
-    // brandConfig comes from parent state and is stable for the modal's lifetime.
-  }, [target, brandConfig]);
+    // retailerConfig comes from parent state and is stable for the modal's lifetime.
+  }, [target, retailerConfig]);
 
   return (
     <dialog
@@ -139,15 +139,15 @@ export function GoodreadsConnectionModal({
           <div className="flex items-center justify-center mb-6">
             <div className="bg-white rounded-lg p-2 w-12 h-12 flex items-center justify-center">
               <img
-                src={brandConfig.logo_url}
-                alt={`${brandConfig.brand_name} logo`}
+                src={retailerConfig.logo_url}
+                alt={`${retailerConfig.retailer_name} logo`}
                 className="w-10 h-10 object-contain"
               />
             </div>
           </div>
 
           <h3 className="text-xl font-semibold text-center leading-6 text-gray-900 mb-6">
-            Connect to {brandConfig.brand_name}
+            Connect to {retailerConfig.retailer_name}
           </h3>
 
           {error ? (
@@ -161,7 +161,7 @@ export function GoodreadsConnectionModal({
             <iframe
               src={`/getgather/dpage/${target.browserId}/${target.pageId}`}
               sandbox="allow-same-origin allow-scripts allow-forms"
-              title={`${brandConfig.brand_name} sign in`}
+              title={`${retailerConfig.retailer_name} sign in`}
               className="w-full h-[420px] rounded-xl border border-gray-200"
             />
           ) : (

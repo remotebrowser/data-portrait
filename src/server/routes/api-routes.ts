@@ -48,21 +48,21 @@ router.post('/goodreads/poll', handleGoodreadsPoll);
 router.post('/goodreads/finalize', handleGoodreadsFinalize);
 
 // Get dpage url
-router.get('/dpage-url/:brandId', handleDpageUrl);
+router.get('/dpage-url/:retailerId', handleDpageUrl);
 
-router.get('/dpage-signin-check/:brandId/:linkId', handleDpageSigninCheck);
+router.get('/dpage-signin-check/:retailerId/:linkId', handleDpageSigninCheck);
 
 // Get purchase history
-router.get('/purchase-history/:brandId', handlePurchaseHistory);
+router.get('/purchase-history/:retailerId', handlePurchaseHistory);
 
 // Get purchase history details (officedepot only)
 router.get(
-  '/purchase-history-details/:brandId/:orderId',
+  '/purchase-history-details/:retailerId/:orderId',
   handlePurchaseHistoryDetails
 );
 
 // MCP poll endpoint
-router.get('/mcp-poll/:brandId/:linkId', handleMcpPoll);
+router.get('/mcp-poll/:retailerId/:linkId', handleMcpPoll);
 
 // Portrait generation endpoint
 router.post(
@@ -85,7 +85,7 @@ router.post('/log', (req, res) => {
   Logger.info('Received orders from client', {
     component: 'api-routes',
     operation: 'receive-orders',
-    brand: req.body.brand,
+    retailer: req.body.retailer,
     orderCount: req.body.orders?.length || 0,
   });
   // Respond with 204 No Content to signal successful receipt without extra payload

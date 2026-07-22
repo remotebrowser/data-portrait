@@ -1,6 +1,6 @@
 {
-  "brand_id": "amazon",
-  "brand_name": "Amazon",
+  "retailer_id": "amazon",
+  "retailer_name": "Amazon",
   "logo_url": "https://i.pinimg.com/originals/01/ca/da/01cada77a0a7d326d85b7969fe26a728.jpg",
   "is_mandatory": true,
   "is_dpage": true,

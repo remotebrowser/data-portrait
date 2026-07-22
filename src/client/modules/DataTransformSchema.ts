@@ -1,8 +1,8 @@
 import { logger } from '@/utils/logger/index.js';
-import type { BrandConfig } from './Config.js';
+import type { RetailerConfig } from './Config.js';
 
 export type PurchaseHistory = {
-  brand: string;
+  retailer: string;
   order_date?: Date | null;
   order_total: string;
   order_id: string;
@@ -270,11 +270,11 @@ export function transformData(
  */
 export function toPurchaseHistory(
   content: Array<object> | object,
-  brandConfig: BrandConfig
+  retailerConfig: RetailerConfig
 ): PurchaseHistory[] {
-  const transformed = transformData(content, brandConfig.dataTransform);
+  const transformed = transformData(content, retailerConfig.dataTransform);
   return transformed.map((item) => ({
-    brand: brandConfig.brand_name,
+    retailer: retailerConfig.retailer_name,
     order_date: (item.order_date as Date) || null,
     order_total: item.order_total as string,
     order_id: item.order_id as string,

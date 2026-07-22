@@ -20,7 +20,7 @@ import tokopedia from '../config/tokopedia.json' with { type: 'json' };
 import shopee from '../config/shopee.json' with { type: 'json' };
 import doordash from '../config/doordash.json' with { type: 'json' };
 import youtube from '../config/youtube.json' with { type: 'json' };
-import type { BrandConfig } from '../modules/Config.js';
+import type { RetailerConfig } from '../modules/Config.js';
 import { type PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type {
   GeneratedImage,
@@ -34,17 +34,17 @@ import { log } from '../utils/log.js';
 import { useAnalytics } from '../hooks/useAnalytics.js';
 import { useFeatureFlags } from '../hooks/useFeatureFlags.js';
 
-const amazonConfig = amazon as BrandConfig;
-const wayfairConfig = wayfair as BrandConfig;
-const officedepotConfig = officedepot as BrandConfig;
-const goodreadsConfig = goodreads as BrandConfig;
-const gofoodConfig = gofood as BrandConfig;
-const garminConfig = garmin as BrandConfig;
-const tokopediaConfig = tokopedia as BrandConfig;
-const shopeeConfig = shopee as BrandConfig;
-const doordashConfig = doordash as BrandConfig;
-const youtubeConfig = youtube as BrandConfig;
-const BRANDS: Array<BrandConfig> = [
+const amazonConfig = amazon as RetailerConfig;
+const wayfairConfig = wayfair as RetailerConfig;
+const officedepotConfig = officedepot as RetailerConfig;
+const goodreadsConfig = goodreads as RetailerConfig;
+const gofoodConfig = gofood as RetailerConfig;
+const garminConfig = garmin as RetailerConfig;
+const tokopediaConfig = tokopedia as RetailerConfig;
+const shopeeConfig = shopee as RetailerConfig;
+const doordashConfig = doordash as RetailerConfig;
+const youtubeConfig = youtube as RetailerConfig;
+const RETAILERS: Array<RetailerConfig> = [
   amazonConfig,
   officedepotConfig,
   wayfairConfig,
@@ -57,21 +57,21 @@ const BRANDS: Array<BrandConfig> = [
   youtubeConfig,
 ];
 
-const EXCLUDED_BRANDS: Array<string> = [
+const EXCLUDED_RETAILERS: Array<string> = [
   // NOTE: exclude officedepot for now until successfully migrated to dpage
-  officedepotConfig.brand_id,
+  officedepotConfig.retailer_id,
 ];
 
-const EXCLUDED_BRAND_FROM_UNIQUE_FILTER: Array<string> = [
-  garminConfig.brand_name,
-  youtubeConfig.brand_name,
+const EXCLUDED_RETAILER_FROM_UNIQUE_FILTER: Array<string> = [
+  garminConfig.retailer_name,
+  youtubeConfig.retailer_name,
 ];
 
 // Sample data for demo purposes
 const sampleOrders: PurchaseHistory[] = [
   {
     order_id: 'demo-001',
-    brand: 'Amazon',
+    retailer: 'Amazon',
     order_date: new Date('2024-01-15'),
     order_total: '$89.97',
     product_names: [
@@ -83,7 +83,7 @@ const sampleOrders: PurchaseHistory[] = [
   },
   {
     order_id: 'demo-003',
-    brand: 'Goodreads',
+    retailer: 'Goodreads',
     order_date: new Date('2024-01-08'),
     order_total: '$0.00',
     product_names: [
@@ -99,7 +99,7 @@ const sampleOrders: PurchaseHistory[] = [
   },
   {
     order_id: 'demo-004',
-    brand: 'GoFood',
+    retailer: 'GoFood',
     order_date: new Date('2024-01-20'),
     order_total: 'Rp 125,000',
     product_names: [
@@ -122,7 +122,7 @@ export function DataPortrait() {
   const { config: appConfig, isFeatureEnabled } = useFeatureFlags();
 
   const [orders, setOrders] = useState<PurchaseHistory[]>([]);
-  const [connectedBrands, setConnectedBrands] = useState<string[]>([]);
+  const [connectedRetailers, setConnectedRetailers] = useState<string[]>([]);
   const [selectedGender, setSelectedGender] = useState(getRandomGender());
   const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -139,23 +139,23 @@ export function DataPortrait() {
   const [selectedPreview, setSelectedPreview] = useState<GeneratedImage | null>(
     null
   );
-  const [signInDialogBrand, setSignInDialogBrand] =
-    useState<BrandConfig | null>(null);
+  const [signInDialogRetailer, setSignInDialogRetailer] =
+    useState<RetailerConfig | null>(null);
 
   const doordashEnabled = isFeatureEnabled('doordash');
 
-  const filteredBrands = useMemo(() => {
-    let brandsToShow = BRANDS.filter(
-      (brand) => !EXCLUDED_BRANDS.includes(brand.brand_id)
+  const filteredRetailers = useMemo(() => {
+    let retailersToShow = RETAILERS.filter(
+      (retailer) => !EXCLUDED_RETAILERS.includes(retailer.retailer_id)
     );
 
     if (!doordashEnabled) {
-      brandsToShow = brandsToShow.filter(
-        (brand) => brand.brand_id !== doordashConfig.brand_id
+      retailersToShow = retailersToShow.filter(
+        (retailer) => retailer.retailer_id !== doordashConfig.retailer_id
       );
     }
 
-    return brandsToShow;
+    return retailersToShow;
   }, [doordashEnabled]);
 
   // Track page view on component mount
@@ -165,25 +165,25 @@ export function DataPortrait() {
     });
   }, [trackEvent]);
 
-  const handleSuccessConnect = (brandName: string, data: PurchaseHistory[]) => {
+  const handleSuccessConnect = (retailerName: string, data: PurchaseHistory[]) => {
     log({
       message: 'Received orders from client',
-      data: { brandName, data },
+      data: { retailerName, data },
       type: 'server',
     });
 
     trackEvent('brand_connected_successful', {
-      brand_name: brandName,
+      brand_name: retailerName,
       orders_count: data.length,
-      connected_brands_count: connectedBrands.length,
-      connected_brands: connectedBrands,
+      connected_brands_count: connectedRetailers.length,
+      connected_brands: connectedRetailers,
       data: data,
     });
 
-    setConnectedBrands((prev) => [...prev, brandName]);
+    setConnectedRetailers((prev) => [...prev, retailerName]);
 
     const shouldSkipUniqueFilter =
-      EXCLUDED_BRAND_FROM_UNIQUE_FILTER.includes(brandName);
+      EXCLUDED_RETAILER_FROM_UNIQUE_FILTER.includes(retailerName);
 
     setOrders((prev) => {
       const combined = [...prev, ...data];
@@ -202,13 +202,13 @@ export function DataPortrait() {
     });
   };
 
-  const handleOpenSignInDialog = (brandConfig: BrandConfig) => {
-    setSignInDialogBrand(brandConfig);
+  const handleOpenSignInDialog = (retailerConfig: RetailerConfig) => {
+    setSignInDialogRetailer(retailerConfig);
   };
 
   const handleSignInSuccess = (data: PurchaseHistory[]) => {
-    if (signInDialogBrand) {
-      handleSuccessConnect(signInDialogBrand.brand_name, data);
+    if (signInDialogRetailer) {
+      handleSuccessConnect(signInDialogRetailer.retailer_name, data);
     }
   };
   const toggleOrderExpansion = (orderId: string, productName: string) => {
@@ -233,11 +233,11 @@ export function DataPortrait() {
     setSelectedItems(newSelected);
   };
 
-  const toggleBrandSelection = (brand: string, selectAll: boolean) => {
+  const toggleRetailerSelection = (retailer: string, selectAll: boolean) => {
     const newSelected = new Set(selectedItems);
-    const brandOrders = orders.filter((order) => order.brand === brand);
+    const retailerOrders = orders.filter((order) => order.retailer === retailer);
 
-    brandOrders.forEach((order) => {
+    retailerOrders.forEach((order) => {
       order.product_names.forEach((productName) => {
         const key = `${order.order_id}__${productName}`;
         if (selectAll) {
@@ -289,7 +289,7 @@ export function DataPortrait() {
 
   const loadSampleData = () => {
     setOrders(sampleOrders);
-    setConnectedBrands(['Amazon', 'Goodreads']);
+    setConnectedRetailers(['Amazon', 'Goodreads']);
 
     // Select all sample items by default
     const newSelected = new Set<string>();
@@ -304,10 +304,10 @@ export function DataPortrait() {
   const clearData = () => {
     trackEvent('data_cleared', {
       orders_count: orders.length,
-      connected_brands_count: connectedBrands.length,
+      connected_brands_count: connectedRetailers.length,
     });
     setOrders([]);
-    setConnectedBrands([]);
+    setConnectedRetailers([]);
     setExpandedOrders(new Set());
     setSelectedItems(new Set());
   };
@@ -323,7 +323,7 @@ export function DataPortrait() {
     trackEvent('portrait_generation_started', {
       orders_count: orders.length,
       selected_items_count: selectedItemsCount,
-      connected_brands: connectedBrands,
+      connected_brands: connectedRetailers,
       selected_gender: selectedGender,
       selected_traits: selectedTraits,
       selected_image_style: selectedImageStyle,
@@ -391,17 +391,17 @@ export function DataPortrait() {
       <div className="flex-1 flex flex-col h-screen">
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 pt-20 sm:pt-20 lg:pt-4">
           {/* Empty State - Show when no data is connected */}
-          {connectedBrands.length === 0 && (
+          {connectedRetailers.length === 0 && (
             <EmptyState
               onLoadSampleData={loadSampleData}
               onOpenSidebar={() => setIsSidebarOpen(true)}
             />
           )}
 
-          {/* Empty State - Show when brand(s) connected but no orders */}
+          {/* Empty State - Show when retailer(s) connected but no orders */}
           <EmptyData
-            visible={connectedBrands.length > 0 && orders.length === 0}
-            connectedBrands={connectedBrands}
+            visible={connectedRetailers.length > 0 && orders.length === 0}
+            connectedRetailers={connectedRetailers}
             onLoadSampleData={loadSampleData}
             onOpenSidebar={() => setIsSidebarOpen(true)}
           />
@@ -409,17 +409,17 @@ export function DataPortrait() {
           {/* Purchase Data Display */}
           <PurchaseDataDisplay
             orders={orders}
-            connectedBrands={connectedBrands}
+            connectedRetailers={connectedRetailers}
             expandedOrders={expandedOrders}
             selectedItems={selectedItems}
             onToggleOrderExpansion={toggleOrderExpansion}
             onToggleItemSelection={toggleItemSelection}
-            onToggleBrandSelection={toggleBrandSelection}
+            onToggleRetailerSelection={toggleRetailerSelection}
             onClearData={clearData}
           />
 
-          {/* Generated Images Grid - Only show if we have connected brands */}
-          {connectedBrands.length > 0 && (
+          {/* Generated Images Grid - Only show if we have connected retailers */}
+          {connectedRetailers.length > 0 && (
             <GeneratedImagesGrid
               generatedImages={generatedImages}
               isGenerating={isGenerating}
@@ -431,7 +431,7 @@ export function DataPortrait() {
       </div>
 
       {/* Floating Action Button - Bottom */}
-      {connectedBrands.length > 0 && (
+      {connectedRetailers.length > 0 && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-60 lg:hidden">
           <Button
             onClick={generatePortrait}
@@ -465,8 +465,8 @@ export function DataPortrait() {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
-        brands={filteredBrands}
-        connectedBrands={connectedBrands}
+        retailers={filteredRetailers}
+        connectedRetailers={connectedRetailers}
         selectedGender={selectedGender}
         selectedTraits={selectedTraits}
         selectedImageStyle={selectedImageStyle}
@@ -484,23 +484,23 @@ export function DataPortrait() {
         enableImageUpload={appConfig.allowFaceUpload}
       />
 
-      {/* Sign In Dialog — brands opting into the iframe dpage flow (config
+      {/* Sign In Dialog — retailers opting into the iframe dpage flow (config
           `use_dpage_iframe`) use GoodreadsConnectionModal; others use the
           credential-form + MCP flow. */}
-      {signInDialogBrand &&
-        (signInDialogBrand.use_dpage_iframe ? (
+      {signInDialogRetailer &&
+        (signInDialogRetailer.use_dpage_iframe ? (
           <GoodreadsConnectionModal
             isOpen={true}
-            onClose={() => setSignInDialogBrand(null)}
+            onClose={() => setSignInDialogRetailer(null)}
             onSuccessConnect={handleSignInSuccess}
-            brandConfig={signInDialogBrand}
+            retailerConfig={signInDialogRetailer}
           />
         ) : (
           <SignInDialog
             isOpen={true}
-            onClose={() => setSignInDialogBrand(null)}
+            onClose={() => setSignInDialogRetailer(null)}
             onSuccessSignin={handleSignInSuccess}
-            brandConfig={signInDialogBrand}
+            retailerConfig={signInDialogRetailer}
           />
         ))}
 

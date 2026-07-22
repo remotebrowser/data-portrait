@@ -1,6 +1,6 @@
 {
-  "brand_id": "youtube",
-  "brand_name": "YouTube",
+  "retailer_id": "youtube",
+  "retailer_name": "YouTube",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg",
   "is_mandatory": false,
   "is_dpage": true,

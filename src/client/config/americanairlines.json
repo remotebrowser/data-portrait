@@ -1,7 +1,7 @@
 {
   "integration": {
-    "brand_id": "americanairlines",
-    "brand_name": "American Airlines",
+    "retailer_id": "americanairlines",
+    "retailer_name": "American Airlines",
     "logo_url": "https://download.logo.wine/logo/American_Airlines/American_Airlines-Logo.wine.png"
   },
   "branding": {

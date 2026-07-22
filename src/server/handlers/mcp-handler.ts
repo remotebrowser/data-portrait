@@ -8,13 +8,13 @@ import { settings } from '../config.js';
 import { getAppHost } from '../utils/index.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 
-interface BrandTool {
+interface RetailerTool {
   toolName: string;
   resultKey: string;
   detailsToolName?: string;
 }
 
-const brandTools: Record<string, BrandTool> = {
+const retailerTools: Record<string, RetailerTool> = {
   amazon: { toolName: 'amazon_get_purchase_history', resultKey: 'amazon_purchase_history' },
   officedepot: { toolName: 'officedepot_get_order_history', resultKey: 'officedepot_order_history', detailsToolName: 'officedepot_get_order_history_details' },
   wayfair: { toolName: 'wayfair_get_order_history', resultKey: 'wayfair_order_history' },
@@ -125,11 +125,11 @@ function splitDoorDashOrders(orders: Array<unknown>): Array<unknown> {
 }
 
 export const handlePurchaseHistory = async (req: Request, res: Response) => {
-  const { brandId } = req.params;
+  const { retailerId } = req.params;
 
-  const brand = brandTools[brandId];
-  if (!brand) {
-    res.status(400).json({ error: 'Invalid brand name' });
+  const retailer = retailerTools[retailerId];
+  if (!retailer) {
+    res.status(400).json({ error: 'Invalid retailer name' });
     return;
   }
 
@@ -137,9 +137,9 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
   const mcpClient = await mcpClientManager.get({
     sessionId: req.sessionID,
     clientIp,
-    brandId,
+    retailerId,
   });
-  const result = await mcpClient.callTool({ name: brand.toolName });
+  const result = await mcpClient.callTool({ name: retailer.toolName });
 
   const sc = result.structuredContent as Record<string, unknown> | undefined;
 
@@ -156,20 +156,20 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
     return;
   }
 
-  const rawContent = sc?.[brand.resultKey];
+  const rawContent = sc?.[retailer.resultKey];
   let content: unknown[] = [];
   if (rawContent) {
     content =
       typeof rawContent === 'string' ? JSON.parse(rawContent) : (rawContent as unknown[]);
   }
 
-  if (brandId === 'doordash' && Array.isArray(content)) {
+  if (retailerId === 'doordash' && Array.isArray(content)) {
     content = splitDoorDashOrders(content);
   }
 
   if (content.length > 0) {
     analytics.track(req.sessionID, 'data_retrieved_successful', {
-      brand_name: brandId,
+      brand_name: retailerId,
       data_count: content.length,
       purchase_history: content,
       client_ip: clientIp,
@@ -183,10 +183,10 @@ export const handlePurchaseHistoryDetails = async (
   req: Request,
   res: Response
 ) => {
-  const { brandId, orderId } = req.params;
-  const brand = brandTools[brandId];
-  if (!brand?.detailsToolName) {
-    res.status(400).json({ error: 'Invalid brand name' });
+  const { retailerId, orderId } = req.params;
+  const retailer = retailerTools[retailerId];
+  if (!retailer?.detailsToolName) {
+    res.status(400).json({ error: 'Invalid retailer name' });
     return;
   }
 
@@ -194,10 +194,10 @@ export const handlePurchaseHistoryDetails = async (
   const mcpClient = await mcpClientManager.get({
     sessionId: req.sessionID,
     clientIp,
-    brandId,
+    retailerId,
   });
   const result = await mcpClient.callTool({
-    name: brand.detailsToolName,
+    name: retailer.detailsToolName,
     arguments: { order_id: orderId },
   });
 
@@ -224,12 +224,12 @@ export const handlePurchaseHistoryDetails = async (
 };
 
 export const handleMcpPoll = async (req: Request, res: Response) => {
-  const { brandId, linkId } = req.params;
+  const { retailerId, linkId } = req.params;
   const clientIp = geolocationService.getClientIp(req);
   const mcpClient = await mcpClientManager.get({
     sessionId: req.sessionID,
     clientIp,
-    brandId,
+    retailerId,
   });
   const result = await mcpClient.callTool({
     name: 'poll_signin',
@@ -254,20 +254,20 @@ export const handleMcpPoll = async (req: Request, res: Response) => {
 };
 
 export const handleDpageUrl = async (req: Request, res: Response) => {
-  const { brandId } = req.params;
+  const { retailerId } = req.params;
 
-  const brand = brandTools[brandId];
-  if (!brand) {
-    res.status(400).json({ error: 'Invalid brand name' });
+  const retailer = retailerTools[retailerId];
+  if (!retailer) {
+    res.status(400).json({ error: 'Invalid retailer name' });
     return;
   }
-  const toolName = brand.toolName;
+  const toolName = retailer.toolName;
 
   const clientIp = geolocationService.getClientIp(req);
   const mcpClient = await mcpClientManager.get({
     sessionId: req.sessionID,
     clientIp,
-    brandId,
+    retailerId,
   });
   const result = await mcpClient.callTool({ name: toolName });
 
@@ -303,14 +303,14 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
   }
 
   // Tool returned data directly (user already signed in)
-  const rawContent = mcpResponse[brand.resultKey];
+  const rawContent = mcpResponse[retailer.resultKey];
 
   let content: unknown[] = [];
   if (rawContent) {
     content =
       typeof rawContent === 'string' ? JSON.parse(rawContent as string) : (rawContent as unknown[]);
   }
-  if (brandId === 'doordash' && Array.isArray(content)) {
+  if (retailerId === 'doordash' && Array.isArray(content)) {
     content = splitDoorDashOrders(content);
   }
 
@@ -318,12 +318,12 @@ export const handleDpageUrl = async (req: Request, res: Response) => {
 };
 
 export const handleDpageSigninCheck = async (req: Request, res: Response) => {
-  const { brandId, linkId } = req.params;
+  const { retailerId, linkId } = req.params;
   const clientIp = geolocationService.getClientIp(req);
   const mcpClient = await mcpClientManager.get({
     sessionId: req.sessionID,
     clientIp,
-    brandId,
+    retailerId,
   });
   const checkResult = await mcpClient.callTool({
     name: 'check_signin',
@@ -345,20 +345,20 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
     return;
   }
 
-  // Sign-in complete — call the brand tool again to fetch data
-  const brand = brandTools[brandId];
+  // Sign-in complete — call the retailer tool again to fetch data
+  const retailer = retailerTools[retailerId];
   let content: unknown[] | null = null;
   let dataFetchOk = false;
 
-  if (brand) {
+  if (retailer) {
     try {
-      const dataResult = await mcpClient.callTool({ name: brand.toolName }, 0);
-      Logger.debug('Brand tool response', {
+      const dataResult = await mcpClient.callTool({ name: retailer.toolName }, 0);
+      Logger.debug('Retailer tool response', {
         component: 'mcp-handler',
         operation: 'dpage-signin-check',
-        brandId,
+        retailerId,
         isError: dataResult.isError,
-        resultKey: brand.resultKey,
+        resultKey: retailer.resultKey,
         structuredContentKeys: dataResult.structuredContent
           ? Object.keys(dataResult.structuredContent as Record<string, unknown>)
           : null,
@@ -366,7 +366,7 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
 
       if (!dataResult.isError && dataResult.structuredContent) {
         const sc = dataResult.structuredContent as Record<string, unknown>;
-        const rawContent = sc[brand.resultKey];
+        const rawContent = sc[retailer.resultKey];
 
         if (rawContent) {
           content =
@@ -376,15 +376,15 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
           dataFetchOk = true;
         }
 
-        if (brandId === 'doordash' && Array.isArray(content)) {
+        if (retailerId === 'doordash' && Array.isArray(content)) {
           content = splitDoorDashOrders(content);
         }
       }
     } catch (err) {
-      Logger.warn('Brand tool call failed after signin', {
+      Logger.warn('Retailer tool call failed after signin', {
         component: 'mcp-handler',
         operation: 'dpage-signin-check',
-        brandId,
+        retailerId,
         error: err instanceof Error ? err.message : String(err),
       });
     }
@@ -408,7 +408,7 @@ export const handleDpageSigninCheck = async (req: Request, res: Response) => {
     finalizeSignin({
       sessionId: req.sessionID,
       clientIp,
-      brandId,
+      retailerId,
       signinId: linkId,
     });
   }

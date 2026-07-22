@@ -1,6 +1,6 @@
 {
-  "brand_id": "doordash",
-  "brand_name": "DoorDash",
+  "retailer_id": "doordash",
+  "retailer_name": "DoorDash",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/DoorDash_Logo.svg/3840px-DoorDash_Logo.svg.png?_=20190413221151",
   "is_mandatory": false,
   "is_dpage": true,

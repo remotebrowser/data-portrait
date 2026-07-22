@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { BrandConfig } from '../modules/Config.js';
+import type { RetailerConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 import { toPurchaseHistory } from '../modules/DataTransformSchema.js';
 import { logger } from '@/utils/logger/index.js';
@@ -10,7 +10,7 @@ type SignInDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccessSignin: (data: PurchaseHistory[]) => void;
-  brandConfig: BrandConfig;
+  retailerConfig: RetailerConfig;
 };
 
 type LoadingState = 'CONNECTING' | 'SIGNING_IN' | 'RETRIEVING_DATA' | null;
@@ -24,7 +24,7 @@ export function SignInDialog({
   isOpen,
   onClose,
   onSuccessSignin,
-  brandConfig,
+  retailerConfig,
 }: SignInDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [credentials, setCredentials] = useState<Record<string, string>>({});
@@ -36,7 +36,7 @@ export function SignInDialog({
   const loadPurchaseDataStream = async () => {
     try {
       const response = await fetch(
-        `/getgather/dpage-url/${brandConfig.brand_id}`,
+        `/getgather/dpage-url/${retailerConfig.retailer_id}`,
         {
           method: 'GET',
           headers: {
@@ -58,7 +58,7 @@ export function SignInDialog({
     } catch (error) {
       logger.error('Error loading purchase data stream', error as Error, {
         component: 'signin-dialog',
-        brandId: brandConfig.brand_id,
+        retailerId: retailerConfig.retailer_id,
       });
       setPollingError(
         error instanceof Error ? error.message : 'Failed to load purchase data'
@@ -82,13 +82,13 @@ export function SignInDialog({
     setLoadingState(null);
     setShowFollowUpForm(false);
     const initial: Record<string, string> = {};
-    brandConfig.schema
+    retailerConfig.schema
       .filter((field) => field.type !== 'click')
       .forEach((field) => {
         initial[field.name] = '';
       });
     setCredentials(initial);
-  }, [isOpen, brandConfig]);
+  }, [isOpen, retailerConfig]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -111,7 +111,7 @@ export function SignInDialog({
     while (true) {
       try {
         const pollResult = await fetch(
-          `/getgather/dpage-signin-check/${brandConfig.brand_id}/${signinData.link_id}`
+          `/getgather/dpage-signin-check/${retailerConfig.retailer_id}/${signinData.link_id}`
         );
 
         if (!pollResult.ok) {
@@ -121,7 +121,7 @@ export function SignInDialog({
         const data = await pollResult.json();
 
         if (data.auth_completed) {
-          const purchaseHistory = toPurchaseHistory(data.content, brandConfig);
+          const purchaseHistory = toPurchaseHistory(data.content, retailerConfig);
 
           setLoadingState('RETRIEVING_DATA');
           onClose();
@@ -133,7 +133,7 @@ export function SignInDialog({
       } catch (error) {
         logger.error('Polling error', error as Error, {
           component: 'signin-dialog',
-          brandId: brandConfig.brand_id,
+          retailerId: retailerConfig.retailer_id,
         });
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
@@ -170,7 +170,7 @@ export function SignInDialog({
     } catch (error) {
       logger.error('Error submitting credentials', error as Error, {
         component: 'signin-dialog',
-        brandId: brandConfig.brand_id,
+        retailerId: retailerConfig.retailer_id,
       });
       setPollingError(
         error instanceof Error ? error.message : 'Failed to submit credentials'
@@ -188,7 +188,7 @@ export function SignInDialog({
     } catch (error) {
       logger.error('Error starting connection', error as Error, {
         component: 'signin-dialog',
-        brandId: brandConfig.brand_id,
+        retailerId: retailerConfig.retailer_id,
       });
       setPollingError('Failed to start connection. Please try again.');
       setLoadingState(null);
@@ -221,15 +221,15 @@ export function SignInDialog({
           <div className="flex items-center justify-center mb-6">
             <div className="bg-white rounded-lg p-2 w-12 h-12 flex items-center justify-center">
               <img
-                src={brandConfig.logo_url}
-                alt={`${brandConfig.brand_name} logo`}
+                src={retailerConfig.logo_url}
+                alt={`${retailerConfig.retailer_name} logo`}
                 className="w-10 h-10 object-contain"
               />
             </div>
           </div>
 
           <h3 className="text-xl font-semibold text-center leading-6 text-gray-900 mb-6">
-            Connect to {brandConfig.brand_name}
+            Connect to {retailerConfig.retailer_name}
           </h3>
 
           {pollingError ? (
@@ -270,7 +270,7 @@ export function SignInDialog({
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
-              {brandConfig.schema
+              {retailerConfig.schema
                 .filter((field) => field.type !== 'click')
                 .map((field) => (
                   <div key={field.name}>
@@ -310,7 +310,7 @@ export function SignInDialog({
                 <Button
                   type="submit"
                   disabled={
-                    !brandConfig.schema
+                    !retailerConfig.schema
                       .filter((f) => f.type !== 'click')
                       .every((f) => credentials[f.name]?.trim())
                   }

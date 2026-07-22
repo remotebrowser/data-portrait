@@ -8,7 +8,7 @@ import { ServerLogger as Logger } from './utils/logger/index.js';
 import { settings } from './config.js';
 import { geolocationService } from './services/geolocation-service.js';
 
-// Currently just define the MCP url path for each brand here for simplicity
+// Currently just define the MCP url path for each retailer here for simplicity
 const MCP_URL_PATHS: Record<string, string> = {
   goodreads: 'mcp-books',
   amazon: 'mcp-shopping',
@@ -20,23 +20,23 @@ class MCPClient {
   private lastAccessed: Date;
   private sessionId: string;
   private clientIp: string;
-  private brandId: string;
+  private retailerId: string;
   private signinId: string | null = null;
 
   constructor({
     sessionId,
     clientIp,
-    brandId,
+    retailerId,
   }: {
     sessionId: string;
     clientIp: string;
-    brandId: string;
+    retailerId: string;
   }) {
     this.client = this.createClient();
     this.lastAccessed = new Date();
     this.sessionId = sessionId;
     this.clientIp = clientIp;
-    this.brandId = brandId;
+    this.retailerId = retailerId;
   }
 
   private createClient(): Client {
@@ -64,7 +64,7 @@ class MCPClient {
         `Bearer ${settings.GETGATHER_APP_KEY}_${this.sessionId}`;
     }
 
-    const mcpUrlPath = MCP_URL_PATHS[this.brandId] ?? 'mcp';
+    const mcpUrlPath = MCP_URL_PATHS[this.retailerId] ?? 'mcp';
     return new StreamableHTTPClientTransport(
       new URL(`${settings.GETGATHER_URL}/${mcpUrlPath}`),
       { requestInit: { headers } }
@@ -99,7 +99,7 @@ class MCPClient {
           operation: 'call-tool',
           toolName: params.name,
           sessionId: this.sessionId,
-          brandId: this.brandId,
+          retailerId: this.retailerId,
         });
         return await this.client.callTool(params, undefined, {
           timeout: 6000000,
@@ -117,7 +117,7 @@ class MCPClient {
             attempt: attempt + 1,
             maxRetries: maxRetries + 1,
             sessionId: this.sessionId,
-            brandId: this.brandId,
+            retailerId: this.retailerId,
             error: (err as Error).message,
           }
         );
@@ -170,15 +170,15 @@ class MCPClientManager {
   async get({
     sessionId,
     clientIp,
-    brandId,
+    retailerId,
   }: {
     sessionId: string;
     clientIp: string;
-    brandId: string;
+    retailerId: string;
   }): Promise<MCPClient> {
-    const key = `${sessionId}-${brandId}`;
+    const key = `${sessionId}-${retailerId}`;
     if (!this.clients.has(key)) {
-      const mcpClient = new MCPClient({ sessionId, clientIp, brandId });
+      const mcpClient = new MCPClient({ sessionId, clientIp, retailerId });
       await mcpClient.connect();
       this.clients.set(key, mcpClient);
     }

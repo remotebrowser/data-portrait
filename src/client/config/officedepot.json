@@ -1,6 +1,6 @@
 {
-  "brand_id": "officedepot",
-  "brand_name": "Office Depot",
+  "retailer_id": "officedepot",
+  "retailer_name": "Office Depot",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Office-depot-logo.png",
   "dataTransform": {
     "dataPath": "bundles.1.content",

@@ -1,6 +1,6 @@
 {
-  "brand_id": "gofood",
-  "brand_name": "GoFood",
+  "retailer_id": "gofood",
+  "retailer_name": "GoFood",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Gofood_logo.svg/1280px-Gofood_logo.svg.png",
   "is_mandatory": false,
   "is_dpage": true,

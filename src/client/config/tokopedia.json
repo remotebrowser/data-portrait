@@ -1,6 +1,6 @@
 {
-  "brand_id": "tokopedia",
-  "brand_name": "Tokopedia",
+  "retailer_id": "tokopedia",
+  "retailer_name": "Tokopedia",
   "logo_url": "https://lf-web-assets.tokopedia-static.net/obj/tokopedia-web-sg/arael_v3/0c292173.png",
   "is_mandatory": false,
   "is_dpage": true,

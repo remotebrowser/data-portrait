@@ -73,7 +73,7 @@ class PromptService {
 
     if (purchaseData && purchaseData.length > 0) {
       for (const order of purchaseData) {
-        if (order.brand === 'Goodreads') {
+        if (order.retailer === 'Goodreads') {
           books.push(...order.product_names);
         } else {
           products.push(...order.product_names);

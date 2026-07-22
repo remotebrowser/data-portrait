@@ -2,14 +2,14 @@ import { EmptyStateActions } from './EmptyState.js';
 
 type EmptyDataProps = {
   visible?: boolean;
-  connectedBrands: string[];
+  connectedRetailers: string[];
   onLoadSampleData: () => void;
   onOpenSidebar: () => void;
 };
 
 export function EmptyData({
   visible = false,
-  connectedBrands,
+  connectedRetailers,
   onLoadSampleData,
   onOpenSidebar,
 }: EmptyDataProps) {
@@ -43,9 +43,9 @@ export function EmptyData({
         </p>
       </div>
 
-      {connectedBrands.length > 0 && (
+      {connectedRetailers.length > 0 && (
         <p className="text-sm text-gray-500">
-          Connected: {connectedBrands.join(', ')}
+          Connected: {connectedRetailers.join(', ')}
         </p>
       )}
 

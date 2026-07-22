@@ -12,41 +12,41 @@ import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 
 type PurchaseDataDisplayProps = {
   orders: PurchaseHistory[];
-  connectedBrands: string[];
+  connectedRetailers: string[];
   expandedOrders: Set<string>;
   selectedItems: Set<string>;
   onToggleOrderExpansion: (orderId: string, productName: string) => void;
   onToggleItemSelection: (orderId: string, productName: string) => void;
-  onToggleBrandSelection: (brand: string, selectAll: boolean) => void;
+  onToggleRetailerSelection: (retailer: string, selectAll: boolean) => void;
   onClearData: () => void;
 };
 
 export function PurchaseDataDisplay({
   orders,
-  connectedBrands,
+  connectedRetailers,
   expandedOrders,
   selectedItems,
   onToggleOrderExpansion,
   onToggleItemSelection,
-  onToggleBrandSelection,
+  onToggleRetailerSelection,
   onClearData,
 }: PurchaseDataDisplayProps) {
-  const groupedOrdersByBrand = useMemo(() => {
+  const groupedOrdersByRetailer = useMemo(() => {
     const grouped = orders.reduce(
       (acc, order) => {
-        const brand = order.brand;
-        if (!acc[brand]) {
-          acc[brand] = [];
+        const retailer = order.retailer;
+        if (!acc[retailer]) {
+          acc[retailer] = [];
         }
-        acc[brand].push(order);
+        acc[retailer].push(order);
         return acc;
       },
       {} as Record<string, PurchaseHistory[]>
     );
 
-    // Sort orders within each brand by date (newest first)
-    Object.keys(grouped).forEach((brand) => {
-      grouped[brand].sort((a, b) => {
+    // Sort orders within each retailer by date (newest first)
+    Object.keys(grouped).forEach((retailer) => {
+      grouped[retailer].sort((a, b) => {
         return (
           (b.order_date ? new Date(b.order_date).getTime() : 0) -
           (a.order_date ? new Date(a.order_date).getTime() : 0)
@@ -72,8 +72,8 @@ export function PurchaseDataDisplay({
                 (total, order) => total + order.product_names.length,
                 0
               )}{' '}
-              products extracted from {connectedBrands.length}{' '}
-              {connectedBrands.length === 1 ? 'data source' : 'data sources'} •
+              products extracted from {connectedRetailers.length}{' '}
+              {connectedRetailers.length === 1 ? 'data source' : 'data sources'} •
               Analyzed for AI personalization patterns
             </CardDescription>
           </div>
@@ -91,12 +91,12 @@ export function PurchaseDataDisplay({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3">
-          {Object.entries(groupedOrdersByBrand).map(([brand, brandOrders]) => {
-            const totalItems = brandOrders.reduce(
+          {Object.entries(groupedOrdersByRetailer).map(([retailer, retailerOrders]) => {
+            const totalItems = retailerOrders.reduce(
               (total, order) => total + order.product_names.length,
               0
             );
-            const selectedCount = brandOrders.reduce((count, order) => {
+            const selectedCount = retailerOrders.reduce((count, order) => {
               return (
                 count +
                 order.product_names.filter((productName) =>
@@ -105,14 +105,14 @@ export function PurchaseDataDisplay({
               );
             }, 0);
             const allSelected = selectedCount === totalItems && totalItems > 0;
-            const brandKey = `${brand}__brand`;
-            const isExpanded = expandedOrders.has(brandKey);
+            const retailerKey = `${retailer}__retailer`;
+            const isExpanded = expandedOrders.has(retailerKey);
 
             return (
-              <div key={brand}>
+              <div key={retailer}>
                 <div className="border border-gray-200 rounded-lg">
                   <button
-                    onClick={() => onToggleOrderExpansion(brand, 'brand')}
+                    onClick={() => onToggleOrderExpansion(retailer, 'retailer')}
                     className="w-full p-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-2">
@@ -123,7 +123,7 @@ export function PurchaseDataDisplay({
                       )}
                       <div className="text-left">
                         <div className="text-sm font-medium text-gray-900">
-                          {brand}
+                          {retailer}
                         </div>
                       </div>
                     </div>
@@ -131,7 +131,7 @@ export function PurchaseDataDisplay({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onToggleBrandSelection(brand, !allSelected);
+                          onToggleRetailerSelection(retailer, !allSelected);
                         }}
                         className="text-xs text-blue-600 hover:text-blue-800 font-medium"
                       >
@@ -147,7 +147,7 @@ export function PurchaseDataDisplay({
                   {isExpanded && (
                     <div className="px-3 pb-3 border-t border-gray-100">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {brandOrders.flatMap((order) =>
+                        {retailerOrders.flatMap((order) =>
                           order.product_names.map((productName, index) => {
                             const itemKey = `${order.order_id}__${productName}`;
                             const isSelected = selectedItems.has(itemKey);
@@ -230,7 +230,7 @@ export function PurchaseDataDisplay({
                                     </p>
                                   )}
                                   <div className="flex items-center gap-3 text-xs text-gray-500">
-                                    <span>🛍️ {order.brand}</span>
+                                    <span>🛍️ {order.retailer}</span>
                                     {!!order.order_date && (
                                       <span>
                                         📅{' '}

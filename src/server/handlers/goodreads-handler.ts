@@ -129,7 +129,7 @@ export const handleGoodreadsConnect = async (req: Request, res: Response) => {
     Logger.info('Goodreads dpage browser ready', {
       component: 'goodreads-handler',
       operation: 'connect',
-      brandId: 'goodreads',
+      retailerId: 'goodreads',
       browserSessionId: browserId,
       pageId,
     });

@@ -5,22 +5,22 @@ import { PersonaSelector } from './PersonaSelector.js';
 import { CameraImageCapture } from './CameraImageCapture.js';
 import { ImageFormatSelector } from './ImageFormatSelector.js';
 import type { ImageFormat } from '../modules/PortraitGeneration.js';
-import type { BrandConfig } from '../modules/Config.js';
+import type { RetailerConfig } from '../modules/Config.js';
 import type { PurchaseHistory } from '../modules/DataTransformSchema.js';
 
 type SidebarProps = {
   isOpen: boolean;
   onClose: () => void;
-  brands: BrandConfig[];
-  connectedBrands: string[];
+  retailers: RetailerConfig[];
+  connectedRetailers: string[];
   selectedGender: string;
   selectedTraits: string[];
   selectedImageStyle: string[];
   imageFormat: ImageFormat;
   isGenerating: boolean;
   selectedItemsCount: number;
-  onSuccessConnect: (brandName: string, data: PurchaseHistory[]) => void;
-  onOpenSignInDialog: (brandConfig: BrandConfig) => void;
+  onSuccessConnect: (retailerName: string, data: PurchaseHistory[]) => void;
+  onOpenSignInDialog: (retailerConfig: RetailerConfig) => void;
   onGenderChange: (genderId: string) => void;
   onTraitsChange: (traits: string[]) => void;
   onImageStyleChange: (styleIds: string[]) => void;
@@ -33,8 +33,8 @@ type SidebarProps = {
 export function Sidebar({
   isOpen,
   onClose,
-  brands,
-  connectedBrands,
+  retailers,
+  connectedRetailers,
   selectedGender,
   selectedTraits,
   selectedImageStyle,
@@ -95,8 +95,8 @@ export function Sidebar({
           )}
 
           <DataConnectors
-            brands={brands}
-            connectedBrands={connectedBrands}
+            retailers={retailers}
+            connectedRetailers={connectedRetailers}
             onSuccessConnect={onSuccessConnect}
             onOpenSignInDialog={onOpenSignInDialog}
           />
@@ -118,18 +118,18 @@ export function Sidebar({
 
         {/* Sidebar Footer - Simple */}
         <div className="flex-shrink-0 p-6 border-t border-gray-100 space-y-3">
-          {connectedBrands.length > 0 && !isGenerating && (
+          {connectedRetailers.length > 0 && !isGenerating && (
             <p className="text-xs text-green-600 text-center">
-              Powered by live shopping data from {connectedBrands.length}{' '}
+              Powered by live shopping data from {connectedRetailers.length}{' '}
               connected{' '}
-              {connectedBrands.length === 1 ? 'retailer' : 'retailers'}!
+              {connectedRetailers.length === 1 ? 'retailer' : 'retailers'}!
             </p>
           )}
           <Button
             onClick={onGeneratePortrait}
             disabled={
               isGenerating ||
-              connectedBrands.length === 0 ||
+              connectedRetailers.length === 0 ||
               selectedItemsCount === 0
             }
             size="lg"
@@ -142,7 +142,7 @@ export function Sidebar({
               </>
             ) : (
               <>
-                {connectedBrands.length > 0
+                {connectedRetailers.length > 0
                   ? '✨ Generate Data Portrait'
                   : '✨ Generate'}
               </>

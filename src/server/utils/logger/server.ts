@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 type LogContext = {
   component?: string;
   operation?: string;
-  brandId?: string;
+  retailerId?: string;
   browserSessionId?: string;
   signinId?: string;
   mcpSessionId?: string;
@@ -29,7 +29,7 @@ export class ServerLogger {
     Sentry.withScope((scope: Sentry.Scope) => {
       if (context?.component) scope.setTag('component', context.component);
       if (context?.operation) scope.setTag('operation', context.operation);
-      if (context?.brandId) scope.setTag('brand_id', context.brandId);
+      if (context?.retailerId) scope.setTag('brand_id', context.retailerId);
       if (context?.browserSessionId)
         scope.setTag('browser_session_id', context.browserSessionId);
       if (context?.signinId) scope.setTag('sign_id', context.signinId);

@@ -3,18 +3,18 @@ import { mcpClientManager } from '../mcp-client.js';
 export async function finalizeSignin({
   sessionId,
   clientIp,
-  brandId,
+  retailerId,
   signinId,
 }: {
   sessionId: string;
   clientIp: string;
-  brandId: string;
+  retailerId: string;
   signinId: string;
 }) {
   const mcpClient = await mcpClientManager.get({
     sessionId,
     clientIp,
-    brandId,
+    retailerId,
   });
 
   await mcpClient.callTool({

@@ -8,7 +8,7 @@ import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
 import { StoryPreviewModal } from '../components/StoryPreviewModal.js';
 import { SignInDialog } from '../components/SignInDialog.js';
-import { GoodreadsConnectionModal } from '../components/GoodreadsConnectionModal.js';
+import { DpageConnectionModal } from '../components/DpageConnectionModal.js';
 import { Sidebar } from '../components/Sidebar.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
@@ -485,11 +485,11 @@ export function DataPortrait() {
       />
 
       {/* Sign In Dialog — brands opting into the iframe dpage flow (config
-          `use_dpage_iframe`) use GoodreadsConnectionModal; others use the
+          `use_dpage_iframe`) use DpageConnectionModal; others use the
           credential-form + MCP flow. */}
       {signInDialogBrand &&
         (signInDialogBrand.use_dpage_iframe ? (
-          <GoodreadsConnectionModal
+          <DpageConnectionModal
             isOpen={true}
             onClose={() => setSignInDialogBrand(null)}
             onSuccessConnect={handleSignInSuccess}

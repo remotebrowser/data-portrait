@@ -4,6 +4,7 @@
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/a/a6/Garmin_logo_2006.svg",
   "is_mandatory": false,
   "is_dpage": true,
+  "use_dpage_iframe": true,
   "schema": [
     {
       "name": "email",

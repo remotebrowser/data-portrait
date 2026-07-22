@@ -20,6 +20,10 @@ import {
 const BRAND_DPAGE_URLS: Record<string, string> = {
   goodreads: 'https://www.goodreads.com/review/list?ref=nav_mybooks&view=table',
   officedepot: 'https://www.officedepot.com/orderhistory/orderHistoryList.do',
+  wayfair:
+    'https://www.wayfair.com/session/secure/account/order_search.php?page=1',
+  gofood: 'https://gofood.co.id/en/orders',
+  garmin: 'https://connect.garmin.com/modern/activities',
 };
 
 // The distilled sign-in form is served in the modal iframe; these assets are

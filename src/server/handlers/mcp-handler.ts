@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { z } from 'zod';
 import { mcpClientManager } from '../mcp-client.js';
 import { geolocationService } from '../services/geolocation-service.js';
 import { analytics } from '../services/analytics-service.js';
@@ -11,12 +10,11 @@ import { ServerLogger as Logger } from '../utils/logger/index.js';
 interface BrandTool {
   toolName: string;
   resultKey: string;
-  detailsToolName?: string;
 }
 
 const brandTools: Record<string, BrandTool> = {
   amazon: { toolName: 'amazon_get_purchase_history', resultKey: 'amazon_purchase_history' },
-  officedepot: { toolName: 'officedepot_get_order_history', resultKey: 'officedepot_order_history', detailsToolName: 'officedepot_get_order_history_details' },
+  officedepot: { toolName: 'officedepot_get_order_history', resultKey: 'officedepot_order_history' },
   wayfair: { toolName: 'wayfair_get_order_history', resultKey: 'wayfair_order_history' },
   goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list' },
   gofood: { toolName: 'gofood_get_purchase_history', resultKey: 'gofood_purchase_history' },
@@ -27,42 +25,9 @@ const brandTools: Record<string, BrandTool> = {
   youtube: { toolName: 'youtube_get_watch_history', resultKey: 'youtube_watch_history' },
 };
 
-const McpResponse = z.object({
-  // Auth fields
-  url: z.string().optional(),
-  link_id: z.string().optional(),
-  message: z.string().optional(),
-  system_message: z.string().optional(),
-
-  // Data fields
-  extract_result: z
-    .array(
-      z.object({
-        name: z.string(),
-        parsed: z.boolean(),
-        parse_schema: z.record(z.unknown()).nullable(),
-        content: z.string(),
-      })
-    )
-    .optional(),
-  // goodreads response
-  books: z.array(z.record(z.unknown())).optional(),
-  // amazon response
-  purchases: z.array(z.record(z.unknown())).optional(),
-  // officedepot response
-  purchase_history: z.array(z.record(z.unknown())).optional(),
-  purchase_history_details: z.array(z.record(z.unknown())).optional(),
-  doordash_orders: z.array(z.record(z.unknown())).optional(),
-  youtube_watch_history: z.array(z.record(z.unknown())).optional(),
-});
-
 type PurchaseHistoryResponse = {
   link_id: string;
   hosted_link_url: string;
-  content: Array<unknown> | Record<string, unknown>;
-};
-
-type PurchaseHistoryDetailsResponse = {
   content: Array<unknown> | Record<string, unknown>;
 };
 
@@ -177,50 +142,6 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
   }
 
   res.json({ link_id: '', hosted_link_url: '', content });
-};
-
-export const handlePurchaseHistoryDetails = async (
-  req: Request,
-  res: Response
-) => {
-  const { brandId, orderId } = req.params;
-  const brand = brandTools[brandId];
-  if (!brand?.detailsToolName) {
-    res.status(400).json({ error: 'Invalid brand name' });
-    return;
-  }
-
-  const clientIp = geolocationService.getClientIp(req);
-  const mcpClient = await mcpClientManager.get({
-    sessionId: req.sessionID,
-    clientIp,
-    brandId,
-  });
-  const result = await mcpClient.callTool({
-    name: brand.detailsToolName,
-    arguments: { order_id: orderId },
-  });
-
-  const mcpResponse = McpResponse.parse(result.structuredContent);
-
-  // if didn't have any content
-  if (!mcpResponse.purchase_history_details?.length) {
-    res.json({});
-    return;
-  }
-
-  const response: PurchaseHistoryDetailsResponse = {
-    content: [],
-  };
-
-  const rawContent = mcpResponse.purchase_history_details;
-  if (typeof rawContent === 'string') {
-    response.content = JSON.parse(rawContent);
-  } else {
-    response.content = rawContent || [];
-  }
-
-  res.json(response);
 };
 
 export const handleMcpPoll = async (req: Request, res: Response) => {

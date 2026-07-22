@@ -5,7 +5,6 @@ import { handleGeneratePortrait } from '../handlers/portrait-handler.js';
 import {
   handlePurchaseHistory,
   handleMcpPoll,
-  handlePurchaseHistoryDetails,
   handleDpageUrl,
   handleDpageSigninCheck,
 } from '../handlers/mcp-handler.js';
@@ -58,12 +57,6 @@ router.get('/dpage-signin-check/:brandId/:linkId', handleDpageSigninCheck);
 
 // Get purchase history
 router.get('/purchase-history/:brandId', handlePurchaseHistory);
-
-// Get purchase history details (officedepot only)
-router.get(
-  '/purchase-history-details/:brandId/:orderId',
-  handlePurchaseHistoryDetails
-);
 
 // MCP poll endpoint
 router.get('/mcp-poll/:brandId/:linkId', handleMcpPoll);

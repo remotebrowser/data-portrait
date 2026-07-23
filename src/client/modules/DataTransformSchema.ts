@@ -95,6 +95,18 @@ export function parseOrderDate(orderDateStr: string) {
     return new Date(`${month} ${day}, ${currentYear}`);
   }
 
+  // Handle Garmin's /app format: month-first "Mar 15", "Mar 15 2026", or
+  // "Mar 152026" (day + year concatenated, since the year lives in an adjacent
+  // span with no separator). Year is optional and defaults to the current year.
+  const garminMonthFirst = orderDateStr.match(
+    /^([A-Za-z]{3,})\s+(\d{1,2})\s*(\d{4})?$/
+  );
+  if (garminMonthFirst) {
+    const [, month, day, year] = garminMonthFirst;
+    const resolvedYear = year || String(new Date().getFullYear());
+    return new Date(`${month} ${day}, ${resolvedYear}`);
+  }
+
   return null;
 }
 

@@ -17,7 +17,6 @@ import goodreads from '../config/goodreads.json' with { type: 'json' };
 import gofood from '../config/gofood.json' with { type: 'json' };
 import shopee from '../config/shopee.json' with { type: 'json' };
 import doordash from '../config/doordash.json' with { type: 'json' };
-import youtube from '../config/youtube.json' with { type: 'json' };
 import type { BrandConfig } from '../modules/Config.js';
 import { type PurchaseHistory } from '../modules/DataTransformSchema.js';
 import type {
@@ -39,7 +38,6 @@ const goodreadsConfig = goodreads as BrandConfig;
 const gofoodConfig = gofood as BrandConfig;
 const shopeeConfig = shopee as BrandConfig;
 const doordashConfig = doordash as BrandConfig;
-const youtubeConfig = youtube as BrandConfig;
 const BRANDS: Array<BrandConfig> = [
   amazonConfig,
   officedepotConfig,
@@ -48,16 +46,11 @@ const BRANDS: Array<BrandConfig> = [
   gofoodConfig,
   shopeeConfig,
   doordashConfig,
-  youtubeConfig,
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [
   // NOTE: exclude officedepot for now until successfully migrated to dpage
   officedepotConfig.brand_id,
-];
-
-const EXCLUDED_BRAND_FROM_UNIQUE_FILTER: Array<string> = [
-  youtubeConfig.brand_name,
 ];
 
 // Sample data for demo purposes
@@ -175,13 +168,7 @@ export function DataPortrait() {
 
     setConnectedBrands((prev) => [...prev, brandName]);
 
-    const shouldSkipUniqueFilter =
-      EXCLUDED_BRAND_FROM_UNIQUE_FILTER.includes(brandName);
-
-    setOrders((prev) => {
-      const combined = [...prev, ...data];
-      return shouldSkipUniqueFilter ? combined : filterUniqueOrders(combined);
-    });
+    setOrders((prev) => filterUniqueOrders([...prev, ...data]));
 
     // Select all items from the new data by default
     setSelectedItems((prev) => {

@@ -15,7 +15,6 @@ import wayfair from '../config/wayfair.json' with { type: 'json' };
 import officedepot from '../config/officedepot.json' with { type: 'json' };
 import goodreads from '../config/goodreads.json' with { type: 'json' };
 import gofood from '../config/gofood.json' with { type: 'json' };
-import tokopedia from '../config/tokopedia.json' with { type: 'json' };
 import shopee from '../config/shopee.json' with { type: 'json' };
 import doordash from '../config/doordash.json' with { type: 'json' };
 import youtube from '../config/youtube.json' with { type: 'json' };
@@ -38,7 +37,6 @@ const wayfairConfig = wayfair as BrandConfig;
 const officedepotConfig = officedepot as BrandConfig;
 const goodreadsConfig = goodreads as BrandConfig;
 const gofoodConfig = gofood as BrandConfig;
-const tokopediaConfig = tokopedia as BrandConfig;
 const shopeeConfig = shopee as BrandConfig;
 const doordashConfig = doordash as BrandConfig;
 const youtubeConfig = youtube as BrandConfig;
@@ -48,7 +46,6 @@ const BRANDS: Array<BrandConfig> = [
   wayfairConfig,
   goodreadsConfig,
   gofoodConfig,
-  tokopediaConfig,
   shopeeConfig,
   doordashConfig,
   youtubeConfig,

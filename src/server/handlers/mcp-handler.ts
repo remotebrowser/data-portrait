@@ -20,11 +20,8 @@ const brandTools: Record<string, BrandTool> = {
   wayfair: { toolName: 'wayfair_get_order_history', resultKey: 'wayfair_order_history' },
   goodreads: { toolName: 'goodreads_get_book_list', resultKey: 'goodreads_book_list' },
   gofood: { toolName: 'gofood_get_purchase_history', resultKey: 'gofood_purchase_history' },
-  garmin: { toolName: 'garmin_get_activities', resultKey: 'garmin_activity_history' },
-  tokopedia: { toolName: 'tokopedia_get_purchase_history', resultKey: 'purchase_history' },
   shopee: { toolName: 'shopee_get_purchase_history', resultKey: 'shopee_purchase_history' },
   doordash: { toolName: 'doordash_get_orders', resultKey: 'doordash_orders' },
-  youtube: { toolName: 'youtube_get_watch_history', resultKey: 'youtube_watch_history' },
 };
 
 const McpResponse = z.object({
@@ -53,7 +50,6 @@ const McpResponse = z.object({
   purchase_history: z.array(z.record(z.unknown())).optional(),
   purchase_history_details: z.array(z.record(z.unknown())).optional(),
   doordash_orders: z.array(z.record(z.unknown())).optional(),
-  youtube_watch_history: z.array(z.record(z.unknown())).optional(),
 });
 
 type PurchaseHistoryResponse = {

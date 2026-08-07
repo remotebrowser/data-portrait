@@ -20,7 +20,15 @@ import {
  * data JSON. Onboarding a retailer is this one entry.
  */
 const RETAILER_DPAGE_URLS: Record<string, string> = {
+  amazon: 'https://www.amazon.com/your-orders/orders',
+  doordash: 'https://www.doordash.com/orders',
+  gofood: 'https://gofood.co.id/en/orders',
   goodreads: 'https://www.goodreads.com/review/list?ref=nav_mybooks&view=table',
+  officedepot:
+    'https://www.officedepot.com/orderhistory/orderHistoryListSet.do?ordersInMonths=0&orderType=ALL&orderStatus=A',
+  shopee: 'https://shopee.co.id/user/purchase',
+  wayfair:
+    'https://www.wayfair.com/session/secure/account/order_search.php?page=1',
 };
 
 // The distilled sign-in form is served in the modal iframe; these assets are

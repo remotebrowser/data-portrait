@@ -4,6 +4,7 @@
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Wayfair_logo_with_tagline.png",
   "is_mandatory": false,
   "is_dpage": true,
+  "use_dpage_iframe": true,
   "dataTransform": {
     "dataPath": "data.orderProductPagesByCustomer.nodes",
     "fieldMappings": [

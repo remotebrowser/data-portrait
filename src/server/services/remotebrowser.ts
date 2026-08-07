@@ -43,7 +43,7 @@ async function fetchUntil200(
   throw new Error(`${label} never returned 200 (last status: ${lastStatus ?? 'unknown'})`);
 }
 
-/** A distilled page is either the book-list JSON array or the sign-in form HTML. */
+/** A distilled page is either the retailer's JSON array or the sign-in form HTML. */
 export type DistilledPage = { json?: unknown[]; html: string };
 
 function parseDistilled(text: string): DistilledPage {
@@ -133,7 +133,7 @@ export async function distillPage(
 }
 
 /**
- * Wait for the distilled page to be available, then return it (book-list JSON or
+ * Wait for the distilled page to be available, then return it (retailer JSON or
  * sign-in form HTML). One fetch, one body read.
  */
 export async function getDistilled(

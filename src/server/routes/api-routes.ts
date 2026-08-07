@@ -10,12 +10,12 @@ import {
   handleDpageSigninCheck,
 } from '../handlers/mcp-handler.js';
 import {
-  handleGoodreadsConnect,
-  handleGoodreadsDpageGet,
-  handleGoodreadsDpagePost,
-  handleGoodreadsPoll,
-  handleGoodreadsFinalize,
-} from '../handlers/goodreads-handler.js';
+  handleDpageConnect,
+  handleDpageFrameGet,
+  handleDpageFramePost,
+  handleDpagePoll,
+  handleDpageFinalize,
+} from '../handlers/dpage-handler.js';
 import { handleAnalytics } from '../handlers/analytics-handler.js';
 import {
   handleStoriesGeneration,
@@ -40,12 +40,15 @@ const upload = multer({
   },
 });
 
-// Goodreads dpage flow (distill REST API — no MCP)
-router.post('/goodreads/connect', handleGoodreadsConnect);
-router.get('/dpage/:browserId/:pageId', handleGoodreadsDpageGet);
-router.post('/dpage/:browserId/:pageId', handleGoodreadsDpagePost);
-router.post('/goodreads/poll', handleGoodreadsPoll);
-router.post('/goodreads/finalize', handleGoodreadsFinalize);
+// Retailer-agnostic dpage flow (distill REST API — no MCP). The retailer is only
+// needed to pick a data URL at connect time, so the /frame/ routes that serve and
+// advance the iframe form are keyed by browserId/pageId alone. The literal "frame"
+// segment keeps them from colliding with the retailer-scoped lifecycle routes.
+router.post('/dpage/:brandId/connect', handleDpageConnect);
+router.post('/dpage/:brandId/poll', handleDpagePoll);
+router.post('/dpage/:brandId/finalize', handleDpageFinalize);
+router.get('/dpage/frame/:browserId/:pageId', handleDpageFrameGet);
+router.post('/dpage/frame/:browserId/:pageId', handleDpageFramePost);
 
 // Get dpage url
 router.get('/dpage-url/:brandId', handleDpageUrl);

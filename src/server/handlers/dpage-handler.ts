@@ -12,8 +12,16 @@ import {
   readDistilledOnce,
 } from '../services/remotebrowser.js';
 
-const GOODREADS_REVIEW_LIST_URL =
-  'https://www.goodreads.com/review/list?ref=nav_mybooks&view=table';
+/**
+ * Retailers that sign in through the iframe distill flow, mapped to the URL we
+ * navigate the remote browser to. mcp-getgather's distiller matches a pattern by
+ * hostname + page content — never by URL — so a single data URL drives the whole
+ * flow: signed out it distills to the sign-in form, signed in it distills to the
+ * data JSON. Onboarding a retailer is this one entry.
+ */
+const RETAILER_DPAGE_URLS: Record<string, string> = {
+  goodreads: 'https://www.goodreads.com/review/list?ref=nav_mybooks&view=table',
+};
 
 // The distilled sign-in form is served in the modal iframe; these assets are
 // served from data-portrait's public/ dir (Vite in dev, express.static in prod).
@@ -76,7 +84,10 @@ function formatDistilledPage(
 
   const form = document.createElement('form');
   form.setAttribute('method', 'POST');
-  form.setAttribute('action', `/getgather/dpage/${browserId}/${pageId}`);
+  form.setAttribute(
+    'action',
+    `/getgather/dpage/frame/${browserId}/${pageId}`
+  );
 
   const body = document.body;
   while (body.firstChild) {
@@ -93,7 +104,7 @@ function formatDistilledPage(
 
 /**
  * Advance the distillation loop, then read the distilled page once: the
- * book-list JSON if it's ready, otherwise the sign-in form HTML.
+ * retailer's data JSON if it's ready, otherwise the sign-in form HTML.
  */
 async function initiateDistill(
   browserId: string,
@@ -119,44 +130,54 @@ function browserCreateHeaders(req: Request): Record<string, string | undefined> 
   return headers;
 }
 
-// POST /getgather/goodreads/connect — create a fresh browser and open the review list.
-export const handleGoodreadsConnect = async (req: Request, res: Response) => {
+// POST /getgather/dpage/:brandId/connect — create a fresh browser and open the data URL.
+export const handleDpageConnect = async (req: Request, res: Response) => {
+  const { brandId } = req.params;
+  const dataUrl = brandId ? RETAILER_DPAGE_URLS[brandId] : undefined;
+  if (!dataUrl) {
+    res.status(400).json({ error: `Unsupported dpage retailer: ${brandId}` });
+    return;
+  }
+
   try {
     const headers = browserCreateHeaders(req);
     const { browserId, pageId } = await prepareNewBrowser(headers);
-    await navigatePage(browserId, pageId, GOODREADS_REVIEW_LIST_URL);
+    await navigatePage(browserId, pageId, dataUrl);
 
-    Logger.info('Goodreads dpage browser ready', {
-      component: 'goodreads-handler',
+    Logger.info('dpage browser ready', {
+      component: 'dpage-handler',
       operation: 'connect',
-      brandId: 'goodreads',
+      brandId,
       browserSessionId: browserId,
       pageId,
     });
 
     res.json({ browserId, pageId });
   } catch (error) {
-    Logger.error('Goodreads connect failed', error as Error, {
-      component: 'goodreads-handler',
+    Logger.error('dpage connect failed', error as Error, {
+      component: 'dpage-handler',
       operation: 'connect',
+      brandId,
     });
-    res.status(500).json({ error: 'Failed to start Goodreads connection' });
+    res.status(500).json({ error: `Failed to start ${brandId} connection` });
   }
 };
 
-// GET /getgather/dpage/:browserId/:pageId — iframe entry; auto-POSTs to itself.
-export const handleGoodreadsDpageGet = (req: Request, res: Response) => {
+// GET /getgather/dpage/frame/:browserId/:pageId — iframe entry; auto-POSTs to itself.
+export const handleDpageFrameGet = (req: Request, res: Response) => {
   const { browserId, pageId } = req.params;
   if (!browserId || !pageId) {
     res.status(400).send();
     return;
   }
-  res.type('text/html').send(redirect(`/getgather/dpage/${browserId}/${pageId}`));
+  res
+    .type('text/html')
+    .send(redirect(`/getgather/dpage/frame/${browserId}/${pageId}`));
 };
 
-// POST /getgather/dpage/:browserId/:pageId — drive one distill step; return the
-// next distilled form (HTML) or a spinner once the data is ready.
-export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
+// POST /getgather/dpage/frame/:browserId/:pageId — drive one distill step; return
+// the next distilled form (HTML) or a spinner once the data is ready.
+export const handleDpageFramePost = async (req: Request, res: Response) => {
   const { browserId, pageId } = req.params;
   if (!browserId || !pageId) {
     res.status(400).send();
@@ -179,9 +200,9 @@ export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
       res.type('text/html').send(formatDistilledPage(html, browserId, pageId));
     }
   } catch (error) {
-    Logger.error('Goodreads dpage step failed', error as Error, {
-      component: 'goodreads-handler',
-      operation: 'dpage',
+    Logger.error('dpage step failed', error as Error, {
+      component: 'dpage-handler',
+      operation: 'frame',
       browserSessionId: browserId,
       pageId,
     });
@@ -189,8 +210,8 @@ export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
   }
 };
 
-// POST /getgather/goodreads/poll — return the book list once distillation yields JSON.
-export const handleGoodreadsPoll = async (req: Request, res: Response) => {
+// POST /getgather/dpage/:brandId/poll — return the data once distillation yields JSON.
+export const handleDpagePoll = async (req: Request, res: Response) => {
   const { browser_id: browserId, page_id: pageId } = (req.body ?? {}) as {
     browser_id?: string;
     page_id?: string;
@@ -200,7 +221,7 @@ export const handleGoodreadsPoll = async (req: Request, res: Response) => {
     return;
   }
 
-  // Single, fast read: if the distilled page isn't the book-list JSON yet
+  // Single, fast read: if the distilled page isn't the data JSON yet
   // (still on the sign-in / verification form, or not ready), stay PENDING and
   // let the client's poll interval drive the retry — don't hold the request open.
   const distilled = await readDistilledOnce(browserId, pageId);
@@ -210,8 +231,8 @@ export const handleGoodreadsPoll = async (req: Request, res: Response) => {
   res.json({ status, content });
 };
 
-// POST /getgather/goodreads/finalize — tear down the remote browser.
-export const handleGoodreadsFinalize = async (req: Request, res: Response) => {
+// POST /getgather/dpage/:brandId/finalize — tear down the remote browser.
+export const handleDpageFinalize = async (req: Request, res: Response) => {
   const { browser_id: browserId } = (req.body ?? {}) as { browser_id?: string };
   if (!browserId) {
     res.status(400).json({ error: 'browser_id is required' });

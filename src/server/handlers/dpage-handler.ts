@@ -48,6 +48,23 @@ function loadingPage(extraBody = ''): string {
 </html>`;
 }
 
+// A terminal message page for the iframe, styled like the loading page.
+function errorPage(message: string): string {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="${DPAGE_CSS}" />
+  </head>
+  <body>
+    <div class="content-wrapper">
+      <p>${message}</p>
+    </div>
+  </body>
+</html>`;
+}
+
 // Browsers can't redirect from a GET to a POST, so serve an auto-submitting form.
 function redirect(action: string): string {
   return loadingPage(
@@ -114,6 +131,22 @@ async function initiateDistill(
   await distillPage(browserId, pageId, fields);
   const { json, html } = await getDistilled(browserId, pageId);
   return json && json.length > 0 ? { json, html } : { html };
+}
+
+/**
+ * A real sign-in / verification step has fields to fill (email, password, OTP).
+ * A distilled *data* page (signed in) has none — only content and buttons. Use
+ * the presence of form inputs to tell "render this form" apart from "distill
+ * matched something but produced nothing usable", so stale data selectors surface
+ * as an error instead of a raw HTML dump in the modal.
+ */
+function hasSignInFields(html: string): boolean {
+  try {
+    const { document } = parseHTML(html);
+    return document.querySelectorAll('input, select, textarea').length > 0;
+  } catch {
+    return false;
+  }
 }
 
 function browserCreateHeaders(req: Request): Record<string, string | undefined> {
@@ -196,8 +229,26 @@ export const handleDpageFramePost = async (req: Request, res: Response) => {
     if (json) {
       // Data is ready; show a spinner until the client's poll grabs it.
       res.type('text/html').send(loadingPage());
-    } else {
+    } else if (hasSignInFields(html)) {
+      // Still a sign-in / verification step to complete.
       res.type('text/html').send(formatDistilledPage(html, browserId, pageId));
+    } else {
+      // Distill matched a page but produced neither structured data nor a form to
+      // fill — typically signed in with stale data selectors. Say so explicitly
+      // rather than dumping raw HTML, which reads as a blank or garbled dialog.
+      Logger.warn('dpage distill produced no data and no sign-in fields', {
+        component: 'dpage-handler',
+        operation: 'frame',
+        browserSessionId: browserId,
+        pageId,
+      });
+      res
+        .type('text/html')
+        .send(
+          errorPage(
+            "We couldn't read your data right now. Please try connecting again later."
+          )
+        );
     }
   } catch (error) {
     Logger.error('dpage step failed', error as Error, {

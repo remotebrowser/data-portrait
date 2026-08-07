@@ -7,7 +7,6 @@ import { PurchaseDataDisplay } from '../components/PurchaseDataDisplay.js';
 import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
 import { StoryPreviewModal } from '../components/StoryPreviewModal.js';
-import { SignInDialog } from '../components/SignInDialog.js';
 import { DpageConnectionModal } from '../components/DpageConnectionModal.js';
 import { Sidebar } from '../components/Sidebar.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
@@ -464,27 +463,18 @@ export function DataPortrait() {
         enableImageUpload={appConfig.allowFaceUpload}
       />
 
-      {/* Sign In Dialog — brands opting into the iframe dpage flow (config
-          `use_dpage_iframe`) use DpageConnectionModal; others use the
-          credential-form + MCP flow. Keying on brand_id forces a remount when
-          switching brands, so the modal's connect-once guard resets. */}
-      {signInDialogBrand &&
-        (signInDialogBrand.use_dpage_iframe ? (
-          <DpageConnectionModal
-            key={signInDialogBrand.brand_id}
-            isOpen={true}
-            onClose={() => setSignInDialogBrand(null)}
-            onSuccessConnect={handleSignInSuccess}
-            brandConfig={signInDialogBrand}
-          />
-        ) : (
-          <SignInDialog
-            isOpen={true}
-            onClose={() => setSignInDialogBrand(null)}
-            onSuccessSignin={handleSignInSuccess}
-            brandConfig={signInDialogBrand}
-          />
-        ))}
+      {/* Every brand signs in through the iframe dpage flow. Keying on brand_id
+          forces a remount when switching brands, so the modal's connect-once
+          guard resets. */}
+      {signInDialogBrand && (
+        <DpageConnectionModal
+          key={signInDialogBrand.brand_id}
+          isOpen={true}
+          onClose={() => setSignInDialogBrand(null)}
+          onSuccessConnect={handleSignInSuccess}
+          brandConfig={signInDialogBrand}
+        />
+      )}
 
       {selectedPreview?.format === 'stories' ? (
         <StoryPreviewModal

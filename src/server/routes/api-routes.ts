@@ -3,13 +3,6 @@ import multer from 'multer';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { handleGeneratePortrait } from '../handlers/portrait-handler.js';
 import {
-  handlePurchaseHistory,
-  handleMcpPoll,
-  handlePurchaseHistoryDetails,
-  handleDpageUrl,
-  handleDpageSigninCheck,
-} from '../handlers/mcp-handler.js';
-import {
   handleDpageConnect,
   handleDpageFrameGet,
   handleDpageFramePost,
@@ -49,23 +42,6 @@ router.post('/dpage/:brandId/poll', handleDpagePoll);
 router.post('/dpage/:brandId/finalize', handleDpageFinalize);
 router.get('/dpage/frame/:browserId/:pageId', handleDpageFrameGet);
 router.post('/dpage/frame/:browserId/:pageId', handleDpageFramePost);
-
-// Get dpage url
-router.get('/dpage-url/:brandId', handleDpageUrl);
-
-router.get('/dpage-signin-check/:brandId/:linkId', handleDpageSigninCheck);
-
-// Get purchase history
-router.get('/purchase-history/:brandId', handlePurchaseHistory);
-
-// Get purchase history details (officedepot only)
-router.get(
-  '/purchase-history-details/:brandId/:orderId',
-  handlePurchaseHistoryDetails
-);
-
-// MCP poll endpoint
-router.get('/mcp-poll/:brandId/:linkId', handleMcpPoll);
 
 // Portrait generation endpoint
 router.post(

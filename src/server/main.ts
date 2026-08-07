@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/node';
-import { Socket } from 'net';
 import express from 'express';
 import { errorHandler } from './middleware/error-handler.js';
 import { healthRoutes } from './routes/health-routes.js';
@@ -13,9 +12,7 @@ import { settings } from './config.js';
 import { IPBlockerMiddleware } from './middleware/ip-blocker-middleware.js';
 import { validateConfiguration } from './services/gcs-service.js';
 import { geolocationService } from './services/geolocation-service.js';
-import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 import session from 'express-session';
-import bodyParser from 'body-parser';
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -36,10 +33,9 @@ app.disable('x-powered-by');
 
 // Basic security headers
 app.use((req, res, next) => {
-  // Allow framing for dpage content since it's designed to be embedded
-  // (both the proxied mcp-getgather /dpage and our own dpage frame route).
-  const isDpageRequest =
-    req.path.startsWith('/dpage') || req.path.startsWith('/getgather/dpage');
+  // Allow framing for our dpage routes since they're designed to be embedded in
+  // the connection modal's iframe.
+  const isDpageRequest = req.path.startsWith('/getgather/dpage');
   if (!isDpageRequest) {
     res.setHeader('X-Frame-Options', 'DENY');
   }
@@ -56,58 +52,6 @@ app.use((req, res, next) => {
   }
 
   next();
-});
-
-const createProxy = (path: string) =>
-  createProxyMiddleware({
-    target: `${settings.GETGATHER_URL}${path}`,
-    changeOrigin: true,
-    on: {
-      proxyReq: fixRequestBody,
-      error: (
-        err: Error,
-        req: express.Request,
-        res: express.Response | Socket
-      ) => {
-        Logger.error('Proxy request error', err, {
-          component: 'proxy-middleware',
-          operation: 'proxy-request',
-        });
-        if ('status' in res) {
-          res.status(500).send('Proxy error occurred');
-        }
-      },
-    },
-  });
-
-const proxyPaths = [
-  '/link',
-  '/__assets',
-  '/__static',
-  '/__static/assets',
-  '/__static/assets/logos',
-  '/dpage',
-];
-
-proxyPaths.forEach((path) => {
-  app.use(path, createProxy(path));
-});
-app.use('/api', async (req, res, next) => {
-  bodyParser.json()(req, res, (err) => {
-    if (err) return next(err);
-
-    if (req.method === 'POST') {
-      if (!req.body) {
-        req.body = {};
-      }
-      const clientIp = geolocationService.getClientIp(req);
-      const requestLocationData =
-        geolocationService.getClientLocationFromCache(clientIp);
-      req.body.location = requestLocationData;
-    }
-
-    createProxy('/api')(req, res, next);
-  });
 });
 
 // Body parsing middleware

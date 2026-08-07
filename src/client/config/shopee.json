@@ -3,26 +3,6 @@
   "brand_name": "Shopee",
   "logo_url": "https://i.pinimg.com/736x/89/f3/62/89f362b04423b091aee923a0387c5c35.jpg",
   "is_mandatory": false,
-  "is_dpage": true,
-  "use_dpage_iframe": true,
-  "schema": [
-    {
-      "name": "loginKey",
-      "type": "text",
-      "prompt": "No. Handphone/Username/Email"
-    },
-    {
-      "name": "password",
-      "type": "password",
-      "prompt": "Password"
-    },
-    {
-      "name": "submit",
-      "type": "click",
-      "prompt": "Sign In",
-      "dependsOnFields": "email"
-    }
-  ],
   "dataTransform": {
     "dataPath": "",
     "fieldMappings": [

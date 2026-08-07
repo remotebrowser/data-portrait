@@ -3,21 +3,6 @@
   "brand_name": "GoFood",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Gofood_logo.svg/1280px-Gofood_logo.svg.png",
   "is_mandatory": false,
-  "is_dpage": true,
-  "use_dpage_iframe": true,
-  "schema": [
-    {
-      "name": "phone",
-      "type": "tel",
-      "prompt": "Phone"
-    },
-    {
-      "name": "Submit",
-      "type": "click",
-      "prompt": "Sign In",
-      "dependsOnFields": "phone"
-    }
-  ],
   "dataTransform": {
     "dataPath": "content",
     "fieldMappings": [

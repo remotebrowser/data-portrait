@@ -3,26 +3,6 @@
   "brand_name": "Goodreads",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Goodreads_%27g%27_logo.svg",
   "is_mandatory": false,
-  "is_dpage": true,
-  "use_dpage_iframe": true,
-  "schema": [
-    {
-      "name": "email",
-      "type": "email",
-      "prompt": "Email"
-    },
-    {
-      "name": "password",
-      "type": "password",
-      "prompt": "Password"
-    },
-    {
-      "name": "login,remember_me,submit",
-      "type": "click",
-      "prompt": "Sign In",
-      "dependsOnFields": "email,password"
-    }
-  ],
   "dataTransform": {
     "dataPath": "bundles.1.content",
     "fieldMappings": [

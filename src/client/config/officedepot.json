@@ -3,8 +3,6 @@
   "brand_name": "Office Depot",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Office-depot-logo.png",
   "is_mandatory": false,
-  "is_dpage": true,
-  "use_dpage_iframe": true,
   "dataTransform": {
     "dataPath": "bundles.1.content",
     "fieldMappings": [
@@ -44,23 +42,5 @@
         "convertToArray": true
       }
     ]
-  },
-  "schema": [
-    {
-      "name": "email",
-      "type": "email",
-      "prompt": "Email"
-    },
-    {
-      "name": "password",
-      "type": "password",
-      "prompt": "Password"
-    },
-    {
-      "name": "dismiss_cookies,stay_signed_in,submit",
-      "type": "click",
-      "prompt": "Sign In",
-      "dependsOnFields": "email,password"
-    }
-  ]
+  }
 }

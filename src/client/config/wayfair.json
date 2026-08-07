@@ -3,8 +3,6 @@
   "brand_name": "Wayfair",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/0/0a/Wayfair_logo_with_tagline.png",
   "is_mandatory": false,
-  "is_dpage": true,
-  "use_dpage_iframe": true,
   "dataTransform": {
     "dataPath": "data.orderProductPagesByCustomer.nodes",
     "fieldMappings": [
@@ -44,24 +42,5 @@
         "convertToArray": true
       }
     ]
-  },
-  "schema": [
-    {
-      "name": "email",
-      "type": "email",
-      "prompt": "Email"
-    },
-    {
-      "name": "submit",
-      "type": "click",
-      "prompt": "Sign In with OTP",
-      "dependsOnFields": "email"
-    },
-    {
-      "name": "password_choice,submit,sign_in_with_password",
-      "type": "click",
-      "prompt": "Sign in with Password",
-      "dependsOnFields": "email"
-    }
-  ]
+  }
 }

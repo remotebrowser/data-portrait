@@ -1,18 +1,14 @@
 import type { DataTransformSchema } from './DataTransformSchema.js';
-import type { Schema } from './Schema.js';
 
 export type BrandConfig = {
   brand_id: string;
   brand_name: string;
   logo_url: string;
   is_mandatory: boolean;
-  is_dpage?: boolean;
   /**
-   * Use the iframe-based distill sign-in flow (DpageConnectionModal) instead
-   * of the credential-form + MCP flow (SignInDialog). Opt in per brand via config
-   * so the page never branches on a brand id.
+   * Maps the retailer's distilled rows onto PurchaseHistory. Since every retailer
+   * signs in through the same dpage flow, this is the only per-retailer behavior
+   * left in config — the sign-in form itself comes from mcp-getgather's distiller.
    */
-  use_dpage_iframe?: boolean;
-  schema: Array<Schema>;
   dataTransform: DataTransformSchema;
 };

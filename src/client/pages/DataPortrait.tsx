@@ -48,7 +48,12 @@ const BRANDS: Array<BrandConfig> = [
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [
-  // NOTE: exclude officedepot for now until successfully migrated to dpage
+  // Office Depot's sign-in works on the dpage flow, but its distill pattern
+  // (officedepot-purchase) only yields order_date, total_amount and order_number
+  // — no product names or images, so its orders can't drive portrait or story
+  // generation. Products live in the officedepot-purchase-details pattern, which
+  // needs a second navigation per order that the single-URL flow doesn't do.
+  // Unhide once that details pass exists.
   officedepotConfig.brand_id,
 ];
 

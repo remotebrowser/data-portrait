@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { parseHTML } from 'linkedom';
 import { settings } from '../config.js';
 import { geolocationService } from '../services/geolocation-service.js';
+import { analytics } from '../services/analytics-service.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import { postprocessDistilled } from '../services/retailers/postprocess.js';
 import {
@@ -286,6 +287,23 @@ export const handleDpagePoll = async (req: Request, res: Response) => {
   const rows = distilled?.json ?? [];
   const content = postprocessDistilled(brandId ?? '', rows);
   const status = content.length > 0 ? 'SUCCESS' : 'PENDING';
+
+  // Data arriving is what marks the connection as complete on this flow, so both
+  // events fire on the same transition. The client stops polling after SUCCESS,
+  // so this runs once per connection.
+  if (status === 'SUCCESS') {
+    const clientIp = geolocationService.getClientIp(req);
+    analytics.track(req.sessionID, 'connection_successful', {
+      brand_name: brandId,
+      client_ip: clientIp,
+    });
+    analytics.track(req.sessionID, 'data_retrieved_successful', {
+      brand_name: brandId,
+      data_count: content.length,
+      purchase_history: content,
+      client_ip: clientIp,
+    });
+  }
 
   res.json({ status, content });
 };

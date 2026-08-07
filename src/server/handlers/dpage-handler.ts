@@ -3,6 +3,7 @@ import { parseHTML } from 'linkedom';
 import { settings } from '../config.js';
 import { geolocationService } from '../services/geolocation-service.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
+import { postprocessDistilled } from '../services/retailers/postprocess.js';
 import {
   deleteBrowser,
   distillPage,
@@ -109,10 +110,7 @@ function formatDistilledPage(
 
   const form = document.createElement('form');
   form.setAttribute('method', 'POST');
-  form.setAttribute(
-    'action',
-    `/getgather/dpage/frame/${browserId}/${pageId}`
-  );
+  form.setAttribute('action', `/getgather/dpage/frame/${browserId}/${pageId}`);
 
   const body = document.body;
   while (body.firstChild) {
@@ -271,6 +269,7 @@ export const handleDpageFramePost = async (req: Request, res: Response) => {
 
 // POST /getgather/dpage/:brandId/poll — return the data once distillation yields JSON.
 export const handleDpagePoll = async (req: Request, res: Response) => {
+  const { brandId } = req.params;
   const { browser_id: browserId, page_id: pageId } = (req.body ?? {}) as {
     browser_id?: string;
     page_id?: string;
@@ -284,7 +283,8 @@ export const handleDpagePoll = async (req: Request, res: Response) => {
   // (still on the sign-in / verification form, or not ready), stay PENDING and
   // let the client's poll interval drive the retry — don't hold the request open.
   const distilled = await readDistilledOnce(browserId, pageId);
-  const content = distilled?.json ?? [];
+  const rows = distilled?.json ?? [];
+  const content = postprocessDistilled(brandId ?? '', rows);
   const status = content.length > 0 ? 'SUCCESS' : 'PENDING';
 
   res.json({ status, content });

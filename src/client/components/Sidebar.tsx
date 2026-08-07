@@ -20,7 +20,7 @@ type SidebarProps = {
   isGenerating: boolean;
   selectedItemsCount: number;
   onSuccessConnect: (brandName: string, data: PurchaseHistory[]) => void;
-  onOpenSignInDialog: (brandConfig: BrandConfig) => void;
+  onOpenConnectionModal: (brandConfig: BrandConfig) => void;
   onGenderChange: (genderId: string) => void;
   onTraitsChange: (traits: string[]) => void;
   onImageStyleChange: (styleIds: string[]) => void;
@@ -42,7 +42,7 @@ export function Sidebar({
   isGenerating,
   selectedItemsCount,
   onSuccessConnect,
-  onOpenSignInDialog,
+  onOpenConnectionModal,
   onGenderChange,
   onTraitsChange,
   onImageStyleChange,
@@ -98,7 +98,7 @@ export function Sidebar({
             brands={brands}
             connectedBrands={connectedBrands}
             onSuccessConnect={onSuccessConnect}
-            onOpenSignInDialog={onOpenSignInDialog}
+            onOpenConnectionModal={onOpenConnectionModal}
           />
 
           <PersonaSelector

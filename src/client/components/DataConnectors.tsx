@@ -11,7 +11,7 @@ type DataConnectorsProps = {
   brands: BrandConfig[];
   connectedBrands: string[];
   onSuccessConnect: (brandName: string, data: PurchaseHistory[]) => void;
-  onOpenSignInDialog: (brandConfig: BrandConfig) => void;
+  onOpenConnectionModal: (brandConfig: BrandConfig) => void;
 };
 
 const ITEMS_PER_ROW = 3;
@@ -20,7 +20,7 @@ export function DataConnectors({
   brands,
   connectedBrands,
   onSuccessConnect,
-  onOpenSignInDialog,
+  onOpenConnectionModal,
 }: DataConnectorsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -82,7 +82,7 @@ export function DataConnectors({
               onSuccessConnect={(data) =>
                 onSuccessConnect(brandConfig.brand_name, data)
               }
-              onOpenSignInDialog={onOpenSignInDialog}
+              onOpenConnectionModal={onOpenConnectionModal}
               isConnected={connectedBrands.includes(brandConfig.brand_name)}
             />
           ))}

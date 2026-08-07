@@ -6,14 +6,14 @@ import { Badge } from '@/components/ui/badge.js';
 
 interface DataSourceProps {
   onSuccessConnect: (data: PurchaseHistory[]) => void;
-  onOpenSignInDialog: (brandConfig: BrandConfig) => void;
+  onOpenConnectionModal: (brandConfig: BrandConfig) => void;
   disabled?: boolean;
   brandConfig: BrandConfig;
   isConnected?: boolean;
 }
 
 export function DataSource({
-  onOpenSignInDialog,
+  onOpenConnectionModal,
   disabled,
   brandConfig,
   isConnected,
@@ -24,7 +24,7 @@ export function DataSource({
     trackEvent('connection_attempt', {
       brand_name: brandConfig.brand_name,
     });
-    onOpenSignInDialog(brandConfig);
+    onOpenConnectionModal(brandConfig);
   };
 
   return (

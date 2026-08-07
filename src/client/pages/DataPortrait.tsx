@@ -129,8 +129,9 @@ export function DataPortrait() {
   const [selectedPreview, setSelectedPreview] = useState<GeneratedImage | null>(
     null
   );
-  const [signInDialogBrand, setSignInDialogBrand] =
-    useState<BrandConfig | null>(null);
+  const [connectingBrand, setConnectingBrand] = useState<BrandConfig | null>(
+    null
+  );
 
   const doordashEnabled = isFeatureEnabled('doordash');
 
@@ -186,13 +187,13 @@ export function DataPortrait() {
     });
   };
 
-  const handleOpenSignInDialog = (brandConfig: BrandConfig) => {
-    setSignInDialogBrand(brandConfig);
+  const handleOpenConnectionModal = (brandConfig: BrandConfig) => {
+    setConnectingBrand(brandConfig);
   };
 
-  const handleSignInSuccess = (data: PurchaseHistory[]) => {
-    if (signInDialogBrand) {
-      handleSuccessConnect(signInDialogBrand.brand_name, data);
+  const handleConnectionSuccess = (data: PurchaseHistory[]) => {
+    if (connectingBrand) {
+      handleSuccessConnect(connectingBrand.brand_name, data);
     }
   };
   const toggleOrderExpansion = (orderId: string, productName: string) => {
@@ -458,7 +459,7 @@ export function DataPortrait() {
         isGenerating={isGenerating}
         selectedItemsCount={selectedItemsCount}
         onSuccessConnect={handleSuccessConnect}
-        onOpenSignInDialog={handleOpenSignInDialog}
+        onOpenConnectionModal={handleOpenConnectionModal}
         onGenderChange={setSelectedGender}
         onTraitsChange={setSelectedTraits}
         onImageStyleChange={setSelectedImageStyle}
@@ -471,13 +472,13 @@ export function DataPortrait() {
       {/* Every brand signs in through the iframe dpage flow. Keying on brand_id
           forces a remount when switching brands, so the modal's connect-once
           guard resets. */}
-      {signInDialogBrand && (
+      {connectingBrand && (
         <DpageConnectionModal
-          key={signInDialogBrand.brand_id}
+          key={connectingBrand.brand_id}
           isOpen={true}
-          onClose={() => setSignInDialogBrand(null)}
-          onSuccessConnect={handleSignInSuccess}
-          brandConfig={signInDialogBrand}
+          onClose={() => setConnectingBrand(null)}
+          onSuccessConnect={handleConnectionSuccess}
+          brandConfig={connectingBrand}
         />
       )}
 

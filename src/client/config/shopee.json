@@ -44,7 +44,7 @@
       },
       {
         "outputKey": "order_id",
-        "sourcePath": "store_nae",
+        "sourcePath": "store_name",
         "defaultValue": "N/A"
       },
       {

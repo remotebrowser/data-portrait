@@ -31,14 +31,17 @@
         "defaultValue": "$0.00"
       },
       {
-        "outputKey": "product_name",
+        "outputKey": "product_names",
         "sourcePath": "product_name",
-        "defaultValue": "Unknown Product"
+        "defaultValue": "Unknown Product",
+        "convertToArray": true
       },
       {
-        "outputKey": "image_url",
+        "outputKey": "image_urls",
         "sourcePath": "image_url",
-        "defaultValue": ""
+        "defaultValue": "",
+        "transform": "image",
+        "convertToArray": true
       }
     ]
   },

@@ -21,11 +21,11 @@ export interface DistillationResult {
   name: string;
   priority: number;
   distilled: string;
-  /** Selectors to click on the live page after this pattern wins (rb-autoclick). */
+  /** Selectors to click after this pattern matches. */
   autoclicks?: string[];
 }
 
-/** Load the pattern HTML files fresh so each distillation owns its DOM. */
+/** Load a new copy of each pattern for every check. */
 export const loadPatterns = (): PatternEntry[] =>
   readdirSync(patternsDir)
     .sort()
@@ -83,7 +83,6 @@ export const distill = async (
       const selector = target.getAttribute(attr);
       if (!selector) continue;
 
-      // Evaluate one selector at a time
       const locator = page.locator(selector);
       const count = await locator.count();
       let el: ReturnType<typeof locator.nth> | null = null;
@@ -101,7 +100,6 @@ export const distill = async (
         const [text, innerHtml, value] = await Promise.all([
           el.textContent().then((t) => (t ?? '').trim()),
           el.innerHTML(),
-          // inputValue() only resolves for input/textarea/select elements
           el.inputValue().catch(() => null as string | null),
         ]);
 
@@ -150,9 +148,7 @@ export const distill = async (
     hostname,
   });
 
-  // Autoclicks advance the page to its next step (e.g. "Sign in with email");
-  // this round's distilled result is returned as-is and the next distillation
-  // sees the new state.
+  // Click these elements now. The next check reads the new page.
   for (const selector of best.autoclicks ?? []) {
     await page
       .locator(selector)
@@ -169,7 +165,6 @@ export const distill = async (
   return best;
 };
 
-/** Minimal element shape needed to convert distilled rows into key/value pairs. */
 interface ConvertibleElement {
   querySelector(selectors: string): ConvertibleElement | null;
   querySelectorAll(selectors: string): Iterable<ConvertibleElement>;

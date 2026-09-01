@@ -31,7 +31,7 @@ function toFetchHeaders(
 
 export async function prepareNewBrowser(
   headers: Record<string, string | undefined> = {}
-): Promise<{ browserId: string; pageId: string }> {
+): Promise<string> {
   const fetchHeaders = toFetchHeaders(headers);
 
   const createRes = await fetch(buildUrl(`/api/v1/browsers`), {
@@ -48,43 +48,10 @@ export async function prepareNewBrowser(
   const { browser_id: browserId } = (await createRes.json()) as {
     browser_id: string;
   };
-
-  const deadline = Date.now() + RETRY_TIMEOUT_MS;
-  let pageId: string | undefined;
-  while (Date.now() < deadline) {
-    try {
-      const pagesRes = await fetch(
-        buildUrl(`/api/v1/browsers/${browserId}/pages`)
-      );
-      if (pagesRes.ok) {
-        const pageIds = (await pagesRes.json()) as unknown[];
-        if (Array.isArray(pageIds) && pageIds.length > 0) {
-          pageId = String(pageIds[0]);
-          break;
-        }
-      }
-    } catch (error) {
-      Logger.debug('Fetching pages failed, retrying', {
-        component: 'remotebrowser',
-        browserSessionId: browserId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-    await sleep(RETRY_INTERVAL_MS);
-  }
-
-  if (!pageId) {
-    await deleteBrowser(browserId);
-    throw new Error(`Browser ${browserId} never exposed any pages`);
-  }
-
-  return { browserId, pageId };
+  return browserId;
 }
 
-/**
- * The CDP WebSocket URL of a browser, derived from the REST base URL
- * (http(s):// becomes ws(s)://).
- */
+/** Change the HTTP URL to a WebSocket URL for CDP. */
 function getCdpUrl(browserId: string): string {
   const base = baseUrl();
   const protocol = base.startsWith('https') ? 'wss' : 'ws';
@@ -95,17 +62,47 @@ export async function connectBrowser(browserId: string): Promise<Browser> {
   return await chromium.connectOverCDP(getCdpUrl(browserId));
 }
 
-/** Resolves the page the browser opened on startup, or creates one. */
-export async function openPage(browser: Browser): Promise<Page> {
+/** Find a page by ID. Create one when the browser is empty. */
+export async function openPage(
+  browser: Browser,
+  pageId?: string
+): Promise<{ page: Page; pageId: string }> {
+  for (const context of browser.contexts()) {
+    for (const page of context.pages()) {
+      const session = await context.newCDPSession(page);
+      try {
+        const { targetInfo } = await session.send('Target.getTargetInfo');
+        if (!targetInfo) continue;
+        if (!pageId || targetInfo.targetId === pageId) {
+          return { page, pageId: targetInfo.targetId };
+        }
+      } finally {
+        await session.detach();
+      }
+    }
+  }
+
+  if (pageId) {
+    throw new Error(`Page with target ID ${pageId} not found`);
+  }
+
   const [context] = browser.contexts();
-  const pages = context.pages();
-  return pages.length > 0 ? pages[0] : await context.newPage();
+  if (!context) throw new Error('Remote browser has no browser context');
+  const page = await context.newPage();
+  const session = await context.newCDPSession(page);
+  try {
+    const { targetInfo } = await session.send('Target.getTargetInfo');
+    if (!targetInfo) throw new Error('Could not resolve new page target ID');
+    return { page, pageId: targetInfo.targetId };
+  } finally {
+    await session.detach();
+  }
 }
 
 export async function navigatePage(page: Page, url: string): Promise<void> {
   for (let attempt = 0; attempt < NAV_RETRY_ATTEMPTS; attempt++) {
     try {
-      await page.goto(url, { waitUntil: 'load' });
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
       return;
     } catch (error) {
       Logger.warn('Navigation attempt failed, retrying', {

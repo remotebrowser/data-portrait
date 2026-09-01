@@ -40,7 +40,6 @@ const upload = multer({
   },
 });
 
-// Goodreads dpage flow (distill REST API — no MCP)
 router.post('/goodreads/connect', handleGoodreadsConnect);
 router.get('/dpage/:browserId/:pageId', handleGoodreadsDpageGet);
 router.post('/dpage/:browserId/:pageId', handleGoodreadsDpagePost);

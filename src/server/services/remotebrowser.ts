@@ -1,8 +1,11 @@
 import { settings } from '../config.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
+import { chromium } from 'playwright';
+import type { Browser, Page } from 'playwright';
 
 const RETRY_TIMEOUT_MS = 30_000;
 const RETRY_INTERVAL_MS = 1_000;
+const NAV_RETRY_ATTEMPTS = RETRY_TIMEOUT_MS / RETRY_INTERVAL_MS;
 
 function baseUrl(): string {
   return settings.GETGATHER_URL.replace(/\/+$/, '');
@@ -26,39 +29,9 @@ function toFetchHeaders(
   );
 }
 
-/** Poll a request until it returns 200 (or the retry window elapses). */
-async function fetchUntil200(
-  url: string,
-  init: RequestInit,
-  label: string
-): Promise<Response> {
-  const deadline = Date.now() + RETRY_TIMEOUT_MS;
-  let lastStatus: number | undefined;
-  while (Date.now() < deadline) {
-    const res = await fetch(url, init);
-    if (res.status === 200) return res;
-    lastStatus = res.status;
-    await sleep(RETRY_INTERVAL_MS);
-  }
-  throw new Error(`${label} never returned 200 (last status: ${lastStatus ?? 'unknown'})`);
-}
-
-/** A distilled page is either the book-list JSON array or the sign-in form HTML. */
-export type DistilledPage = { json?: unknown[]; html: string };
-
-function parseDistilled(text: string): DistilledPage {
-  try {
-    const parsed = JSON.parse(text);
-    if (Array.isArray(parsed)) return { json: parsed, html: text };
-  } catch {
-    // Not JSON — it's the distilled sign-in/verification form HTML.
-  }
-  return { html: text };
-}
-
 export async function prepareNewBrowser(
   headers: Record<string, string | undefined> = {}
-): Promise<{ browserId: string; pageId: string }> {
+): Promise<string> {
   const fetchHeaders = toFetchHeaders(headers);
 
   const createRes = await fetch(buildUrl(`/api/v1/browsers`), {
@@ -68,100 +41,80 @@ export async function prepareNewBrowser(
   if (createRes.status !== 200) {
     const errorBody = await createRes.text().catch(() => '');
     const detail = errorBody ? `: ${errorBody}` : '';
-    throw new Error(`Failed to create browser: HTTP ${createRes.status}${detail}`);
+    throw new Error(
+      `Failed to create browser: HTTP ${createRes.status}${detail}`
+    );
   }
   const { browser_id: browserId } = (await createRes.json()) as {
     browser_id: string;
   };
+  return browserId;
+}
 
-  const deadline = Date.now() + RETRY_TIMEOUT_MS;
-  let pageId: string | undefined;
-  while (Date.now() < deadline) {
-    try {
-      const pagesRes = await fetch(buildUrl(`/api/v1/browsers/${browserId}/pages`));
-      if (pagesRes.ok) {
-        const pageIds = (await pagesRes.json()) as unknown[];
-        if (Array.isArray(pageIds) && pageIds.length > 0) {
-          pageId = String(pageIds[0]);
-          break;
+/** Change the HTTP URL to a WebSocket URL for CDP. */
+function getCdpUrl(browserId: string): string {
+  const base = baseUrl();
+  const protocol = base.startsWith('https') ? 'wss' : 'ws';
+  return `${base.replace(/^https?:\/\//, `${protocol}://`)}/api/v1/browsers/${browserId}/cdp`;
+}
+
+export async function connectBrowser(browserId: string): Promise<Browser> {
+  return await chromium.connectOverCDP(getCdpUrl(browserId));
+}
+
+/** Find a page by ID. Create one when the browser is empty. */
+export async function openPage(
+  browser: Browser,
+  pageId?: string
+): Promise<{ page: Page; pageId: string }> {
+  for (const context of browser.contexts()) {
+    for (const page of context.pages()) {
+      const session = await context.newCDPSession(page);
+      try {
+        const { targetInfo } = await session.send('Target.getTargetInfo');
+        if (!targetInfo) continue;
+        if (!pageId || targetInfo.targetId === pageId) {
+          return { page, pageId: targetInfo.targetId };
         }
+      } finally {
+        await session.detach();
       }
+    }
+  }
+
+  if (pageId) {
+    throw new Error(`Page with target ID ${pageId} not found`);
+  }
+
+  const [context] = browser.contexts();
+  if (!context) throw new Error('Remote browser has no browser context');
+  const page = await context.newPage();
+  const session = await context.newCDPSession(page);
+  try {
+    const { targetInfo } = await session.send('Target.getTargetInfo');
+    if (!targetInfo) throw new Error('Could not resolve new page target ID');
+    return { page, pageId: targetInfo.targetId };
+  } finally {
+    await session.detach();
+  }
+}
+
+export async function navigatePage(page: Page, url: string): Promise<void> {
+  for (let attempt = 0; attempt < NAV_RETRY_ATTEMPTS; attempt++) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded' });
+      return;
     } catch (error) {
-      Logger.debug('Fetching pages failed, retrying', {
+      Logger.warn('Navigation attempt failed, retrying', {
         component: 'remotebrowser',
-        browserSessionId: browserId,
+        attempt,
+        url,
         error: error instanceof Error ? error.message : String(error),
       });
     }
     await sleep(RETRY_INTERVAL_MS);
   }
-
-  if (!pageId) {
-    await deleteBrowser(browserId);
-    throw new Error(`Browser ${browserId} never exposed any pages`);
-  }
-
-  return { browserId, pageId };
-}
-
-export async function navigatePage(
-  browserId: string,
-  pageId: string,
-  url: string
-): Promise<void> {
-  await fetchUntil200(
-    `${buildUrl(`/api/v1/browsers/${browserId}/pages/${pageId}/navigate`)}?url=${encodeURIComponent(url)}`,
-    { method: 'POST' },
-    `Navigate to ${url}`
-  );
-}
-
-export async function distillPage(
-  browserId: string,
-  pageId: string,
-  fields?: Record<string, string>
-): Promise<void> {
-  await fetchUntil200(
-    buildUrl(`/api/v1/browsers/${browserId}/pages/${pageId}/distill`),
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(fields ?? {}).toString(),
-    },
-    `Distill ${browserId}/${pageId}`
-  );
-}
-
-/**
- * Wait for the distilled page to be available, then return it (book-list JSON or
- * sign-in form HTML). One fetch, one body read.
- */
-export async function getDistilled(
-  browserId: string,
-  pageId: string
-): Promise<DistilledPage> {
-  const res = await fetchUntil200(
-    buildUrl(`/api/v1/browsers/${browserId}/pages/${pageId}/distilled`),
-    {},
-    `Distilled ${browserId}/${pageId}`
-  );
-  return parseDistilled(await res.text());
-}
-
-/**
- * Single, non-blocking read of the distilled page for polling. Returns undefined
- * when it isn't ready yet (non-200) so the caller can report PENDING immediately
- * rather than holding the request open for the full retry window.
- */
-export async function readDistilledOnce(
-  browserId: string,
-  pageId: string
-): Promise<DistilledPage | undefined> {
-  const res = await fetch(
-    buildUrl(`/api/v1/browsers/${browserId}/pages/${pageId}/distilled`)
-  );
-  if (res.status !== 200) return undefined;
-  return parseDistilled(await res.text());
+  throw new Error(`Failed to navigate to ${url}`);
 }
 
 export async function deleteBrowser(browserId: string): Promise<void> {

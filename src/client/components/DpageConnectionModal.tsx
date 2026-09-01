@@ -5,7 +5,7 @@ import { toPurchaseHistory } from '../modules/DataTransformSchema.js';
 import { logger } from '@/utils/logger/index.js';
 import { Button } from '@/components/ui/button.js';
 
-type GoodreadsConnectionModalProps = {
+type DpageConnectionModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccessConnect: (data: PurchaseHistory[]) => void;
@@ -16,14 +16,16 @@ type BrowserTarget = { browserId: string; pageId: string };
 
 const POLL_INTERVAL_MS = 3000;
 
-export function GoodreadsConnectionModal({
+export function DpageConnectionModal({
   isOpen,
   onClose,
   onSuccessConnect,
   brandConfig,
-}: GoodreadsConnectionModalProps) {
+}: DpageConnectionModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [target, setTarget] = useState<BrowserTarget | null>(null);
+  const [iframeHeight, setIframeHeight] = useState(200);
   const [error, setError] = useState<string | null>(null);
   // Guard against React StrictMode's double-invoked effect creating two browsers.
   const connectStartedRef = useRef(false);
@@ -39,7 +41,7 @@ export function GoodreadsConnectionModal({
     else dialog.close();
   }, [isOpen]);
 
-  // Create the remote browser + open the review list once per open.
+  // Create the remote browser + open the retailer's data page once per open.
   useEffect(() => {
     if (!isOpen) return;
     // StrictMode invokes effects twice on mount; the ref guard ensures we POST
@@ -53,16 +55,19 @@ export function GoodreadsConnectionModal({
 
     (async () => {
       try {
-        const res = await fetch('/getgather/goodreads/connect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const res = await fetch(
+          `/getgather/dpage/${brandConfig.brand_id}/connect`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as BrowserTarget;
         setTarget(data);
       } catch (err) {
-        logger.error('Failed to start Goodreads connection', err as Error, {
-          component: 'goodreads-connection-modal',
+        logger.error('Failed to start dpage connection', err as Error, {
+          component: 'dpage-connection-modal',
           brandId: brandConfig.brand_id,
         });
         setError('Failed to start connection. Please try again.');
@@ -70,7 +75,7 @@ export function GoodreadsConnectionModal({
     })();
   }, [isOpen, brandConfig.brand_id]);
 
-  // Poll for the distilled book list until sign-in completes.
+  // Poll for distilled retailer data until sign-in completes.
   useEffect(() => {
     if (!target) return;
     let stopped = false;
@@ -79,11 +84,14 @@ export function GoodreadsConnectionModal({
     (async () => {
       while (!stopped) {
         try {
-          const res = await fetch('/getgather/goodreads/poll', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ browser_id: browserId, page_id: pageId }),
-          });
+          const res = await fetch(
+            `/getgather/dpage/${brandConfig.brand_id}/poll`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ browser_id: browserId, page_id: pageId }),
+            }
+          );
           if (res.ok) {
             const data = (await res.json()) as {
               status?: string;
@@ -97,17 +105,23 @@ export function GoodreadsConnectionModal({
               stopped = true;
               callbacks.current.onSuccessConnect(purchaseHistory);
               callbacks.current.onClose();
-              void fetch('/getgather/goodreads/finalize', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ browser_id: browserId, page_id: pageId }),
-              });
+              void fetch(
+                `/getgather/dpage/${brandConfig.brand_id}/finalize`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    browser_id: browserId,
+                    page_id: pageId,
+                  }),
+                }
+              );
               return;
             }
           }
         } catch (err) {
-          logger.error('Goodreads poll error', err as Error, {
-            component: 'goodreads-connection-modal',
+          logger.error('dpage poll error', err as Error, {
+            component: 'dpage-connection-modal',
             brandId: brandConfig.brand_id,
           });
         }
@@ -120,6 +134,26 @@ export function GoodreadsConnectionModal({
     };
     // brandConfig comes from parent state and is stable for the modal's lifetime.
   }, [target, brandConfig]);
+
+  useEffect(() => {
+    if (!target) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.origin !== window.location.origin ||
+        event.source !== iframeRef.current?.contentWindow ||
+        event.data?.type !== 'dpage:resize' ||
+        typeof event.data.height !== 'number'
+      ) {
+        return;
+      }
+
+      setIframeHeight(Math.min(520, Math.max(180, event.data.height)));
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [target]);
 
   return (
     <dialog
@@ -159,10 +193,12 @@ export function GoodreadsConnectionModal({
             </div>
           ) : target ? (
             <iframe
-              src={`/getgather/dpage/${target.browserId}/${target.pageId}`}
+              ref={iframeRef}
+              src={`/getgather/dpage/frame/${target.browserId}/${target.pageId}`}
               sandbox="allow-same-origin allow-scripts allow-forms"
               title={`${brandConfig.brand_name} sign in`}
-              className="w-full h-[420px] rounded-xl border border-gray-200"
+              style={{ height: iframeHeight }}
+              className="w-full rounded-xl border-0 transition-[height] duration-150"
             />
           ) : (
             <div className="text-center">

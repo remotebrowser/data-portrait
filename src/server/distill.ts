@@ -78,6 +78,7 @@ export const distill = async (
     let found = true;
     let matchCount = 0;
     for (const target of targets) {
+      const patternText = target.textContent?.trim() ?? '';
       const isHtml = target.hasAttribute('rb-match-html');
       const attr = isHtml ? 'rb-match-html' : 'rb-match';
       const selector = target.getAttribute(attr);
@@ -106,7 +107,13 @@ export const distill = async (
         if (isHtml) {
           target.innerHTML = innerHtml;
         } else {
-          target.textContent = text;
+          // Submit inputs expose their label through `value`, not textContent.
+          // Patterns render those controls as buttons, so use the input value
+          // as the visible label when the matched element has no text.
+          target.textContent =
+            target.tagName.toLowerCase() === 'button'
+              ? text || value || patternText
+              : text;
           if (value !== null) {
             target.setAttribute('value', value);
           }
@@ -182,7 +189,7 @@ const extractValue = (item: ConvertibleElement, attribute?: string): string => {
 export const convert = async (
   distilled: string,
   patternsDir: string
-): Promise<Record<string, string>[]> => {
+): Promise<Record<string, unknown>[]> => {
   const document = parse(distilled);
 
   const stopEl = document.querySelector('[rb-stop][rb-convert]');
@@ -231,15 +238,15 @@ export const convert = async (
     { component: 'distill', convertFile }
   );
 
-  const converted: Record<string, string>[] = [];
+  const converted: Record<string, unknown>[] = [];
   for (const el of rows) {
-    const kv: Record<string, string> = {};
+    const kv: Record<string, unknown> = {};
     for (const col of converter.columns) {
       if (col.kind === 'list') {
         const items = el.querySelectorAll(col.selector);
-        kv[col.name] = Array.from(items)
-          .map((item) => extractValue(item, col.attribute))
-          .join(', ');
+        kv[col.name] = Array.from(items).map((item) =>
+          extractValue(item, col.attribute)
+        );
       } else {
         const item = el.querySelector(col.selector);
         if (item) {

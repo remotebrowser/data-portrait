@@ -2,6 +2,9 @@
   "brand_id": "officedepot",
   "brand_name": "Office Depot",
   "logo_url": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Office-depot-logo.png",
+  "is_mandatory": false,
+  "is_dpage": true,
+  "use_dpage_iframe": true,
   "dataTransform": {
     "dataPath": "bundles.1.content",
     "fieldMappings": [

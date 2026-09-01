@@ -3,6 +3,8 @@ import { parseHTML } from 'linkedom';
 import type { Page } from 'playwright';
 import { settings } from '../config.js';
 import { geolocationService } from '../services/geolocation-service.js';
+import { analytics } from '../services/analytics-service.js';
+import { postprocessDistilled } from '../services/retailers/postprocess.js';
 import { ServerLogger as Logger } from '../utils/logger/index.js';
 import {
   connectBrowser,
@@ -13,15 +15,24 @@ import {
 } from '../services/remotebrowser.js';
 import { convert, distill, loadPatterns, patternsDir } from '../distill.js';
 
-const GOODREADS_REVIEW_LIST_URL =
-  'https://www.goodreads.com/review/list?ref=nav_mybooks&view=table';
+const RETAILER_DPAGE_URLS: Record<string, string> = {
+  amazon: 'https://www.amazon.com/your-orders/orders',
+  doordash: 'https://www.doordash.com/orders',
+  gofood: 'https://gofood.co.id/en/orders',
+  goodreads: 'https://www.goodreads.com/review/list?ref=nav_mybooks&view=table',
+  officedepot:
+    'https://www.officedepot.com/orderhistory/orderHistoryListSet.do?ordersInMonths=0&orderType=ALL&orderStatus=A',
+  shopee: 'https://shopee.co.id/user/purchase',
+  wayfair:
+    'https://www.wayfair.com/session/secure/account/order_search.php?page=1',
+};
 
 const DPAGE_CSS = '/dpage.css';
 const DPAGE_JS = '/dpage-signin.js';
 
 interface DpageState {
   html?: string;
-  json?: Record<string, string>[];
+  json?: Record<string, unknown>[];
 }
 const dpageStates = new Map<string, DpageState>();
 
@@ -107,7 +118,10 @@ function formatDistilledPage(
 
   const form = document.createElement('form');
   form.setAttribute('method', 'POST');
-  form.setAttribute('action', `/getgather/dpage/${browserId}/${pageId}`);
+  form.setAttribute(
+    'action',
+    `/getgather/dpage/frame/${browserId}/${pageId}`
+  );
 
   const body = document.body;
   while (body.firstChild) {
@@ -137,7 +151,7 @@ async function distillStep(page: Page): Promise<DpageState> {
     } catch (error) {
       // The page may change during a check. Try again on the new page.
       Logger.debug('Distillation attempt failed, retrying', {
-        component: 'goodreads-handler',
+        component: 'dpage-handler',
         attempt,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -160,12 +174,16 @@ async function applyFields(
     const selector = el.getAttribute('rb-match');
     if (!selector) continue;
 
-    if (el.getAttribute('type') === 'checkbox') {
+    if (el.tagName.toLowerCase() === 'select') {
+      await page.locator(selector).first().selectOption(value);
+    } else if (el.getAttribute('type') === 'checkbox') {
       if (value === 'on') {
         await page.locator(selector).first().check();
       } else {
         await page.locator(selector).first().uncheck();
       }
+    } else if (el.getAttribute('type') === 'radio') {
+      await page.locator(selector).first().check();
     } else {
       await page.locator(selector).first().fill(value);
     }
@@ -202,7 +220,14 @@ function browserCreateHeaders(
   return headers;
 }
 
-export const handleGoodreadsConnect = async (req: Request, res: Response) => {
+export const handleDpageConnect = async (req: Request, res: Response) => {
+  const { brandId } = req.params;
+  const dataUrl = brandId ? RETAILER_DPAGE_URLS[brandId] : undefined;
+  if (!dataUrl) {
+    res.status(400).json({ error: `Unsupported dpage retailer: ${brandId}` });
+    return;
+  }
+
   let browserId: string | undefined;
   let pageId: string | undefined;
   let browser: Awaited<ReturnType<typeof connectBrowser>> | undefined;
@@ -215,22 +240,22 @@ export const handleGoodreadsConnect = async (req: Request, res: Response) => {
     const target = await openPage(browser);
     const page = target.page;
     pageId = target.pageId;
-    Logger.info('Navigating to review list', {
-      component: 'goodreads-handler',
+    Logger.info('Navigating to retailer data page', {
+      component: 'dpage-handler',
       operation: 'connect',
-      brandId: 'goodreads',
+      brandId,
       browserSessionId: browserId,
       pageId,
     });
-    await navigatePage(page, GOODREADS_REVIEW_LIST_URL);
+    await navigatePage(page, dataUrl);
 
     const state = await distillStep(page);
     dpageStates.set(`${browserId}/${pageId}`, state);
 
-    Logger.info('Goodreads dpage browser ready', {
-      component: 'goodreads-handler',
+    Logger.info('dpage browser ready', {
+      component: 'dpage-handler',
       operation: 'connect',
-      brandId: 'goodreads',
+      brandId,
       browserSessionId: browserId,
       pageId,
       distilled: state.html ? 'form' : 'none',
@@ -239,18 +264,19 @@ export const handleGoodreadsConnect = async (req: Request, res: Response) => {
     connected = true;
     res.json({ browserId, pageId });
   } catch (error) {
-    Logger.error('Goodreads connect failed', error as Error, {
-      component: 'goodreads-handler',
+    Logger.error('dpage connect failed', error as Error, {
+      component: 'dpage-handler',
       operation: 'connect',
+      brandId,
     });
-    res.status(500).json({ error: 'Failed to start Goodreads connection' });
+    res.status(500).json({ error: `Failed to start ${brandId} connection` });
   } finally {
     if (browser) {
       try {
         await browser.close();
       } catch (e) {
         Logger.warn('Error closing Playwright connection', {
-          component: 'goodreads-handler',
+          component: 'dpage-handler',
           operation: 'connect',
           browserSessionId: browserId,
           error: e instanceof Error ? e.message : String(e),
@@ -264,7 +290,7 @@ export const handleGoodreadsConnect = async (req: Request, res: Response) => {
   }
 };
 
-export const handleGoodreadsDpageGet = (req: Request, res: Response) => {
+export const handleDpageFrameGet = (req: Request, res: Response) => {
   const { browserId, pageId } = req.params;
   if (!browserId || !pageId) {
     res.status(400).send();
@@ -272,10 +298,10 @@ export const handleGoodreadsDpageGet = (req: Request, res: Response) => {
   }
   res
     .type('text/html')
-    .send(redirect(`/getgather/dpage/${browserId}/${pageId}`));
+    .send(redirect(`/getgather/dpage/frame/${browserId}/${pageId}`));
 };
 
-export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
+export const handleDpageFramePost = async (req: Request, res: Response) => {
   const { browserId, pageId } = req.params;
   if (!browserId || !pageId) {
     res.status(400).send();
@@ -310,7 +336,7 @@ export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
 
     if (next.json) {
       res.type('text/html').send(loadingPage());
-    } else if (next.html) {
+    } else if (next.html && !next.html.includes(' rb-error=')) {
       res
         .type('text/html')
         .send(formatDistilledPage(next.html, browserId, pageId));
@@ -324,9 +350,9 @@ export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
         );
     }
   } catch (error) {
-    Logger.error('Goodreads dpage step failed', error as Error, {
-      component: 'goodreads-handler',
-      operation: 'dpage',
+    Logger.error('dpage step failed', error as Error, {
+      component: 'dpage-handler',
+      operation: 'frame',
       browserSessionId: browserId,
       pageId,
     });
@@ -337,8 +363,8 @@ export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
         await browser.close();
       } catch (e) {
         Logger.warn('Error closing Playwright connection', {
-          component: 'goodreads-handler',
-          operation: 'dpage',
+          component: 'dpage-handler',
+          operation: 'frame',
           browserSessionId: browserId,
           error: e instanceof Error ? e.message : String(e),
         });
@@ -347,7 +373,8 @@ export const handleGoodreadsDpagePost = async (req: Request, res: Response) => {
   }
 };
 
-export const handleGoodreadsPoll = async (req: Request, res: Response) => {
+export const handleDpagePoll = async (req: Request, res: Response) => {
+  const { brandId } = req.params;
   const { browser_id: browserId, page_id: pageId } = (req.body ?? {}) as {
     browser_id?: string;
     page_id?: string;
@@ -358,13 +385,28 @@ export const handleGoodreadsPoll = async (req: Request, res: Response) => {
   }
 
   const state = dpageStates.get(`${browserId}/${pageId}`);
-  const content = state?.json ?? [];
+  const rows = state?.json ?? [];
+  const content = postprocessDistilled(brandId ?? '', rows);
   const status = content.length > 0 ? 'SUCCESS' : 'PENDING';
+
+  if (status === 'SUCCESS') {
+    const clientIp = geolocationService.getClientIp(req);
+    void analytics.track(req.sessionID, 'connection_successful', {
+      brand_name: brandId,
+      client_ip: clientIp,
+    });
+    void analytics.track(req.sessionID, 'data_retrieved_successful', {
+      brand_name: brandId,
+      data_count: content.length,
+      purchase_history: content,
+      client_ip: clientIp,
+    });
+  }
 
   res.json({ status, content });
 };
 
-export const handleGoodreadsFinalize = async (req: Request, res: Response) => {
+export const handleDpageFinalize = async (req: Request, res: Response) => {
   const { browser_id: browserId, page_id: pageId } = (req.body ?? {}) as {
     browser_id?: string;
     page_id?: string;

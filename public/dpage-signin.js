@@ -53,4 +53,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     wrapper.appendChild(toggle);
   });
+
+  const reportHeight = function () {
+    const bodyHeight = document.body.getBoundingClientRect().height;
+    window.parent.postMessage(
+      {
+        type: 'dpage:resize',
+        height: Math.ceil(bodyHeight),
+      },
+      window.location.origin
+    );
+  };
+
+  requestAnimationFrame(reportHeight);
+  setTimeout(reportHeight, 100);
+  window.addEventListener('resize', reportHeight);
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(reportHeight).observe(document.body);
+  }
 });

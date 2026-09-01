@@ -8,7 +8,7 @@ import { GeneratedImagesGrid } from '../components/GeneratedImagesGrid.js';
 import { ImagePreviewModal } from '../components/ImagePreviewModal.js';
 import { StoryPreviewModal } from '../components/StoryPreviewModal.js';
 import { SignInDialog } from '../components/SignInDialog.js';
-import { GoodreadsConnectionModal } from '../components/GoodreadsConnectionModal.js';
+import { DpageConnectionModal } from '../components/DpageConnectionModal.js';
 import { Sidebar } from '../components/Sidebar.js';
 import amazon from '../config/amazon.json' with { type: 'json' };
 import wayfair from '../config/wayfair.json' with { type: 'json' };
@@ -49,7 +49,9 @@ const BRANDS: Array<BrandConfig> = [
 ];
 
 const EXCLUDED_BRANDS: Array<string> = [
-  // NOTE: exclude officedepot for now until successfully migrated to dpage
+  // Office Depot now signs in and distills through dpage, but its order-list
+  // pattern does not include products or images. Keep it hidden until the
+  // per-order details pass is implemented so it can contribute portrait data.
   officedepotConfig.brand_id,
 ];
 
@@ -465,11 +467,12 @@ export function DataPortrait() {
       />
 
       {/* Sign In Dialog — brands opting into the iframe dpage flow (config
-          `use_dpage_iframe`) use GoodreadsConnectionModal; others use the
-          credential-form + MCP flow. */}
+          `use_dpage_iframe`) use DpageConnectionModal; others use the
+          credential-form + MCP flow. Keying by brand resets connection state. */}
       {signInDialogBrand &&
         (signInDialogBrand.use_dpage_iframe ? (
-          <GoodreadsConnectionModal
+          <DpageConnectionModal
+            key={signInDialogBrand.brand_id}
             isOpen={true}
             onClose={() => setSignInDialogBrand(null)}
             onSuccessConnect={handleSignInSuccess}

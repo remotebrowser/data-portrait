@@ -47,9 +47,9 @@ Office Depot is off right now. It will come back after we update its sign-in flo
 Create a `.env` file in the project root. See `.env.template` for an empty starting point. All variables are optional unless noted.
 
 ```env
-# RemoteBrowser API. The env vars keep the old GETGATHER_ name.
-GETGATHER_URL=https://api.getgather.com
-GETGATHER_APP_KEY=            # optional. Sent as a Bearer token.
+# RemoteBrowser API
+REMOTEBROWSER_URL=https://api.getgather.com
+REMOTEBROWSER_APP_KEY=        # optional. Sent as a Bearer token.
 
 # MaxMind GeoIP (optional)
 MAXMIND_ACCOUNT_ID=
@@ -101,7 +101,7 @@ SESSION_SECRET=               # set your own in production
 
 ```bash
 docker run -p 3000:3000 \
-  -e GETGATHER_URL=your_local_remotebrowser_url \
+  -e REMOTEBROWSER_URL=your_local_remotebrowser_url \
   -e PORTKEY_API_KEY=your_portkey_key \
   ghcr.io/remotebrowser/data-portrait:latest
 ```

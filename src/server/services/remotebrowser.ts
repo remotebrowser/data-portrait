@@ -8,7 +8,7 @@ const RETRY_INTERVAL_MS = 1_000;
 const NAV_RETRY_ATTEMPTS = RETRY_TIMEOUT_MS / RETRY_INTERVAL_MS;
 
 function baseUrl(): string {
-  return settings.GETGATHER_URL.replace(/\/+$/, '');
+  return settings.REMOTEBROWSER_URL.replace(/\/+$/, '');
 }
 
 function buildUrl(path: string): string {

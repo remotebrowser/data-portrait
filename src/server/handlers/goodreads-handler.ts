@@ -195,9 +195,9 @@ function browserCreateHeaders(
     'x-origin-ip': clientIp,
     'user-agent': Array.isArray(userAgent) ? userAgent.join(', ') : userAgent,
   };
-  if (settings.GETGATHER_APP_KEY) {
+  if (settings.REMOTEBROWSER_APP_KEY) {
     headers['Authorization'] =
-      `Bearer ${settings.GETGATHER_APP_KEY}_${req.sessionID}`;
+      `Bearer ${settings.REMOTEBROWSER_APP_KEY}_${req.sessionID}`;
   }
   return headers;
 }

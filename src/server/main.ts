@@ -60,7 +60,7 @@ app.use((req, res, next) => {
 
 const createProxy = (path: string) =>
   createProxyMiddleware({
-    target: `${settings.GETGATHER_URL}${path}`,
+    target: `${settings.REMOTEBROWSER_URL}${path}`,
     changeOrigin: true,
     on: {
       proxyReq: fixRequestBody,

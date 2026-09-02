@@ -58,14 +58,14 @@ class MCPClient {
       headers['x-signin-id'] = this.signinId;
     }
 
-    if (settings.GETGATHER_APP_KEY) {
+    if (settings.REMOTEBROWSER_APP_KEY) {
       headers['Authorization'] =
-        `Bearer ${settings.GETGATHER_APP_KEY}_${this.sessionId}`;
+        `Bearer ${settings.REMOTEBROWSER_APP_KEY}_${this.sessionId}`;
     }
 
     const mcpUrlPath = MCP_URL_PATHS[this.brandId] ?? 'mcp';
     return new StreamableHTTPClientTransport(
-      new URL(`${settings.GETGATHER_URL}/${mcpUrlPath}`),
+      new URL(`${settings.REMOTEBROWSER_URL}/${mcpUrlPath}`),
       { requestInit: { headers } }
     );
   }

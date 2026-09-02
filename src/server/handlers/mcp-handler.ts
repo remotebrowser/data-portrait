@@ -143,7 +143,7 @@ export const handlePurchaseHistory = async (req: Request, res: Response) => {
   const url = sc?.url as string | undefined;
   if (url) {
     const appHost = getAppHost(req);
-    const hosted_link_url = url.replace(settings.GETGATHER_URL, appHost);
+    const hosted_link_url = url.replace(settings.REMOTEBROWSER_URL, appHost);
     res.json({
       link_id: (sc?.link_id as string) || '',
       hosted_link_url,

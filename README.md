@@ -1,6 +1,6 @@
 # Data Portrait
 
-![E2E Tests](https://github.com/mcp-getgather/data-portrait/actions/workflows/e2e-daily.yml/badge.svg)
+![E2E Tests](https://github.com/remotebrowser/data-portrait/actions/workflows/e2e-daily.yml/badge.svg)
 
 Data Portrait makes a picture from your shopping and reading history. Connect your accounts, and the app reads your recent orders and books. Then it draws a portrait that shows your style and interests.
 
@@ -19,7 +19,7 @@ Data Portrait makes a picture from your shopping and reading history. Connect yo
 ## How It Works
 
 1. Connect your accounts in the sidebar.
-2. The app fetches your orders and reading history through the GetGather API.
+2. The app fetches your orders and reading history through the RemoteBrowser API.
 3. Pick your style, gender, and traits.
 4. The app makes your portrait.
 5. Download and share it.
@@ -38,7 +38,7 @@ Office Depot is off right now. It will come back after we update its sign-in flo
 ## Technical Overview
 
 - **Frontend:** React, TypeScript, Tailwind CSS.
-- **Backend:** Express.js. It talks to brand websites through the GetGather API. It uses MaxMind to look up locations.
+- **Backend:** Express.js. It talks to brand websites through the RemoteBrowser API. It uses MaxMind to look up locations.
 - **Image models:** Gemini (through Portkey or direct) or FLUX. A Gemini model writes the image prompt. DeepInfra handles the background blur trait.
 - **Storage:** Save images on the local disk, or in Google Cloud Storage.
 
@@ -47,7 +47,7 @@ Office Depot is off right now. It will come back after we update its sign-in flo
 Create a `.env` file in the project root. See `.env.template` for an empty starting point. All variables are optional unless noted.
 
 ```env
-# GetGather API
+# RemoteBrowser API. The env vars keep the old GETGATHER_ name.
 GETGATHER_URL=https://api.getgather.com
 GETGATHER_APP_KEY=            # optional. Sent as a Bearer token.
 
@@ -101,9 +101,9 @@ SESSION_SECRET=               # set your own in production
 
 ```bash
 docker run -p 3000:3000 \
-  -e GETGATHER_URL=your_local_mcp_getgather_url \
+  -e GETGATHER_URL=your_local_remotebrowser_url \
   -e PORTKEY_API_KEY=your_portkey_key \
-  ghcr.io/mcp-getgather/data-portrait:latest
+  ghcr.io/remotebrowser/data-portrait:latest
 ```
 
 Then open [localhost:3000](http://localhost:3000).

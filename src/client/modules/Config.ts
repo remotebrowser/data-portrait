@@ -8,7 +8,7 @@ export type BrandConfig = {
   is_mandatory: boolean;
   is_dpage?: boolean;
   /**
-   * Use the iframe-based distill sign-in flow (GoodreadsConnectionModal) instead
+   * Use the iframe-based distill sign-in flow (DpageConnectionModal) instead
    * of the credential-form + MCP flow (SignInDialog). Opt in per brand via config
    * so the page never branches on a brand id.
    */

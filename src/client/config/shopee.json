@@ -4,6 +4,7 @@
   "logo_url": "https://i.pinimg.com/736x/89/f3/62/89f362b04423b091aee923a0387c5c35.jpg",
   "is_mandatory": false,
   "is_dpage": true,
+  "use_dpage_iframe": true,
   "schema": [
     {
       "name": "loginKey",

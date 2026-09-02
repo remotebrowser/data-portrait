@@ -10,12 +10,12 @@ import {
   handleDpageSigninCheck,
 } from '../handlers/mcp-handler.js';
 import {
-  handleGoodreadsConnect,
-  handleGoodreadsDpageGet,
-  handleGoodreadsDpagePost,
-  handleGoodreadsPoll,
-  handleGoodreadsFinalize,
-} from '../handlers/goodreads-handler.js';
+  handleDpageConnect,
+  handleDpageFrameGet,
+  handleDpageFramePost,
+  handleDpagePoll,
+  handleDpageFinalize,
+} from '../handlers/dpage-handler.js';
 import { handleAnalytics } from '../handlers/analytics-handler.js';
 import {
   handleStoriesGeneration,
@@ -40,11 +40,11 @@ const upload = multer({
   },
 });
 
-router.post('/goodreads/connect', handleGoodreadsConnect);
-router.get('/dpage/:browserId/:pageId', handleGoodreadsDpageGet);
-router.post('/dpage/:browserId/:pageId', handleGoodreadsDpagePost);
-router.post('/goodreads/poll', handleGoodreadsPoll);
-router.post('/goodreads/finalize', handleGoodreadsFinalize);
+router.post('/dpage/:brandId/connect', handleDpageConnect);
+router.post('/dpage/:brandId/poll', handleDpagePoll);
+router.post('/dpage/:brandId/finalize', handleDpageFinalize);
+router.get('/dpage/frame/:browserId/:pageId', handleDpageFrameGet);
+router.post('/dpage/frame/:browserId/:pageId', handleDpageFramePost);
 
 // Get dpage url
 router.get('/dpage-url/:brandId', handleDpageUrl);

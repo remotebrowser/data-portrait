@@ -2,87 +2,102 @@
 
 ![E2E Tests](https://github.com/mcp-getgather/data-portrait/actions/workflows/e2e-daily.yml/badge.svg)
 
-Data Portrait is a web app that transforms your shopping and reading history into stunning, personalized AI-generated portraits. Connect your accounts from major brands (like Amazon, Wayfair, Office Depot, and Goodreads), and Data Portrait will analyze your purchase data to create unique images that reflect your style, interests, and personality.
+Data Portrait makes a picture from your shopping and reading history. Connect your accounts, and the app reads your recent orders and books. Then it draws a portrait that shows your style and interests.
 
 **Live Demo:** https://dataportrait.app/
 
 ## Features
 
-- **Connect Shopping & Reading Accounts:** Securely connect your Amazon, Wayfair, Office Depot and Goodreads accounts.
-- **Automatic Import:** Instantly fetch your recent purchases and reading history.
-- **AI Portrait Generation:** Create unique portraits based on your real data, powered by Google Gemini and FLUX.
-- **Customization:** Choose portrait style, gender, and traits for a personalized result.
-- **Live Data Analysis:** Visualize and review the products and brands that shape your portrait.
-- **Privacy-Focused:** Your data is used only for generating your portraits and is never sold or shared.
+- **Connect accounts:** Amazon, Wayfair, Goodreads, GoFood, and Shopee.
+- **Import your history:** The app fetches your recent orders and books.
+- **Make a portrait:** The app uses Gemini or FLUX to draw an image from your data.
+- **Use your own photo:** Upload one, or take a selfie with your camera.
+- **Choose the look:** Pick a style, gender, and traits like hair and age.
+- **Check your data:** See the products and brands behind your portrait.
+- **Your data stays yours:** We use it only to make your portrait. We never sell or share it.
 
 ## How It Works
 
-1. **Connect Accounts:** Use the sidebar to securely link your brand and reading accounts.
-2. **Import Purchases:** The app fetches your order and reading history using the GetGather API.
-3. **Customize Portrait:** Select your preferred style, gender, and traits (e.g., hair, age, features).
-4. **Generate Portrait:** Advanced AI models create a portrait that naturally integrates your interests and purchases.
-5. **Download & Share:** Preview, download, and share your personalized data portrait.
+1. Connect your accounts in the sidebar.
+2. The app fetches your orders and reading history through the GetGather API.
+3. Pick your style, gender, and traits.
+4. The app makes your portrait.
+5. Download and share it.
 
 ## Supported Brands
 
 - Amazon
 - Wayfair
-- Office Depot
 - Goodreads
+- GoFood
+- Shopee
+- DoorDash (turn on with the `doordash` feature flag)
+
+Office Depot is off right now. It will come back after we update its sign-in flow.
 
 ## Technical Overview
 
-- **Frontend:** React (Vite), TypeScript, Tailwind CSS.
-- **Backend:** Express.js, geolocation via MaxMind, reverse proxy to GetGather API.
-- **AI Models:** Google Gemini via Portkey or direct Google GenAI, or FLUX.
-- **Storage:** Google Cloud Storage (optional) or local filesystem.
-- **Data Model:** Purchases include brand, order date, products, images, etc.
+- **Frontend:** React, TypeScript, Tailwind CSS.
+- **Backend:** Express.js. It talks to brand websites through the GetGather API. It uses MaxMind to look up locations.
+- **Image models:** Gemini (through Portkey or direct) or FLUX. A Gemini model writes the image prompt. DeepInfra handles the background blur trait.
+- **Storage:** Save images on the local disk, or in Google Cloud Storage.
 
 ## Configuration
 
-Create a `.env` file in the project root with the following variables:
+Create a `.env` file in the project root. See `.env.template` for an empty starting point. All variables are optional unless noted.
 
 ```env
-# GetGather API Configuration
+# GetGather API
 GETGATHER_URL=https://api.getgather.com
+GETGATHER_APP_KEY=            # optional. Sent as a Bearer token.
 
-# MaxMind GeoIP Configuration (optional)
-MAXMIND_ACCOUNT_ID=your_maxmind_account_id
-MAXMIND_LICENSE_KEY=your_maxmind_license_key
+# MaxMind GeoIP (optional)
+MAXMIND_ACCOUNT_ID=
+MAXMIND_LICENSE_KEY=
 
-# AI Providers (required for image generation)
-# Image generation provider is automatically selected based on API key availability:
-# - If PORTKEY_API_KEY is set, uses Portkey (recommended for production)
-# - If only GEMINI_API_KEY is set, uses Google GenAI directly
-# - If only FLUX_API_KEY is set, uses FLUX directly
-# - Both keys can be set; priority order is: Portkey → Google GenAI → Flux
-PORTKEY_API_KEY=your_portkey_api_key
-GEMINI_API_KEY=your_gemini_api_key
-FLUX_API_KEY=your_flux_api_key
+# Image generation (required)
+# The app picks a provider in this order: Portkey, Google GenAI, FLUX.
+# Set at least one key.
+PORTKEY_API_KEY=
+GEMINI_API_KEY=
+FLUX_API_KEY=
 
-# Google Cloud Storage (optional, for cloud image storage)
-# If not configured, images are stored locally in the public/ directory
-GCS_BUCKET_NAME=data-portrait-imagegen
-GCS_PROJECT_ID=your_gcp_project_id
+# DeepInfra (optional). Used for the "Background Blur" trait.
+DEEPINFRA_API_KEY=
 
-# Feature Flags
-# Comma-separated list of feature keys used by the app.
-# Supported keys:
-# - doordash: enable DoorDash connector in the UI
-# - photo_upload: enable face upload feature in the UI
-# - camera: reserved for future camera-specific features
-ENABLE_FEATURES=doordash,photo_upload
+# Storage
+# local: save images in the public/ folder (default)
+# gcs: save images in Google Cloud Storage
+STORAGE_MODE=local
+GCS_BUCKET_NAME=              # required when STORAGE_MODE=gcs
+GCS_PROJECT_ID=               # required when STORAGE_MODE=gcs
 
-# Legacy flag (optional):
-# If set to 'true', also enables face upload in addition to ENABLE_FEATURES.
+# Google Cloud login. Pick one:
+# - A file path to a service account JSON file
+# - A base64-encoded service account JSON string
+GOOGLE_APPLICATION_CREDENTIALS=
+GOOGLE_APPLICATION_CREDENTIALS_JSON=
+
+# Feature flags. A comma-separated list.
+# doordash: show the DoorDash connector
+# photo_upload: allow face upload and selfies
+# camera: not used yet
+ENABLE_FEATURES=
+
+# Old way to allow face upload. Still works.
+# Set to true, or use the photo_upload flag above.
 ALLOW_FACE_UPLOAD=false
+
+# Optional extras
+SENTRY_DSN=                   # error reports (server)
+VITE_SENTRY_DSN=              # error reports (browser)
+SEGMENT_WRITE_KEY=            # usage tracking
+SESSION_SECRET=               # set your own in production
 ```
 
 ## Development
 
-### Using Docker
-
-Use Docker or Podman to pull the container image and run it:
+### Run with Docker
 
 ```bash
 docker run -p 3000:3000 \
@@ -91,11 +106,28 @@ docker run -p 3000:3000 \
   ghcr.io/mcp-getgather/data-portrait:latest
 ```
 
-Then open [localhost:3000](http://localhost:3000) to access the application.
+Then open [localhost:3000](http://localhost:3000).
 
-### Local Development
+### Run on your machine
 
 ```bash
 npm install
 npm run dev
 ```
+
+This starts two things: the Vite dev server and the backend on port `3000`. Open the Vite URL (default: `localhost:5173`). The dev server sends API calls to the backend.
+
+### Build for production
+
+```bash
+npm run build
+npm start
+```
+
+### Tests
+
+```bash
+npm run test:e2e
+```
+
+Other test modes: `test:e2e:ui`, `test:e2e:headed`, and `test:e2e:debug`.
